@@ -1,0 +1,292 @@
+<?php
+/**
+ * Clase para el panel de administración del plugin Cuadros
+ */
+class Cuadros_Admin_Settings {
+    
+    public function __construct() {
+        add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_init', array($this, 'register_settings'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+    }
+    
+    /**
+     * Agregar menú de administración
+     */
+    public function add_admin_menu() {
+        add_menu_page(
+            __('Configuración de Cuadros', 'cuadros'),
+            __('Cuadros', 'cuadros'),
+            'manage_options',
+            'cuadros-settings',
+            array($this, 'render_settings_page'),
+            'dashicons-format-gallery',
+            56
+        );
+        
+        add_submenu_page(
+            'cuadros-settings',
+            __('Configuración General', 'cuadros'),
+            __('Configuración', 'cuadros'),
+            'manage_options',
+            'cuadros-settings',
+            array($this, 'render_settings_page')
+        );
+    }
+    
+    /**
+     * Registrar configuraciones
+     */
+    public function register_settings() {
+        register_setting('cuadros_settings_group', 'cuadros_settings', array($this, 'sanitize_settings'));
+        
+        // Sección de colores de paspartú
+        add_settings_section(
+            'cuadros_paspartu_section',
+            __('Colores de Paspartú', 'cuadros'),
+            array($this, 'render_paspartu_section'),
+            'cuadros-settings'
+        );
+        
+        // Sección de imágenes de marcos
+        add_settings_section(
+            'cuadros_marco_section',
+            __('Imágenes de Marcos', 'cuadros'),
+            array($this, 'render_marco_section'),
+            'cuadros-settings'
+        );
+        
+        // Sección de dimensiones
+        add_settings_section(
+            'cuadros_dimensions_section',
+            __('Dimensiones de Visualización', 'cuadros'),
+            array($this, 'render_dimensions_section'),
+            'cuadros-settings'
+        );
+        
+        // Campos para colores de paspartú
+        $default_colors = array(
+            'blanco' => '#ffffff',
+            'negro' => '#222222',
+            'crema' => '#f5f5dc',
+            'rojo' => '#a83232'
+        );
+        
+        foreach ($default_colors as $key => $default) {
+            add_settings_field(
+                'paspartu_color_' . $key,
+                sprintf(__('Color %s', 'cuadros'), ucfirst($key)),
+                array($this, 'render_color_field'),
+                'cuadros-settings',
+                'cuadros_paspartu_section',
+                array(
+                    'label_for' => 'paspartu_color_' . $key,
+                    'color_key' => $key,
+                    'default' => $default
+                )
+            );
+        }
+        
+        // Campos para dimensiones
+        add_settings_field(
+            'vertical_dimensions',
+            __('Dimensiones Verticales', 'cuadros'),
+            array($this, 'render_dimensions_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section',
+            array(
+                'orientation' => 'vertical',
+                'default_width' => 70,
+                'default_height' => 90
+            )
+        );
+        
+        add_settings_field(
+            'horizontal_dimensions',
+            __('Dimensiones Horizontales', 'cuadros'),
+            array($this, 'render_dimensions_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section',
+            array(
+                'orientation' => 'horizontal',
+                'default_width' => 90,
+                'default_height' => 70
+            )
+        );
+    }
+    
+    /**
+     * Sanitizar configuraciones
+     */
+    public function sanitize_settings($input) {
+        $sanitized = array();
+        
+        // Sanitizar colores de paspartú
+        $default_colors = array('blanco', 'negro', 'crema', 'rojo');
+        foreach ($default_colors as $color) {
+            $key = 'paspartu_color_' . $color;
+            if (isset($input[$key])) {
+                $sanitized['paspartu_colors'][$color] = sanitize_hex_color($input[$key]);
+            }
+        }
+        
+        // Sanitizar dimensiones
+        if (isset($input['vertical_width']) && isset($input['vertical_height'])) {
+            $sanitized['dimensions']['vertical'] = array(
+                'width' => absint($input['vertical_width']),
+                'height' => absint($input['vertical_height'])
+            );
+        }
+        
+        if (isset($input['horizontal_width']) && isset($input['horizontal_height'])) {
+            $sanitized['dimensions']['horizontal'] = array(
+                'width' => absint($input['horizontal_width']),
+                'height' => absint($input['horizontal_height'])
+            );
+        }
+        
+        // Mantener imágenes existentes
+        $old_settings = get_option('cuadros_settings', array());
+        if (isset($old_settings['marco_images'])) {
+            $sanitized['marco_images'] = $old_settings['marco_images'];
+        }
+        
+        return $sanitized;
+    }
+    
+    /**
+     * Renderizar sección de colores de paspartú
+     */
+    public function render_paspartu_section() {
+        echo '<p>' . __('Configura los colores disponibles para los paspartús. Los usuarios podrán seleccionar entre estos colores en la página del producto.', 'cuadros') . '</p>';
+    }
+    
+    /**
+     * Renderizar sección de imágenes de marcos
+     */
+    public function render_marco_section() {
+        echo '<p>' . __('Gestiona las imágenes de marcos. Para cada color de marco (oro, negro, blanco), sube una imagen para orientación vertical y otra para horizontal.', 'cuadros') . '</p>';
+        echo '<div id="cuadros-marco-uploader">';
+        echo '<button type="button" class="button" id="cuadros-add-marco">' . __('Agregar Nuevo Marco', 'cuadros') . '</button>';
+        echo '</div>';
+    }
+    
+    /**
+     * Renderizar sección de dimensiones
+     */
+    public function render_dimensions_section() {
+        echo '<p>' . __('Configura las dimensiones de visualización para los marcos y paspartús. Los valores son porcentajes relativos al contenedor de la imagen.', 'cuadros') . '</p>';
+    }
+    
+    /**
+     * Renderizar campo de color
+     */
+    public function render_color_field($args) {
+        $settings = get_option('cuadros_settings', array());
+        $color_key = $args['color_key'];
+        $default = $args['default'];
+        
+        $value = isset($settings['paspartu_colors'][$color_key]) ? $settings['paspartu_colors'][$color_key] : $default;
+        
+        echo '<input type="text" 
+                     id="' . esc_attr($args['label_for']) . '" 
+                     name="cuadros_settings[' . esc_attr($args['label_for']) . ']" 
+                     value="' . esc_attr($value) . '" 
+                     class="cuadros-color-picker" 
+                     data-default-color="' . esc_attr($default) . '" />';
+        echo '<p class="description">' . sprintf(__('Color hexadecimal para el paspartú %s.', 'cuadros'), $color_key) . '</p>';
+    }
+    
+    /**
+     * Renderizar campo de dimensiones
+     */
+    public function render_dimensions_field($args) {
+        $settings = get_option('cuadros_settings', array());
+        $orientation = $args['orientation'];
+        
+        $width = isset($settings['dimensions'][$orientation]['width']) ? $settings['dimensions'][$orientation]['width'] : $args['default_width'];
+        $height = isset($settings['dimensions'][$orientation]['height']) ? $settings['dimensions'][$orientation]['height'] : $args['default_height'];
+        
+        echo '<div class="cuadros-dimensions-field">';
+        echo '<label>' . __('Ancho (%):', 'cuadros') . ' ';
+        echo '<input type="number" 
+                     min="1" 
+                     max="100" 
+                     name="cuadros_settings[' . $orientation . '_width]" 
+                     value="' . esc_attr($width) . '" /></label>';
+        
+        echo '<label style="margin-left: 20px;">' . __('Alto (%):', 'cuadros') . ' ';
+        echo '<input type="number" 
+                     min="1" 
+                     max="100" 
+                     name="cuadros_settings[' . $orientation . '_height]" 
+                     value="' . esc_attr($height) . '" /></label>';
+        echo '</div>';
+    }
+    
+    /**
+     * Renderizar página de configuración
+     */
+    public function render_settings_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            
+            <form action="options.php" method="post">
+                <?php
+                settings_fields('cuadros_settings_group');
+                do_settings_sections('cuadros-settings');
+                submit_button(__('Guardar Cambios', 'cuadros'));
+                ?>
+            </form>
+            
+            <div id="cuadros-marco-management" style="margin-top: 30px;">
+                <h2><?php _e('Gestión de Imágenes de Marcos', 'cuadros'); ?></h2>
+                <div id="cuadros-marco-list">
+                    <!-- Las imágenes de marcos se cargarán aquí via AJAX -->
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Enqueue scripts y estilos de administración
+     */
+    public function enqueue_admin_scripts($hook) {
+        if ($hook !== 'toplevel_page_cuadros-settings') {
+            return;
+        }
+        
+        wp_enqueue_style('wp-color-picker');
+        wp_enqueue_script('wp-color-picker');
+        
+        wp_enqueue_media();
+        
+        wp_enqueue_style(
+            'cuadros-admin-style',
+            CUADROS_ASSETS_URL . 'css/admin.css',
+            array(),
+            CUADROS_VERSION
+        );
+        
+        wp_enqueue_script(
+            'cuadros-admin-script',
+            CUADROS_ASSETS_URL . 'js/admin.js',
+            array('jquery', 'wp-color-picker', 'media-upload'),
+            CUADROS_VERSION,
+            true
+        );
+        
+        wp_localize_script('cuadros-admin-script', 'cuadros_admin', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cuadros_admin_nonce'),
+            'upload_title' => __('Seleccionar Imagen de Marco', 'cuadros'),
+            'upload_button' => __('Usar esta imagen', 'cuadros')
+        ));
+    }
+}
