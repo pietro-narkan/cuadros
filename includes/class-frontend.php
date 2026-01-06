@@ -209,13 +209,10 @@ class Cuadros_Frontend {
             console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
             console.log('[cuadros] Dimensiones:', dimensiones);
             
-            // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto
-            var $mainImage = $('.woocommerce-product-gallery__image:first img');
-            if ($mainImage.length === 0) {
-                $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
-            }
-            if ($mainImage.length === 0) {
-                $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
+            // 2. PREPARACIÓN DOM - Buscar la galería de producto
+            var $gallery = $('.woocommerce-product-gallery');
+            if ($gallery.length === 0) {
+                $gallery = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery');
             }
             
             // Verificar si estamos usando shortcode
@@ -226,16 +223,16 @@ class Cuadros_Frontend {
                 // Si usamos shortcode, usar su contenedor
                 $container = $('#cuadros-visualizador-container');
             } else {
-                // En modo automático, usar el contenedor de la imagen principal
-                $container = $mainImage.parent();
+                // En modo automático, usar la galería
+                $container = $gallery;
             }
             
             // Asegurar que las capas estén en el lugar correcto
             if ($container.length > 0) {
                 // Mover las capas al contenedor correcto si no están ya allí
                 if ($('#layer-marco').parent()[0] !== $container[0]) {
-                    $container.append($('#layer-marco'));
-                    $container.append($('#layer-paspartu'));
+                    $container.prepend($('#layer-marco'));
+                    $container.prepend($('#layer-paspartu'));
                 }
                 
                 // Asegurar que el contenedor tenga posicionamiento relativo
