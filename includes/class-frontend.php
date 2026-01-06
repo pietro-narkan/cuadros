@@ -209,10 +209,13 @@ class Cuadros_Frontend {
             console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
             console.log('[cuadros] Dimensiones:', dimensiones);
             
-            // 2. PREPARACIÓN DOM - Buscar la galería de producto
-            var $gallery = $('.woocommerce-product-gallery');
-            if ($gallery.length === 0) {
-                $gallery = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery');
+            // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto
+            var $mainImage = $('.woocommerce-product-gallery__image:first img');
+            if ($mainImage.length === 0) {
+                $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
+            }
+            if ($mainImage.length === 0) {
+                $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
             }
             
             // Verificar si estamos usando shortcode
@@ -222,21 +225,47 @@ class Cuadros_Frontend {
             if (usingShortcode) {
                 // Si usamos shortcode, usar su contenedor
                 $container = $('#cuadros-visualizador-container');
+                // Si el contenedor del shortcode no tiene imagen, usar la imagen principal
+                if ($container.find('img').length === 0) {
+                    $container = $mainImage.parent();
+                }
             } else {
-                // En modo automático, usar la galería
-                $container = $gallery;
+                // En modo automático, usar el contenedor de la imagen principal
+                $container = $mainImage.parent();
             }
             
             // Asegurar que las capas estén en el lugar correcto
             if ($container.length > 0) {
                 // Mover las capas al contenedor correcto si no están ya allí
                 if ($('#layer-marco').parent()[0] !== $container[0]) {
-                    $container.prepend($('#layer-marco'));
-                    $container.prepend($('#layer-paspartu'));
+                    $container.append($('#layer-marco'));
+                    $container.append($('#layer-paspartu'));
                 }
                 
                 // Asegurar que el contenedor tenga posicionamiento relativo
                 $container.css('position', 'relative');
+                
+                // Posicionar las capas exactamente sobre la imagen
+                var $img = $container.find('img').first();
+                if ($img.length > 0) {
+                    // Obtener posición y tamaño de la imagen
+                    var imgOffset = $img.offset();
+                    var imgWidth = $img.width();
+                    var imgHeight = $img.height();
+                    
+                    // Posicionar las capas sobre la imagen
+                    $('#layer-marco, #layer-paspartu').css({
+                        'position': 'absolute',
+                        'top': imgOffset.top + 'px',
+                        'left': imgOffset.left + 'px',
+                        'width': imgWidth + 'px',
+                        'height': imgHeight + 'px',
+                        'transform': 'none',
+                        'background-size': 'contain',
+                        'background-position': 'center',
+                        'background-repeat': 'no-repeat'
+                    });
+                }
             } else {
                 console.log('[cuadros] No se encontró contenedor para las capas');
             }
@@ -279,59 +308,80 @@ class Cuadros_Frontend {
                 var $divPaspartu = $('#layer-paspartu');
                 var $wrapper = $('.woocommerce-product-gallery__wrapper');
                 
-                // A. CAMBIO DE DIMENSIONES (CSS DINÁMICO) - Usando porcentajes como en el código de referencia
-                if (dimensiones[estilo]) {
-                    var widthMarco = dimensiones[estilo].width + '%';
-                    var heightMarco = dimensiones[estilo].height + '%';
-                    var widthPaspartu = (dimensiones[estilo].width - 3) + '%';
-                    var heightPaspartu = (dimensiones[estilo].height - 3) + '%';
+                // A. CAMBIO DE DIMENSIONES - Calcular dimensiones basadas en la imagen real
+                var $mainImage = $('.woocommerce-product-gallery__image:first img');
+                if ($mainImage.length === 0) {
+                    $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
+                }
+                if ($mainImage.length === 0) {
+                    $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
+                }
+                
+                if ($mainImage.length > 0) {
+                    var imgWidth = $mainImage.width();
+                    var imgHeight = $mainImage.height();
                     
-                    $divMarco.css({
-                        'width': widthMarco,
-                        'height': heightMarco,
-                        'background-size': '100% 100%',
-                        'background-position': 'center',
-                        'background-repeat': 'no-repeat'
-                    });
-                    
-                    $divPaspartu.css({
-                        'width': widthPaspartu,
-                        'height': heightPaspartu,
-                        'background-size': '100% 100%',
-                        'background-position': 'center',
-                        'background-repeat': 'no-repeat'
-                    });
-                } else {
-                    // Fallback a valores por defecto (como en el código de referencia)
-                    if (estilo === 'vertical') {
-                        $divMarco.css({ 
-                            'width': '70%', 
-                            'height': '90%',
+                    if (imgWidth > 0 && imgHeight > 0) {
+                        // Calcular porcentajes según orientación
+                        var marcoWidthPercent, marcoHeightPercent;
+                        
+                        if (dimensiones[estilo]) {
+                            marcoWidthPercent = dimensiones[estilo].width;
+                            marcoHeightPercent = dimensiones[estilo].height;
+                        } else {
+                            // Valores por defecto
+                            if (estilo === 'vertical') {
+                                marcoWidthPercent = 70;
+                                marcoHeightPercent = 90;
+                            } else {
+                                marcoWidthPercent = 90;
+                                marcoHeightPercent = 70;
+                            }
+                        }
+                        
+                        var paspartuWidthPercent = marcoWidthPercent - 3;
+                        var paspartuHeightPercent = marcoHeightPercent - 3;
+                        
+                        // Calcular dimensiones en píxeles
+                        var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
+                        var marcoHeight = (imgHeight * marcoHeightPercent) / 100;
+                        var paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
+                        var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                        
+                        // Calcular posición centrada
+                        var marcoLeft = (imgWidth - marcoWidth) / 2;
+                        var marcoTop = (imgHeight - marcoHeight) / 2;
+                        var paspartuLeft = (imgWidth - paspartuWidth) / 2;
+                        var paspartuTop = (imgHeight - paspartuHeight) / 2;
+                        
+                        // Aplicar dimensiones y posicionamiento
+                        $divMarco.css({
+                            'width': marcoWidth + 'px',
+                            'height': marcoHeight + 'px',
+                            'left': marcoLeft + 'px',
+                            'top': marcoTop + 'px',
                             'background-size': '100% 100%',
                             'background-position': 'center',
                             'background-repeat': 'no-repeat'
                         });
-                        $divPaspartu.css({ 
-                            'width': '67%', 
-                            'height': '87%',
+                        
+                        $divPaspartu.css({
+                            'width': paspartuWidth + 'px',
+                            'height': paspartuHeight + 'px',
+                            'left': paspartuLeft + 'px',
+                            'top': paspartuTop + 'px',
                             'background-size': '100% 100%',
                             'background-position': 'center',
                             'background-repeat': 'no-repeat'
                         });
-                    } else {
-                        $divMarco.css({ 
-                            'width': '90%', 
-                            'height': '70%',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                        $divPaspartu.css({ 
-                            'width': '87%', 
-                            'height': '67%',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
+                        
+                        console.log('[cuadros] Dimensiones calculadas:', {
+                            imgWidth: imgWidth,
+                            imgHeight: imgHeight,
+                            marcoWidth: marcoWidth,
+                            marcoHeight: marcoHeight,
+                            paspartuWidth: paspartuWidth,
+                            paspartuHeight: paspartuHeight
                         });
                     }
                 }
@@ -453,6 +503,18 @@ class Cuadros_Frontend {
                     subtree: true
                 });
             }
+            
+            // Recalcular dimensiones cuando cambie el tamaño de la ventana
+            $(window).on('resize', function() {
+                setTimeout(actualizarCapas, 100);
+            });
+            
+            // También recalcular cuando se cargue completamente la imagen
+            $('img').on('load', function() {
+                if ($(this).closest('.woocommerce-product-gallery').length) {
+                    setTimeout(actualizarCapas, 100);
+                }
+            });
         });
         </script>
         <?php
