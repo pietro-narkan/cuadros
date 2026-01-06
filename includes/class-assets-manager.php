@@ -11,6 +11,7 @@ class Cuadros_Assets_Manager {
         add_action('wp_ajax_cuadros_delete_marco', array($this, 'delete_marco'));
         add_action('wp_ajax_cuadros_get_models', array($this, 'get_woocommerce_models'));
         add_action('wp_ajax_cuadros_get_paspartu_colors', array($this, 'get_paspartu_colors'));
+        add_action('wp_ajax_cuadros_debug_status', array($this, 'debug_status'));
         
         // También registrar para usuarios no autenticados (pero con verificación de permisos en cada función)
         add_action('wp_ajax_nopriv_cuadros_upload_marco', array($this, 'handle_marco_upload'));
@@ -18,6 +19,26 @@ class Cuadros_Assets_Manager {
         add_action('wp_ajax_nopriv_cuadros_delete_marco', array($this, 'delete_marco'));
         add_action('wp_ajax_nopriv_cuadros_get_models', array($this, 'get_woocommerce_models'));
         add_action('wp_ajax_nopriv_cuadros_get_paspartu_colors', array($this, 'get_paspartu_colors'));
+        add_action('wp_ajax_nopriv_cuadros_debug_status', array($this, 'debug_status'));
+    }
+    
+    /**
+     * Endpoint de debug para ver el estado actual
+     */
+    public function debug_status() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+        
+        $settings = get_option('cuadros_settings', array());
+        
+        wp_send_json_success(array(
+            'total_marcos' => isset($settings['marco_images']) ? count($settings['marco_images']) : 0,
+            'total_paspartu_colors' => isset($settings['paspartu_colors']) ? count($settings['paspartu_colors']) : 0,
+            'marcos' => $settings['marco_images'] ?? array(),
+            'paspartu_colors' => $settings['paspartu_colors'] ?? array(),
+            'full_settings' => $settings
+        ));
     }
     
     /**
@@ -315,9 +336,28 @@ class Cuadros_Assets_Manager {
         if ($found) {
             // Reindexar array
             $settings['marco_images'] = array_values($settings['marco_images']);
-            update_option('cuadros_settings', $settings);
             
-            wp_send_json_success(array('message' => __('Imagen eliminada correctamente.', 'cuadros')));
+            error_log('[cuadros] delete_marco: eliminando archivo ' . $filename);
+            error_log('[cuadros] delete_marco: settings después de eliminar = ' . print_r($settings, true));
+            
+            // Limpiar caché antes de guardar
+            wp_cache_delete('cuadros_settings', 'options');
+            
+            // Usar update_option directamente
+            $result = update_option('cuadros_settings', $settings);
+            error_log('[cuadros] delete_marco: update_option returned ' . var_export($result, true));
+            
+            // Limpiar caché después de guardar
+            wp_cache_delete('cuadros_settings', 'options');
+            
+            // Verificar que se guardó
+            $verify = get_option('cuadros_settings');
+            error_log('[cuadros] delete_marco: after delete, get_option = ' . print_r($verify, true));
+            
+            wp_send_json_success(array(
+                'message' => __('Imagen eliminada correctamente.', 'cuadros'),
+                'marcos' => $verify['marco_images'] ?? array()
+            ));
         } else {
             wp_send_json_error(array('message' => __('Imagen no encontrada.', 'cuadros')));
         }
