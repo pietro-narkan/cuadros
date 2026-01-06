@@ -9,11 +9,101 @@ class Cuadros_Assets_Manager {
         add_action('wp_ajax_cuadros_upload_marco', array($this, 'handle_marco_upload'));
         add_action('wp_ajax_cuadros_get_marcos', array($this, 'get_marcos_list'));
         add_action('wp_ajax_cuadros_delete_marco', array($this, 'delete_marco'));
+        add_action('wp_ajax_cuadros_get_models', array($this, 'get_woocommerce_models'));
+        add_action('wp_ajax_cuadros_get_paspartu_colors', array($this, 'get_paspartu_colors'));
         
         // También registrar para usuarios no autenticados (pero con verificación de permisos en cada función)
         add_action('wp_ajax_nopriv_cuadros_upload_marco', array($this, 'handle_marco_upload'));
         add_action('wp_ajax_nopriv_cuadros_get_marcos', array($this, 'get_marcos_list'));
         add_action('wp_ajax_nopriv_cuadros_delete_marco', array($this, 'delete_marco'));
+        add_action('wp_ajax_nopriv_cuadros_get_models', array($this, 'get_woocommerce_models'));
+        add_action('wp_ajax_nopriv_cuadros_get_paspartu_colors', array($this, 'get_paspartu_colors'));
+    }
+    
+    /**
+     * Obtener colores de paspartú desde el atributo "Paspartú" de WooCommerce
+     */
+    public function get_paspartu_colors() {
+        // Verificar nonce
+        if (empty($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cuadros_admin_nonce')) {
+            wp_send_json_error(array('message' => 'Error de seguridad: Nonce verification failed'));
+        }
+        
+        // Verificar permisos
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+        
+        $colors = array();
+        
+        try {
+            // Obtener los términos del atributo "paspartú" directamente
+            // El slug del atributo es "pa_paspartu" en WordPress
+            $terms = get_terms(array(
+                'taxonomy' => 'pa_paspartu',
+                'hide_empty' => false
+            ));
+            
+            if (!is_wp_error($terms) && is_array($terms)) {
+                foreach ($terms as $term) {
+                    if ($term->name) {
+                        $colors[] = $term->name;
+                    }
+                }
+            }
+            
+            // Ordenar alfabéticamente
+            sort($colors);
+            
+            error_log('[cuadros] get_paspartu_colors: found ' . count($colors) . ' colors');
+            wp_send_json_success(array('colors' => $colors));
+        } catch (Exception $e) {
+            error_log('[cuadros] get_paspartu_colors error: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Error al cargar colores: ' . $e->getMessage()));
+        }
+    }
+    
+    /**
+     * Obtener modelos de marcos desde el atributo "Marco" de WooCommerce
+     */
+    public function get_woocommerce_models() {
+        // Verificar nonce
+        if (empty($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cuadros_admin_nonce')) {
+            wp_send_json_error(array('message' => 'Error de seguridad: Nonce verification failed'));
+        }
+        
+        // Verificar permisos
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permisos insuficientes.'));
+        }
+        
+        $models = array();
+        
+        try {
+            // Obtener los términos del atributo "marco" directamente
+            // El slug del atributo es "pa_marco" en WordPress
+            $terms = get_terms(array(
+                'taxonomy' => 'pa_marco',
+                'hide_empty' => false
+            ));
+            
+            if (!is_wp_error($terms) && is_array($terms)) {
+                foreach ($terms as $term) {
+                    if ($term->name) {
+                        $models[] = $term->name;
+                    }
+                }
+            }
+            
+            // Ordenar alfabéticamente
+            sort($models);
+            
+            error_log('[cuadros] get_woocommerce_models: found ' . count($models) . ' models');
+            wp_send_json_success(array('models' => $models));
+        } catch (Exception $e) {
+            error_log('[cuadros] get_woocommerce_models error: ' . $e->getMessage());
+            wp_send_json_error(array('message' => 'Error al cargar modelos: ' . $e->getMessage()));
+        }
     }
     
     /**
@@ -31,8 +121,8 @@ class Cuadros_Assets_Manager {
         }
         
         // Verificar que se hayan enviado los datos necesarios
-        if (empty($_POST['color']) || empty($_POST['orientation'])) {
-            wp_send_json_error(array('message' => __('Faltan datos requeridos (color u orientación).', 'cuadros')));
+        if (empty($_POST['modelo']) || empty($_POST['orientation'])) {
+            wp_send_json_error(array('message' => __('Faltan datos requeridos (modelo u orientación).', 'cuadros')));
         }
         
         // Verificar que se haya subido un archivo
@@ -41,7 +131,7 @@ class Cuadros_Assets_Manager {
             wp_send_json_error(array('message' => __('Error en la subida del archivo:', 'cuadros') . ' ' . $error_message));
         }
         
-        $color = sanitize_text_field($_POST['color']);
+        $modelo = sanitize_text_field($_POST['modelo']);
         $orientation = sanitize_text_field($_POST['orientation']);
         
         // Verificar tipo de archivo (solo PNG)
@@ -82,7 +172,7 @@ class Cuadros_Assets_Manager {
             
             // Agregar nueva imagen
             $settings['marco_images'][] = array(
-                'color' => $color,
+                'modelo' => $modelo,
                 'orientation' => $orientation,
                 'url' => $movefile['url'],
                 'path' => $movefile['file'],
@@ -124,7 +214,7 @@ class Cuadros_Assets_Manager {
             wp_send_json_success(array(
                 'message' => __('Imagen subida correctamente.', 'cuadros'),
                 'url' => $movefile['url'],
-                'color' => $color,
+                'modelo' => $modelo,
                 'orientation' => $orientation,
                 'marcos' => $settings
             ));

@@ -7,6 +7,10 @@ jQuery(document).ready(function($) {
     var uploadModal = $('#cuadros-upload-modal');
     var marcoList = $('#cuadros-marco-list');
     var addMarcoBtn = $('#cuadros-add-marco');
+    var woocommerceModels = [];
+    
+    // Cargar modelos de WooCommerce al iniciar
+    loadWooCommerceModels();
     
     // Cargar lista de marcos al iniciar
     loadMarcosList();
@@ -15,6 +19,35 @@ jQuery(document).ready(function($) {
     addMarcoBtn.on('click', function() {
         showUploadModal();
     });
+    
+    // Cargar modelos de WooCommerce
+    function loadWooCommerceModels() {
+        console.log('[cuadros] Loading WooCommerce models...');
+        console.log('[cuadros] AJAX URL:', cuadros_admin.ajax_url);
+        console.log('[cuadros] Nonce:', cuadros_admin.nonce);
+        
+        $.ajax({
+            url: cuadros_admin.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'cuadros_get_models',
+                nonce: cuadros_admin.nonce
+            },
+            success: function(response) {
+                console.log('[cuadros] Response from server:', response);
+                if (response.success) {
+                    woocommerceModels = response.data.models;
+                    console.log('[cuadros] Loaded ' + woocommerceModels.length + ' models from WooCommerce:', woocommerceModels);
+                } else {
+                    console.log('[cuadros] Server returned error:', response.data.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('[cuadros] AJAX Error:', status, error);
+                console.log('[cuadros] Response:', xhr.responseText);
+            }
+        });
+    }
     
     // Cargar lista de marcos
     function loadMarcosList() {
@@ -56,7 +89,7 @@ jQuery(document).ready(function($) {
             html += '<div class="marco-item" data-filename="' + marco.filename + '">';
             html += '<div class="marco-preview" style="background-image: url(\'' + marco.url + '\')"></div>';
             html += '<div class="marco-info">';
-            html += '<h4>' + marco.color.charAt(0).toUpperCase() + marco.color.slice(1) + ' - ' + marco.orientation.charAt(0).toUpperCase() + marco.orientation.slice(1) + '</h4>';
+            html += '<h4>' + (marco.modelo || marco.color || 'N/A').charAt(0).toUpperCase() + (marco.modelo || marco.color || 'N/A').slice(1) + ' - ' + marco.orientation.charAt(0).toUpperCase() + marco.orientation.slice(1) + '</h4>';
             html += '<p><strong>Archivo:</strong> ' + marco.filename + '</p>';
             html += '<p><strong>Subido:</strong> ' + marco.uploaded + '</p>';
             html += '</div>';
@@ -133,16 +166,32 @@ jQuery(document).ready(function($) {
         var modalHtml = '<div id="cuadros-upload-modal" class="cuadros-upload-modal">';
         modalHtml += '<div class="cuadros-upload-content">';
         modalHtml += '<h3>Subir Nueva Imagen de Marco</h3>';
+        
+        // Sección de referencia con imagen
+        modalHtml += '<div class="cuadros-upload-reference">';
+        modalHtml += '<p class="description"><strong>Referencia:</strong> Las imágenes de marcos deben ser PNG transparentes que se superpongan sobre las imágenes de productos.</p>';
+        modalHtml += '<div class="reference-preview" id="reference-preview" style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; text-align: center; color: #999; min-height: 200px; display: flex; align-items: center; justify-content: center;">';
+        modalHtml += 'Vista previa (selecciona un archivo PNG)';
+        modalHtml += '</div>';
+        modalHtml += '</div>';
+        
         modalHtml += '<form id="cuadros-upload-form" class="cuadros-upload-form" enctype="multipart/form-data">';
         modalHtml += '<div class="form-group">';
-        modalHtml += '<label for="marco-color">Color del Marco</label>';
-        modalHtml += '<select id="marco-color" name="color" required>';
-        modalHtml += '<option value="">Seleccionar color...</option>';
-        modalHtml += '<option value="oro">Oro</option>';
-        modalHtml += '<option value="negro">Negro</option>';
-        modalHtml += '<option value="blanco">Blanco</option>';
+        modalHtml += '<label for="marco-modelo">Modelo del Producto</label>';
+        modalHtml += '<select id="marco-modelo" name="modelo" required>';
+        modalHtml += '<option value="">Seleccionar modelo...</option>';
+        
+        // Agregar opciones de modelos dinámicamente
+        if (woocommerceModels.length > 0) {
+            woocommerceModels.forEach(function(model) {
+                modalHtml += '<option value="' + model + '">' + model + '</option>';
+            });
+        }
+        
         modalHtml += '</select>';
+        modalHtml += '<p class="description">Selecciona el modelo o atributo del producto para el cual es este marco.</p>';
         modalHtml += '</div>';
+        
         modalHtml += '<div class="form-group">';
         modalHtml += '<label for="marco-orientation">Orientación</label>';
         modalHtml += '<select id="marco-orientation" name="orientation" required>';
@@ -151,11 +200,13 @@ jQuery(document).ready(function($) {
         modalHtml += '<option value="horizontal">Horizontal</option>';
         modalHtml += '</select>';
         modalHtml += '</div>';
+        
         modalHtml += '<div class="form-group">';
         modalHtml += '<label for="marco-image">Imagen PNG</label>';
         modalHtml += '<input type="file" id="marco-image" name="marco_image" accept=".png" required>';
         modalHtml += '<p class="description">Suba una imagen PNG transparente para el marco.</p>';
         modalHtml += '</div>';
+        
         modalHtml += '<div class="cuadros-upload-actions">';
         modalHtml += '<button type="button" class="button cancel-upload">Cancelar</button>';
         modalHtml += '<button type="submit" class="button button-primary">Subir Imagen</button>';
@@ -177,6 +228,18 @@ jQuery(document).ready(function($) {
         $('#cuadros-upload-form').on('submit', function(e) {
             e.preventDefault();
             uploadMarcoImage();
+        });
+        
+        // Mostrar vista previa de la imagen seleccionada
+        $('#marco-image').on('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    $('#reference-preview').html('<img src="' + event.target.result + '" style="max-width: 100%; max-height: 300px; object-fit: contain;">');
+                };
+                reader.readAsDataURL(file);
+            }
         });
         
         // Cerrar modal al hacer clic fuera

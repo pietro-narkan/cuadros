@@ -99,3 +99,4 @@ Para soporte técnico, reporte de bugs o solicitudes de características, por fa
 == Licencia ==
 
 Este plugin está licenciado bajo la GPL v2 o posterior.
+

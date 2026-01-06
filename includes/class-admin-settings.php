@@ -69,28 +69,15 @@ class Cuadros_Admin_Settings {
             'cuadros-settings'
         );
         
-        // Campos para colores de paspartú
-        $default_colors = array(
-            'blanco' => '#ffffff',
-            'negro' => '#222222',
-            'crema' => '#f5f5dc',
-            'rojo' => '#a83232'
+        // Campos para colores de paspartú - se cargan dinámicamente
+        add_settings_field(
+            'paspartu_colors_dynamic',
+            __('Colores de Paspartú Configurados', 'cuadros'),
+            array($this, 'render_paspartu_colors_field'),
+            'cuadros-settings',
+            'cuadros_paspartu_section',
+            array()
         );
-        
-        foreach ($default_colors as $key => $default) {
-            add_settings_field(
-                'paspartu_color_' . $key,
-                sprintf(__('Color %s', 'cuadros'), ucfirst($key)),
-                array($this, 'render_color_field'),
-                'cuadros-settings',
-                'cuadros_paspartu_section',
-                array(
-                    'label_for' => 'paspartu_color_' . $key,
-                    'color_key' => $key,
-                    'default' => $default
-                )
-            );
-        }
         
         // Campos para dimensiones
         add_settings_field(
@@ -152,12 +139,11 @@ class Cuadros_Admin_Settings {
     public function sanitize_settings($input) {
         $sanitized = array();
         
-        // Sanitizar colores de paspartú
-        $default_colors = array('blanco', 'negro', 'crema', 'rojo');
-        foreach ($default_colors as $color) {
-            $key = 'paspartu_color_' . $color;
-            if (isset($input[$key])) {
-                $sanitized['paspartu_colors'][$color] = sanitize_hex_color($input[$key]);
+        // Sanitizar colores de paspartú - ahora viene del campo dinámico
+        if (isset($input['paspartu_colors']) && is_array($input['paspartu_colors'])) {
+            $sanitized['paspartu_colors'] = array();
+            foreach ($input['paspartu_colors'] as $key => $color) {
+                $sanitized['paspartu_colors'][$key] = sanitize_hex_color($color);
             }
         }
         
@@ -207,6 +193,61 @@ class Cuadros_Admin_Settings {
      */
     public function render_dimensions_section() {
         echo '<p>' . __('Configura las dimensiones de visualización para los marcos y paspartús. Los valores son porcentajes relativos al contenedor de la imagen.', 'cuadros') . '</p>';
+    }
+    
+    /**
+     * Renderizar campo dinámico de colores de paspartú
+     */
+    public function render_paspartu_colors_field($args) {
+        $settings = get_option('cuadros_settings', array());
+        $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
+        ?>
+        <div id="cuadros-paspartu-colors" style="margin: 10px 0;">
+            <p style="color: #666; font-style: italic;">Cargando colores de paspartú disponibles...</p>
+        </div>
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'cuadros_get_paspartu_colors',
+                        nonce: '<?php echo wp_create_nonce('cuadros_admin_nonce'); ?>'
+                    },
+                    success: function(response) {
+                        if (response.success && response.data.colors) {
+                            var colors = response.data.colors;
+                            var savedColors = <?php echo json_encode($paspartu_colors); ?>;
+                            var html = '<table style="width: 100%; border-collapse: collapse;">';
+                            
+                            colors.forEach(function(color) {
+                                var colorKey = color.toLowerCase().replace(/\s+/g, '_');
+                                var savedValue = savedColors[colorKey] || '#ffffff';
+                                
+                                html += '<tr style="border-bottom: 1px solid #ddd; padding: 5px 0;">';
+                                html += '<td style="padding: 10px; width: 30%;"><strong>' + color + '</strong></td>';
+                                html += '<td style="padding: 10px; width: 70%;">';
+                                html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[paspartu_colors][' + colorKey + ']" value="' + savedValue + '" data-color="' + savedValue + '" style="width: 100px; padding: 5px;">';
+                                html += '</td>';
+                                html += '</tr>';
+                            });
+                            
+                            html += '</table>';
+                            $('#cuadros-paspartu-colors').html(html);
+                            
+                            // Inicializar color pickers
+                            $('.cuadros-color-picker').wpColorPicker();
+                        } else {
+                            $('#cuadros-paspartu-colors').html('<p style="color: #999;">No hay colores de paspartú configurados en WooCommerce.</p>');
+                        }
+                    },
+                    error: function() {
+                        $('#cuadros-paspartu-colors').html('<p style="color: #d32f2f;">Error al cargar los colores de paspartú.</p>');
+                    }
+                });
+            });
+        </script>
+        <?php
     }
     
     /**
