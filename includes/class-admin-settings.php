@@ -334,7 +334,53 @@ class Cuadros_Admin_Settings {
                     <!-- Las imágenes de marcos se cargarán aquí via AJAX -->
                 </div>
             </div>
+
+            <!-- Sección del shortcode -->
+            <div id="cuadros-shortcode-section" style="margin-top: 40px; padding: 20px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+                <h2><?php _e('Uso del Shortcode', 'cuadros'); ?></h2>
+                <p><?php _e('Para mostrar el visualizador de cuadros en cualquier página o producto, utiliza el siguiente shortcode:', 'cuadros'); ?></p>
+                
+                <div style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+                    <input type="text" id="cuadros-shortcode-input" value="[cuadros_visualizador]" readonly style="flex: 1; padding: 10px; font-family: monospace; font-size: 14px; background: #fff; border: 1px solid #ccc; border-radius: 3px;">
+                    <button type="button" id="cuadros-copy-shortcode" class="button button-primary" style="padding: 10px 20px;">
+                        <?php _e('Copiar Shortcode', 'cuadros'); ?>
+                    </button>
+                </div>
+                
+                <div id="cuadros-copy-message" style="display: none; color: #46b450; font-weight: bold; margin-top: 10px;">
+                    <?php _e('¡Shortcode copiado al portapapeles!', 'cuadros'); ?>
+                </div>
+                
+                <p class="description">
+                    <?php _e('Puedes insertar este shortcode en cualquier página o producto usando el widget de shortcode de Elementor, bloques de Gutenberg, o directamente en el contenido.', 'cuadros'); ?>
+                </p>
+                <p class="description">
+                    <strong><?php _e('Nota:', 'cuadros'); ?></strong> 
+                    <?php _e('El shortcode solo funcionará en páginas de productos variables que tengan los atributos "marco" y/o "paspartú" configurados.', 'cuadros'); ?>
+                </p>
+            </div>
         </div>
+
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                $('#cuadros-copy-shortcode').on('click', function() {
+                    var shortcodeInput = $('#cuadros-shortcode-input')[0];
+                    shortcodeInput.select();
+                    shortcodeInput.setSelectionRange(0, 99999); // Para móviles
+                    
+                    try {
+                        var successful = document.execCommand('copy');
+                        if (successful) {
+                            $('#cuadros-copy-message').fadeIn().delay(2000).fadeOut();
+                        } else {
+                            alert('<?php _e('No se pudo copiar el shortcode. Por favor, cópialo manualmente.', 'cuadros'); ?>');
+                        }
+                    } catch (err) {
+                        alert('<?php _e('Error al copiar: ', 'cuadros'); ?>' + err);
+                    }
+                });
+            });
+        </script>
         <?php
     }
     
