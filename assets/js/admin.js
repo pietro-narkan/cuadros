@@ -134,10 +134,8 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     showMessage('success', response.data.message);
-                    // Siempre recargar la lista después de eliminar
-                    setTimeout(function() {
-                        loadMarcosList();
-                    }, 500);
+                    // Forzar recarga de la lista desde el servidor
+                    loadMarcosList();
                 } else {
                     showMessage('error', response.data.message);
                     item.removeClass('cuadros-loading');
