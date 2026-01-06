@@ -1,44 +1,47 @@
 /* Estilos Base para el Plugin Cuadros */
-.woocommerce-product-gallery__image,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image {
+.woocommerce-product-gallery {
     position: relative !important;
-    display: inline-block;
+    z-index: 1;
+    background-color: transparent; 
 }
 
 .custom-overlay-layer {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); /* Centrado absoluto */
     background-repeat: no-repeat;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    opacity: 0;
+    pointer-events: none; 
+    transition: all 0.3s ease; /* Transición suave al cambiar de forma */
+    opacity: 0; 
     box-sizing: border-box;
-    background-size: 100% 100% !important;
-    background-position: center !important;
 }
 
 #layer-marco {
-    z-index: 20 !important;
+    z-index: 2 !important; 
+    background-size: 100% 100%; 
 }
 
 #layer-paspartu {
-    z-index: 19 !important;
-    background-color: transparent;
-    border: none;
+    z-index: 1 !important; 
+    background-color: transparent; 
 }
 
-.custom-overlay-layer.visible {
-    opacity: 1;
-}
-
-/* Asegurar que las imágenes de producto estén debajo */
-.woocommerce-product-gallery__image img,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img {
+.woocommerce-product-gallery__wrapper {
     position: relative;
-    z-index: 15 !important;
-    display: block;
+    z-index: 10 !important; 
+    padding: 0; 
+    box-sizing: border-box;
+    transition: padding 0.3s ease;
+}
+
+.custom-overlay-layer.visible { 
+    opacity: 1; 
+}
+
+/* Ajustes para compatibilidad con Elementor */
+.elementor-widget-woocommerce-product-images .woocommerce-product-gallery {
+    position: relative !important;
 }
 
 /* Contenedor del shortcode */
@@ -46,7 +49,6 @@
     position: relative !important;
     display: block;
     min-height: 300px;
-    overflow: visible !important;
 }
 
 #cuadros-visualizador-container img {
@@ -63,37 +65,4 @@
     border: 1px solid #f5c6cb;
     border-radius: 4px;
     margin: 15px 0;
-}
-
-/* Ajustes responsivos */
-@media (max-width: 768px) {
-    .custom-overlay-layer {
-        transition: opacity 0.3s ease;
-    }
-}
-
-/* Clases de utilidad */
-.cuadros-loading {
-    opacity: 0.7;
-    pointer-events: none;
-}
-
-.cuadros-error {
-    border: 2px solid #ff6b6b !important;
-}
-
-/* Animaciones suaves */
-@keyframes cuadrosFadeIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-}
-
-.custom-overlay-layer.visible {
-    animation: cuadrosFadeIn 0.3s ease-out;
 }

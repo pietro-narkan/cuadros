@@ -282,65 +282,61 @@ class Cuadros_Frontend {
                 var $divPaspartu = $('#layer-paspartu');
                 var $wrapper = $('.woocommerce-product-gallery__wrapper');
                 
-                // A. CAMBIO DE DIMENSIONES (CSS DINÁMICO) - Basado en la imagen real
-                var $mainImage = $('.woocommerce-product-gallery__image:first img');
-                if ($mainImage.length === 0) {
-                    $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
-                }
-                if ($mainImage.length === 0) {
-                    $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
-                }
-                
-                if ($mainImage.length > 0) {
-                    var imageWidth = $mainImage.width();
-                    var imageHeight = $mainImage.height();
+                // A. CAMBIO DE DIMENSIONES (CSS DINÁMICO) - Usando porcentajes como en el código de referencia
+                if (dimensiones[estilo]) {
+                    var widthMarco = dimensiones[estilo].width + '%';
+                    var heightMarco = dimensiones[estilo].height + '%';
+                    var widthPaspartu = (dimensiones[estilo].width - 3) + '%';
+                    var heightPaspartu = (dimensiones[estilo].height - 3) + '%';
                     
-                    if (imageWidth > 0 && imageHeight > 0) {
-                        // Calcular dimensiones basadas en porcentajes de la imagen real
-                        var marcoWidthPercent = dimensiones[estilo] ? dimensiones[estilo].width : (estilo === 'vertical' ? 70 : 90);
-                        var marcoHeightPercent = dimensiones[estilo] ? dimensiones[estilo].height : (estilo === 'vertical' ? 90 : 70);
-                        
-                        var marcoWidth = (imageWidth * marcoWidthPercent) / 100;
-                        var marcoHeight = (imageHeight * marcoHeightPercent) / 100;
-                        
-                        var paspartuWidthPercent = marcoWidthPercent - 3;
-                        var paspartuHeightPercent = marcoHeightPercent - 3;
-                        var paspartuWidth = (imageWidth * paspartuWidthPercent) / 100;
-                        var paspartuHeight = (imageHeight * paspartuHeightPercent) / 100;
-                        
-                        // Aplicar dimensiones al marco
-                        $divMarco.css({
-                            'width': marcoWidth + 'px',
-                            'height': marcoHeight + 'px',
+                    $divMarco.css({
+                        'width': widthMarco,
+                        'height': heightMarco,
+                        'background-size': '100% 100%',
+                        'background-position': 'center',
+                        'background-repeat': 'no-repeat'
+                    });
+                    
+                    $divPaspartu.css({
+                        'width': widthPaspartu,
+                        'height': heightPaspartu,
+                        'background-size': '100% 100%',
+                        'background-position': 'center',
+                        'background-repeat': 'no-repeat'
+                    });
+                } else {
+                    // Fallback a valores por defecto (como en el código de referencia)
+                    if (estilo === 'vertical') {
+                        $divMarco.css({ 
+                            'width': '70%', 
+                            'height': '90%',
                             'background-size': '100% 100%',
                             'background-position': 'center',
                             'background-repeat': 'no-repeat'
                         });
-                        
-                        // Aplicar dimensiones al paspartú
-                        $divPaspartu.css({
-                            'width': paspartuWidth + 'px',
-                            'height': paspartuHeight + 'px',
+                        $divPaspartu.css({ 
+                            'width': '67%', 
+                            'height': '87%',
                             'background-size': '100% 100%',
                             'background-position': 'center',
                             'background-repeat': 'no-repeat'
-                        });
-                        
-                        console.log('[cuadros] Dimensiones calculadas:', {
-                            imageWidth: imageWidth,
-                            imageHeight: imageHeight,
-                            marcoWidth: marcoWidth,
-                            marcoHeight: marcoHeight,
-                            paspartuWidth: paspartuWidth,
-                            paspartuHeight: paspartuHeight
                         });
                     } else {
-                        // Si no se pueden obtener dimensiones, usar porcentajes como fallback
-                        applyPercentageDimensions(estilo, dimensiones, $divMarco, $divPaspartu);
+                        $divMarco.css({ 
+                            'width': '90%', 
+                            'height': '70%',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
+                        $divPaspartu.css({ 
+                            'width': '87%', 
+                            'height': '67%',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
                     }
-                } else {
-                    // Si no hay imagen, usar porcentajes
-                    applyPercentageDimensions(estilo, dimensiones, $divMarco, $divPaspartu);
                 }
                 
                 // B. RENDERIZADO MARCO - búsqueda insensible a mayúsculas/minúsculas
@@ -459,63 +455,6 @@ class Cuadros_Frontend {
                     childList: true,
                     subtree: true
                 });
-            }
-            // Función auxiliar para aplicar dimensiones en porcentajes
-            function applyPercentageDimensions(estilo, dimensiones, $divMarco, $divPaspartu) {
-                if (dimensiones[estilo]) {
-                    var widthMarco = dimensiones[estilo].width + '%';
-                    var heightMarco = dimensiones[estilo].height + '%';
-                    var widthPaspartu = (dimensiones[estilo].width - 3) + '%';
-                    var heightPaspartu = (dimensiones[estilo].height - 3) + '%';
-                    
-                    $divMarco.css({
-                        'width': widthMarco,
-                        'height': heightMarco,
-                        'background-size': '100% 100%',
-                        'background-position': 'center',
-                        'background-repeat': 'no-repeat'
-                    });
-                    
-                    $divPaspartu.css({
-                        'width': widthPaspartu,
-                        'height': heightPaspartu,
-                        'background-size': '100% 100%',
-                        'background-position': 'center',
-                        'background-repeat': 'no-repeat'
-                    });
-                } else {
-                    if (estilo === 'vertical') {
-                        $divMarco.css({ 
-                            'width': '70%', 
-                            'height': '90%',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                        $divPaspartu.css({ 
-                            'width': '67%', 
-                            'height': '87%',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                    } else {
-                        $divMarco.css({ 
-                            'width': '90%', 
-                            'height': '70%',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                        $divPaspartu.css({ 
-                            'width': '87%', 
-                            'height': '67%',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                    }
-                }
             }
         });
         </script>
