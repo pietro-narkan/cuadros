@@ -65,6 +65,18 @@ class Cuadros_Frontend {
         $this->output_frontend_script();
         $output .= ob_get_clean();
         
+        // Agregar mensaje de depuración en la consola
+        $output .= '<script type="text/javascript">
+            console.log("[Cuadros] Shortcode cargado correctamente.");
+            console.log("[Cuadros] Contenedor ID: #cuadros-visualizador-container");
+            console.log("[Cuadros] Posición en DOM:", document.getElementById("cuadros-visualizador-container") ? "ENCONTRADO" : "NO ENCONTRADO");
+            if (document.getElementById("cuadros-visualizador-container")) {
+                var rect = document.getElementById("cuadros-visualizador-container").getBoundingClientRect();
+                console.log("[Cuadros] Posición (x, y):", rect.left + "px, " + rect.top + "px");
+                console.log("[Cuadros] Dimensión (ancho x alto):", rect.width + "px x " + rect.height + "px");
+            }
+        </script>';
+        
         return $output;
     }
     
