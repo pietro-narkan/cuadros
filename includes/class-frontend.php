@@ -73,11 +73,14 @@ class Cuadros_Frontend {
         // Estructurar imágenes de marcos para JS
         $urls_marcos = array();
         foreach ($marco_images as $marco) {
-            if (isset($marco['color']) && isset($marco['orientation']) && isset($marco['url'])) {
-                if (!isset($urls_marcos[$marco['color']])) {
-                    $urls_marcos[$marco['color']] = array();
+            // Soportar tanto 'modelo' (nuevo) como 'color' (antiguo)
+            $key = isset($marco['modelo']) ? $marco['modelo'] : (isset($marco['color']) ? $marco['color'] : null);
+            
+            if ($key && isset($marco['orientation']) && isset($marco['url'])) {
+                if (!isset($urls_marcos[$key])) {
+                    $urls_marcos[$key] = array();
                 }
-                $urls_marcos[$marco['color']][$marco['orientation']] = $marco['url'];
+                $urls_marcos[$key][$marco['orientation']] = $marco['url'];
             }
         }
         
@@ -89,6 +92,10 @@ class Cuadros_Frontend {
             var urlsMarcos = <?php echo json_encode($urls_marcos); ?>;
             var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
             var dimensiones = <?php echo json_encode($dimensions); ?>;
+            
+            console.log('[cuadros] Marcos disponibles:', urlsMarcos);
+            console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
+            console.log('[cuadros] Dimensiones:', dimensiones);
             
             // 2. PREPARACIÓN DOM
             var $gallery = $('.woocommerce-product-gallery');
@@ -134,6 +141,8 @@ class Cuadros_Frontend {
                 var orientacion = obtenerOrientacion(tamanoTexto);
                 var estilo = orientacion || 'vertical';
                 
+                console.log('[cuadros] actualizarCapas:', {marco: marcoVal, paspartu: paspartuVal, orientation: estilo});
+                
                 var $divMarco = $('#layer-marco');
                 var $divPaspartu = $('#layer-paspartu');
                 var $wrapper = $('.woocommerce-product-gallery__wrapper');
@@ -164,23 +173,63 @@ class Cuadros_Frontend {
                     }
                 }
                 
-                // B. RENDERIZADO MARCO
-                if (marcoVal && urlsMarcos[marcoVal] && urlsMarcos[marcoVal][estilo]) {
-                    $divMarco.css('background-image', 'url(' + urlsMarcos[marcoVal][estilo] + ')');
+                // B. RENDERIZADO MARCO - búsqueda flexible
+                var marcoEncontrado = null;
+                if (marcoVal) {
+                    // Intentar coincidencia exacta
+                    if (urlsMarcos[marcoVal] && urlsMarcos[marcoVal][estilo]) {
+                        marcoEncontrado = urlsMarcos[marcoVal][estilo];
+                        console.log('[cuadros] Marco encontrado (exacto):', marcoVal);
+                    } else {
+                        // Intentar búsqueda case-insensitive
+                        for (var key in urlsMarcos) {
+                            if (key.toLowerCase() === marcoVal.toLowerCase() && urlsMarcos[key][estilo]) {
+                                marcoEncontrado = urlsMarcos[key][estilo];
+                                console.log('[cuadros] Marco encontrado (case-insensitive):', key);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (marcoEncontrado) {
+                    console.log('[cuadros] Mostrando marco:', marcoEncontrado);
+                    $divMarco.css('background-image', 'url(' + marcoEncontrado + ')');
                     $divMarco.addClass('visible');
                 } else {
+                    console.log('[cuadros] Marco no encontrado:', marcoVal, 'Disponibles:', Object.keys(urlsMarcos));
                     $divMarco.removeClass('visible');
                 }
                 
-                // C. RENDERIZADO PASPARTU
-                if (paspartuVal && coloresPaspartu[paspartuVal]) {
-                    $divPaspartu.css('background-color', coloresPaspartu[paspartuVal]);
+                // C. RENDERIZADO PASPARTU - búsqueda flexible
+                var paspartuEncontrado = null;
+                if (paspartuVal) {
+                    // Intentar coincidencia exacta
+                    if (coloresPaspartu[paspartuVal]) {
+                        paspartuEncontrado = coloresPaspartu[paspartuVal];
+                        console.log('[cuadros] Paspartú encontrado (exacto):', paspartuVal);
+                    } else {
+                        // Intentar búsqueda case-insensitive
+                        for (var key in coloresPaspartu) {
+                            if (key.toLowerCase() === paspartuVal.toLowerCase()) {
+                                paspartuEncontrado = coloresPaspartu[key];
+                                console.log('[cuadros] Paspartú encontrado (case-insensitive):', key);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (paspartuEncontrado) {
+                    console.log('[cuadros] Mostrando paspartú:', paspartuVal, paspartuEncontrado);
+                    $divPaspartu.css('background-color', paspartuEncontrado);
                     $divPaspartu.addClass('visible');
                     $wrapper.css('padding', '15%');
                 } else {
+                    console.log('[cuadros] Paspartú no encontrado:', paspartuVal, 'Disponibles:', Object.keys(coloresPaspartu));
                     $divPaspartu.removeClass('visible');
                     $divPaspartu.css('background-color', 'transparent');
-                    if (marcoVal && urlsMarcos[marcoVal]) {
+                    if (marcoEncontrado) {
                         $wrapper.css('padding', '3%');
                     } else {
                         $wrapper.css('padding', '0');
