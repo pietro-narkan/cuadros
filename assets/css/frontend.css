@@ -1,9 +1,8 @@
 /* Estilos Base para el Plugin Cuadros */
-.woocommerce-product-gallery {
+.woocommerce-product-gallery__image,
+.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image {
     position: relative !important;
-    z-index: 1;
-    background: transparent;
-    overflow: visible !important;
+    display: inline-block;
 }
 
 .custom-overlay-layer {
@@ -16,13 +15,12 @@
     transition: opacity 0.3s ease;
     opacity: 0;
     box-sizing: border-box;
-    background-size: contain !important;
+    background-size: 100% 100% !important;
     background-position: center !important;
 }
 
 #layer-marco {
     z-index: 20 !important;
-    background-size: 100% 100% !important;
 }
 
 #layer-paspartu {
@@ -31,34 +29,40 @@
     border: none;
 }
 
-.woocommerce-product-gallery__wrapper {
-    position: relative;
-    z-index: 10 !important;
-    transition: padding 0.3s ease;
-}
-
 .custom-overlay-layer.visible {
     opacity: 1;
 }
 
 /* Asegurar que las imágenes de producto estén debajo */
-.woocommerce-product-gallery__image,
-.woocommerce-product-gallery__image a,
 .woocommerce-product-gallery__image img,
-.flex-viewport,
-.woocommerce-product-gallery__wrapper img {
+.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img {
     position: relative;
     z-index: 15 !important;
+    display: block;
 }
 
-/* Ajustes para compatibilidad con Elementor */
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery {
+/* Contenedor del shortcode */
+#cuadros-visualizador-container {
     position: relative !important;
+    display: block;
+    min-height: 300px;
     overflow: visible !important;
 }
 
-.elementor-widget-woocommerce-product-images .custom-overlay-layer {
-    position: absolute;
+#cuadros-visualizador-container img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Mensajes de depuración */
+.cuadros-notice {
+    padding: 15px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 15px 0;
 }
 
 /* Ajustes responsivos */
@@ -66,23 +70,6 @@
     .custom-overlay-layer {
         transition: opacity 0.3s ease;
     }
-    
-    .woocommerce-product-gallery__wrapper {
-        transition: padding 0.2s ease;
-    }
-}
-
-/* Soporte para temas con contenedores diferentes */
-.woocommerce-product-gallery__image,
-.woocommerce-product-gallery__image a,
-.woocommerce-product-gallery__image img {
-    position: relative;
-    z-index: 15;
-}
-
-/* Estilos para cuando no hay marco visible */
-.woocommerce-product-gallery.without-frame .woocommerce-product-gallery__wrapper {
-    padding: 0 !important;
 }
 
 /* Clases de utilidad */
@@ -109,28 +96,4 @@
 
 .custom-overlay-layer.visible {
     animation: cuadrosFadeIn 0.3s ease-out;
-}
-
-/* Contenedor del shortcode */
-#cuadros-visualizador-container {
-    position: relative !important;
-    display: block;
-    min-height: 300px;
-    overflow: visible !important;
-}
-
-/* Mensajes de depuración */
-.cuadros-notice {
-    padding: 15px;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    margin: 15px 0;
-}
-
-/* Asegurar que los marcos no se desborden */
-.custom-overlay-layer {
-    max-width: 100%;
-    max-height: 100%;
 }
