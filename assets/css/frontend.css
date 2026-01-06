@@ -1,4 +1,6 @@
 /* Estilos Base para el Plugin Cuadros */
+.woocommerce-product-gallery,
+.woocommerce-product-gallery__wrapper,
 .woocommerce-product-gallery__image,
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image {
     position: relative !important;
@@ -7,7 +9,7 @@
 }
 
 .custom-overlay-layer {
-    position: absolute;
+    position: absolute !important;
     background-repeat: no-repeat;
     pointer-events: none; 
     transition: opacity 0.3s ease;
@@ -16,8 +18,10 @@
     background-size: contain !important;
     background-position: center !important;
     z-index: 20;
-    max-width: 100%;
-    max-height: 100%;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 #layer-marco {

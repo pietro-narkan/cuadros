@@ -210,21 +210,15 @@ class Cuadros_Frontend {
             console.log('[cuadros] Dimensiones:', dimensiones);
             
             // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto de forma robusta
-            var selectors = [
-                '.woocommerce-product-gallery__image img',
-                '.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img',
-                '.woocommerce-product-gallery__wrapper img',
-                '.woocommerce-product-gallery img',
-                '.product img'
-            ];
-
-            var $mainImage = $();
-            for (var i = 0; i < selectors.length; i++) {
-                var $found = $(selectors[i] + ':first');
-                if ($found.length) {
-                    $mainImage = $found;
-                    break;
-                }
+            var $mainImage = $('.woocommerce-product-gallery__image:first img');
+            if ($mainImage.length === 0) {
+                $mainImage = $('.elementor-widget-woocommerce-product-images img:first');
+            }
+            if ($mainImage.length === 0) {
+                $mainImage = $('.woocommerce-product-gallery img:first');
+            }
+            if ($mainImage.length === 0) {
+                $mainImage = $('figure img:first');
             }
 
             // Verificar si estamos usando shortcode
@@ -233,31 +227,42 @@ class Cuadros_Frontend {
 
             if (usingShortcode) {
                 $container = $('#cuadros-visualizador-container');
-                if ($container.find('img').length === 0 && $mainImage.length) {
-                    $container = $mainImage.closest('.woocommerce-product-gallery__image, .woocommerce-product-gallery__wrapper, figure, .product');
-                    if (!$container.length) {
-                        $container = $mainImage.parent();
-                    }
-                }
-            } else if ($mainImage.length) {
-                // Preferir contenedores semánticos cercanos a la imagen
-                $container = $mainImage.closest('.woocommerce-product-gallery__image, .woocommerce-product-gallery__wrapper, figure, .product');
+            } else if ($mainImage.length > 0) {
+                // Buscar el contenedor más cercano que tenga position relativa o sea un contenedor visual
+                // Prioridad: woocommerce-product-gallery > woocommerce-product-gallery__image > figure > contenedor con img
+                $container = $mainImage.closest('.woocommerce-product-gallery');
                 if (!$container.length) {
+                    $container = $mainImage.closest('.woocommerce-product-gallery__image');
+                }
+                if (!$container.length) {
+                    $container = $mainImage.closest('figure');
+                }
+                if (!$container.length) {
+                    $container = $mainImage.closest('.product-image, .product__image, [class*="image"]');
+                }
+                if (!$container.length) {
+                    // Último recurso: parent directo
                     $container = $mainImage.parent();
                 }
             }
 
             // Asegurar que las capas estén en el lugar correcto
             if ($container.length > 0) {
+                console.log('[cuadros] Container encontrado:', $container[0].className, 'Tag:', $container[0].tagName);
+                
                 // Mover las capas al contenedor correcto de forma segura
                 $('#layer-marco').detach().appendTo($container);
                 $('#layer-paspartu').detach().appendTo($container);
 
-                // Asegurar que el contenedor tenga posicionamiento relativo solo si es estático
+                // Asegurar que el contenedor tenga posicionamiento relativo
                 var currentPos = $container.css('position');
-                if (!currentPos || currentPos === 'static') {
+                if (currentPos === 'static' || !currentPos) {
                     $container.css('position', 'relative');
+                    console.log('[cuadros] Set container position to relative');
                 }
+                
+                // Forzar overflow: hidden para evitar desbordamientos
+                $container.css('overflow', 'hidden');
 
                 // Posicionar las capas exactamente sobre la imagen
                 var $img = $container.find('img').first();
@@ -267,23 +272,23 @@ class Cuadros_Frontend {
                     var imgHeight = $img.height();
 
                     // Posicionar las capas sobre la imagen (dentro del contenedor)
-                    // Inicialmente ocultas y sin dimensiones fijas
                     $('#layer-marco, #layer-paspartu').css({
                         'position': 'absolute',
                         'top': '0',
                         'left': '0',
-                        'width': 'auto',
-                        'height': 'auto',
+                        'width': '100%',
+                        'height': '100%',
                         'transform': 'none',
                         'background-size': 'contain',
                         'background-position': 'center',
                         'background-repeat': 'no-repeat',
-                        'max-width': '100%',
-                        'max-height': '100%'
+                        'box-sizing': 'border-box'
                     });
+                    
+                    console.log('[cuadros] Layers positioned, img size:', imgWidth, 'x', imgHeight);
                 }
             } else {
-                console.log('[cuadros] No se encontró contenedor para las capas');
+                console.log('[cuadros] No se encontró contenedor para las capas; capas en:', $('#layer-marco').parent()[0].tagName);
             }
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
