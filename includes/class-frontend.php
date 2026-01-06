@@ -253,16 +253,19 @@ class Cuadros_Frontend {
                     var imgHeight = $img.height();
                     
                     // Posicionar las capas sobre la imagen (dentro del contenedor)
+                    // Inicialmente ocultas y sin dimensiones fijas
                     $('#layer-marco, #layer-paspartu').css({
                         'position': 'absolute',
                         'top': '0',
                         'left': '0',
-                        'width': '100%',
-                        'height': '100%',
+                        'width': 'auto',
+                        'height': 'auto',
                         'transform': 'none',
                         'background-size': 'contain',
                         'background-position': 'center',
-                        'background-repeat': 'no-repeat'
+                        'background-repeat': 'no-repeat',
+                        'max-width': '100%',
+                        'max-height': '100%'
                     });
                 }
             } else {
@@ -307,59 +310,83 @@ class Cuadros_Frontend {
                 var $divPaspartu = $('#layer-paspartu');
                 var $wrapper = $('.woocommerce-product-gallery__wrapper');
                 
-                // A. CAMBIO DE DIMENSIONES - Usar porcentajes directamente
-                var marcoWidthPercent, marcoHeightPercent;
-                
-                if (dimensiones[estilo]) {
-                    marcoWidthPercent = dimensiones[estilo].width;
-                    marcoHeightPercent = dimensiones[estilo].height;
-                } else {
-                    // Valores por defecto
-                    if (estilo === 'vertical') {
-                        marcoWidthPercent = 70;
-                        marcoHeightPercent = 90;
-                    } else {
-                        marcoWidthPercent = 90;
-                        marcoHeightPercent = 70;
-                    }
+                // A. CAMBIO DE DIMENSIONES - Calcular dimensiones basadas en la imagen real
+                var $mainImage = $('.woocommerce-product-gallery__image:first img');
+                if ($mainImage.length === 0) {
+                    $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
+                }
+                if ($mainImage.length === 0) {
+                    $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
                 }
                 
-                var paspartuWidthPercent = marcoWidthPercent - 3;
-                var paspartuHeightPercent = marcoHeightPercent - 3;
-                
-                // Calcular posiciones centradas usando porcentajes
-                var marcoLeftPercent = (100 - marcoWidthPercent) / 2;
-                var marcoTopPercent = (100 - marcoHeightPercent) / 2;
-                var paspartuLeftPercent = (100 - paspartuWidthPercent) / 2;
-                var paspartuTopPercent = (100 - paspartuHeightPercent) / 2;
-                
-                // Aplicar dimensiones y posicionamiento con porcentajes
-                $divMarco.css({
-                    'width': marcoWidthPercent + '%',
-                    'height': marcoHeightPercent + '%',
-                    'left': marcoLeftPercent + '%',
-                    'top': marcoTopPercent + '%',
-                    'background-size': '100% 100%',
-                    'background-position': 'center',
-                    'background-repeat': 'no-repeat'
-                });
-                
-                $divPaspartu.css({
-                    'width': paspartuWidthPercent + '%',
-                    'height': paspartuHeightPercent + '%',
-                    'left': paspartuLeftPercent + '%',
-                    'top': paspartuTopPercent + '%',
-                    'background-size': '100% 100%',
-                    'background-position': 'center',
-                    'background-repeat': 'no-repeat'
-                });
-                
-                console.log('[cuadros] Dimensiones porcentuales:', {
-                    marcoWidthPercent: marcoWidthPercent,
-                    marcoHeightPercent: marcoHeightPercent,
-                    paspartuWidthPercent: paspartuWidthPercent,
-                    paspartuHeightPercent: paspartuHeightPercent
-                });
+                if ($mainImage.length > 0) {
+                    var imgWidth = $mainImage.width();
+                    var imgHeight = $mainImage.height();
+                    
+                    if (imgWidth > 0 && imgHeight > 0) {
+                        // Calcular porcentajes según orientación
+                        var marcoWidthPercent, marcoHeightPercent;
+                        
+                        if (dimensiones[estilo]) {
+                            marcoWidthPercent = dimensiones[estilo].width;
+                            marcoHeightPercent = dimensiones[estilo].height;
+                        } else {
+                            // Valores por defecto
+                            if (estilo === 'vertical') {
+                                marcoWidthPercent = 70;
+                                marcoHeightPercent = 90;
+                            } else {
+                                marcoWidthPercent = 90;
+                                marcoHeightPercent = 70;
+                            }
+                        }
+                        
+                        var paspartuWidthPercent = marcoWidthPercent - 3;
+                        var paspartuHeightPercent = marcoHeightPercent - 3;
+                        
+                        // Calcular dimensiones en píxeles basadas en la imagen
+                        var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
+                        var marcoHeight = (imgHeight * marcoHeightPercent) / 100;
+                        var paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
+                        var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                        
+                        // Calcular posiciones centradas
+                        var marcoLeft = (imgWidth - marcoWidth) / 2;
+                        var marcoTop = (imgHeight - marcoHeight) / 2;
+                        var paspartuLeft = (imgWidth - paspartuWidth) / 2;
+                        var paspartuTop = (imgHeight - paspartuHeight) / 2;
+                        
+                        // Aplicar dimensiones y posicionamiento en píxeles
+                        $divMarco.css({
+                            'width': marcoWidth + 'px',
+                            'height': marcoHeight + 'px',
+                            'left': marcoLeft + 'px',
+                            'top': marcoTop + 'px',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
+                        
+                        $divPaspartu.css({
+                            'width': paspartuWidth + 'px',
+                            'height': paspartuHeight + 'px',
+                            'left': paspartuLeft + 'px',
+                            'top': paspartuTop + 'px',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
+                        
+                        console.log('[cuadros] Dimensiones calculadas:', {
+                            imgWidth: imgWidth,
+                            imgHeight: imgHeight,
+                            marcoWidth: marcoWidth,
+                            marcoHeight: marcoHeight,
+                            paspartuWidth: paspartuWidth,
+                            paspartuHeight: paspartuHeight
+                        });
+                    }
+                }
                 
                 // B. RENDERIZADO MARCO - búsqueda insensible a mayúsculas/minúsculas
                 var marcoEncontrado = null;

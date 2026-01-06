@@ -3,6 +3,7 @@
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image {
     position: relative !important;
     display: inline-block;
+    overflow: hidden;
 }
 
 .custom-overlay-layer {
@@ -15,6 +16,8 @@
     background-size: contain !important;
     background-position: center !important;
     z-index: 20;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 #layer-marco {
@@ -45,6 +48,7 @@
     position: relative !important;
     display: block;
     min-height: 300px;
+    overflow: hidden;
 }
 
 #cuadros-visualizador-container img {
@@ -74,4 +78,12 @@
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image a {
     position: relative !important;
     display: inline-block;
+    overflow: hidden;
+}
+
+/* Asegurar que las capas no se desborden */
+.woocommerce-product-gallery__image,
+.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image,
+#cuadros-visualizador-container {
+    overflow: hidden !important;
 }
