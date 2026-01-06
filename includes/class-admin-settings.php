@@ -112,22 +112,31 @@ class Cuadros_Admin_Settings {
      * Si viene de otro lado (AJAX, API), pasar el valor sin cambios
      */
     public function sanitize_on_admin_form($new_value, $old_value) {
-        // Si el nuevo valor tiene la estructura de datos de AJAX (solo marco_images), pasarlo sin cambios
+        // Obtener la configuración actual para preservar marco_images
+        $current_settings = get_option('cuadros_settings', array());
+        $current_marco_images = isset($current_settings['marco_images']) ? $current_settings['marco_images'] : array();
+        
+        // Si el nuevo valor es un array y contiene solo marco_images (AJAX), preservar otros campos existentes
         if (is_array($new_value) && isset($new_value['marco_images']) && count($new_value) === 1) {
-            error_log('[cuadros] sanitize_on_admin_form: detectado formato AJAX, pasando sin cambios');
-            return $new_value;
+            error_log('[cuadros] sanitize_on_admin_form: detectado formato AJAX, combinando con configuración existente');
+            // Combinar con la configuración actual, manteniendo colores y dimensiones
+            $merged = $current_settings;
+            $merged['marco_images'] = $new_value['marco_images'];
+            return $merged;
         }
         
-        // Si viene del formulario de admin (tiene colores o dimensiones), sanitizar
+        // Si viene del formulario de admin (tiene colores o dimensiones), sanitizar y preservar marco_images
         if (is_array($new_value) && (isset($new_value['paspartu_colors']) || isset($new_value['dimensions']))) {
-            error_log('[cuadros] sanitize_on_admin_form: detectado formulario admin, sanitizando');
-            return $this->sanitize_settings($new_value);
+            error_log('[cuadros] sanitize_on_admin_form: detectado formulario admin, sanitizando y preservando marco_images');
+            $sanitized = $this->sanitize_settings($new_value);
+            // Asegurar que marco_images se mantenga
+            $sanitized['marco_images'] = $current_marco_images;
+            return $sanitized;
         }
         
-        // En cualquier otro caso, preservar marco_images del registro anterior
-        $old_settings = get_option('cuadros_settings', array());
-        if (isset($old_settings['marco_images']) && is_array($new_value)) {
-            $new_value['marco_images'] = $old_settings['marco_images'];
+        // En cualquier otro caso, preservar marco_images y combinar con nuevo valor
+        if (is_array($new_value)) {
+            $new_value['marco_images'] = $current_marco_images;
         }
         
         return $new_value;

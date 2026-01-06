@@ -207,8 +207,8 @@ class Cuadros_Assets_Manager {
             // Limpiar caché antes de guardar
             wp_cache_delete('cuadros_settings', 'options');
             
-            // Usar update_option que es más confiable que add_option
-            $result = update_option('cuadros_settings', $settings);
+            // Usar update_option con autoload = 'no' para evitar problemas de caché
+            $result = update_option('cuadros_settings', $settings, 'no');
             error_log('[cuadros] update_option returned: ' . var_export($result, true));
             
             // Limpiar caché después de guardar
@@ -226,10 +226,26 @@ class Cuadros_Assets_Manager {
             error_log('[cuadros] After save, DB value unserialized: ' . print_r($verified, true));
 
             if (empty($verified) || !isset($verified['marco_images'])) {
-                wp_send_json_error(array(
-                    'message' => __('Error al guardar la configuración del plugin. Revisa los logs.', 'cuadros'),
-                    'debug' => 'option_save_failed'
+                // Intentar una segunda vez con una estrategia diferente
+                wp_cache_delete('alloptions', 'options');
+                $result2 = update_option('cuadros_settings', $settings, 'no');
+                error_log('[cuadros] Second update attempt returned: ' . var_export($result2, true));
+                
+                // Verificar nuevamente
+                $raw_value2 = $wpdb->get_var($wpdb->prepare(
+                    "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+                    'cuadros_settings'
                 ));
+                $verified2 = maybe_unserialize($raw_value2);
+                
+                if (empty($verified2) || !isset($verified2['marco_images'])) {
+                    wp_send_json_error(array(
+                        'message' => __('Error al guardar la configuración del plugin. Revisa los logs.', 'cuadros'),
+                        'debug' => 'option_save_failed'
+                    ));
+                } else {
+                    $verified = $verified2;
+                }
             }
             
             wp_send_json_success(array(
@@ -342,22 +358,39 @@ class Cuadros_Assets_Manager {
             
             // Limpiar caché antes de guardar
             wp_cache_delete('cuadros_settings', 'options');
+            wp_cache_delete('alloptions', 'options');
             
-            // Usar update_option directamente
-            $result = update_option('cuadros_settings', $settings);
+            // Usar update_option con autoload = 'no'
+            $result = update_option('cuadros_settings', $settings, 'no');
             error_log('[cuadros] delete_marco: update_option returned ' . var_export($result, true));
             
             // Limpiar caché después de guardar
             wp_cache_delete('cuadros_settings', 'options');
+            wp_cache_delete('alloptions', 'options');
             
-            // Verificar que se guardó
-            $verify = get_option('cuadros_settings');
-            error_log('[cuadros] delete_marco: after delete, get_option = ' . print_r($verify, true));
-            
-            wp_send_json_success(array(
-                'message' => __('Imagen eliminada correctamente.', 'cuadros'),
-                'marcos' => $verify['marco_images'] ?? array()
+            // Verificar que se guardó leyendo directamente de la BD
+            global $wpdb;
+            $raw_value = $wpdb->get_var($wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+                'cuadros_settings'
             ));
+            $verify = maybe_unserialize($raw_value);
+            error_log('[cuadros] delete_marco: after delete, DB value = ' . print_r($verify, true));
+            
+            if ($verify && isset($verify['marco_images'])) {
+                wp_send_json_success(array(
+                    'message' => __('Imagen eliminada correctamente.', 'cuadros'),
+                    'marcos' => $verify['marco_images']
+                ));
+            } else {
+                // Si falla, intentar una vez más
+                wp_cache_delete('alloptions', 'options');
+                update_option('cuadros_settings', $settings, 'no');
+                wp_send_json_success(array(
+                    'message' => __('Imagen eliminada (verificación falló, pero se intentó guardar).', 'cuadros'),
+                    'marcos' => $settings['marco_images']
+                ));
+            }
         } else {
             wp_send_json_error(array('message' => __('Imagen no encontrada.', 'cuadros')));
         }
