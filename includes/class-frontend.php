@@ -70,17 +70,20 @@ class Cuadros_Frontend {
             'horizontal' => array('width' => 90, 'height' => 70)
         );
         
-        // Estructurar imágenes de marcos para JS
+        // Estructurar imágenes de marcos para JS (claves en minúsculas para búsqueda insensible)
         $urls_marcos = array();
         foreach ($marco_images as $marco) {
             // Soportar tanto 'modelo' (nuevo) como 'color' (antiguo)
             $key = isset($marco['modelo']) ? $marco['modelo'] : (isset($marco['color']) ? $marco['color'] : null);
             
             if ($key && isset($marco['orientation']) && isset($marco['url'])) {
-                if (!isset($urls_marcos[$key])) {
-                    $urls_marcos[$key] = array();
+                // Usar minúsculas para la clave
+                $normalized_key = strtolower($key);
+                if (!isset($urls_marcos[$normalized_key])) {
+                    $urls_marcos[$normalized_key] = array();
                 }
-                $urls_marcos[$key][$marco['orientation']] = $marco['url'];
+                // Guardar la URL directamente
+                $urls_marcos[$normalized_key][$marco['orientation']] = $marco['url'];
             }
         }
         
@@ -89,9 +92,18 @@ class Cuadros_Frontend {
         jQuery(document).ready(function($) {
             
             // 1. CONFIGURACIÓN DE DATOS
-            var urlsMarcos = <?php echo json_encode($urls_marcos); ?>;
+            var urlsMarcosRaw = <?php echo json_encode($urls_marcos); ?>;
             var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
             var dimensiones = <?php echo json_encode($dimensions); ?>;
+            
+            // Procesar urlsMarcos para facilitar el acceso
+            var urlsMarcos = {};
+            for (var key in urlsMarcosRaw) {
+                urlsMarcos[key] = {};
+                for (var orient in urlsMarcosRaw[key]) {
+                    urlsMarcos[key][orient] = urlsMarcosRaw[key][orient].url;
+                }
+            }
             
             console.log('[cuadros] Marcos disponibles:', urlsMarcos);
             console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
@@ -173,20 +185,25 @@ class Cuadros_Frontend {
                     }
                 }
                 
-                // B. RENDERIZADO MARCO - búsqueda flexible
+                // B. RENDERIZADO MARCO - búsqueda insensible a mayúsculas/minúsculas
                 var marcoEncontrado = null;
                 if (marcoVal) {
-                    // Intentar coincidencia exacta
-                    if (urlsMarcos[marcoVal] && urlsMarcos[marcoVal][estilo]) {
-                        marcoEncontrado = urlsMarcos[marcoVal][estilo];
-                        console.log('[cuadros] Marco encontrado (exacto):', marcoVal);
+                    // Normalizar el valor seleccionado a minúsculas
+                    var marcoValNormalized = marcoVal.toLowerCase();
+                    
+                    // Buscar en urlsMarcos (las claves ya están en minúsculas)
+                    if (urlsMarcos[marcoValNormalized] && urlsMarcos[marcoValNormalized][estilo]) {
+                        marcoEncontrado = urlsMarcos[marcoValNormalized][estilo];
+                        console.log('[cuadros] Marco encontrado (normalizado):', marcoValNormalized);
                     } else {
-                        // Intentar búsqueda case-insensitive
+                        // Si no se encuentra exacto, buscar cualquier coincidencia parcial
                         for (var key in urlsMarcos) {
-                            if (key.toLowerCase() === marcoVal.toLowerCase() && urlsMarcos[key][estilo]) {
-                                marcoEncontrado = urlsMarcos[key][estilo];
-                                console.log('[cuadros] Marco encontrado (case-insensitive):', key);
-                                break;
+                            if (key.includes(marcoValNormalized) || marcoValNormalized.includes(key)) {
+                                if (urlsMarcos[key][estilo]) {
+                                    marcoEncontrado = urlsMarcos[key][estilo];
+                                    console.log('[cuadros] Marco encontrado (coincidencia parcial):', key);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -197,7 +214,7 @@ class Cuadros_Frontend {
                     $divMarco.css('background-image', 'url(' + marcoEncontrado + ')');
                     $divMarco.addClass('visible');
                 } else {
-                    console.log('[cuadros] Marco no encontrado:', marcoVal, 'Disponibles:', Object.keys(urlsMarcos));
+                    console.log('[cuadros] Marco no encontrado:', marcoVal, 'Normalizado:', marcoValNormalized, 'Disponibles:', Object.keys(urlsMarcos));
                     $divMarco.removeClass('visible');
                 }
                 
