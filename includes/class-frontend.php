@@ -111,7 +111,11 @@ class Cuadros_Frontend {
                 var rect = document.getElementById("cuadros-visualizador-container").getBoundingClientRect();
                 console.log("[Cuadros] Posición (x, y):", rect.left + "px, " + rect.top + "px");
                 console.log("[Cuadros] Dimensión (ancho x alto):", rect.width + "px x " + rect.height + "px");
+                console.log("[Cuadros] Estilos aplicados:", window.getComputedStyle(document.getElementById("cuadros-visualizador-container")));
             }
+            // Verificar si hay capas
+            console.log("[Cuadros] Capa marco:", document.getElementById("layer-marco") ? "ENCONTRADA" : "NO ENCONTRADA");
+            console.log("[Cuadros] Capa paspartú:", document.getElementById("layer-paspartu") ? "ENCONTRADA" : "NO ENCONTRADA");
         </script>';
         
         return $output;

@@ -3,6 +3,7 @@
     position: relative !important;
     z-index: 1;
     background: transparent;
+    overflow: visible !important;
 }
 
 .custom-overlay-layer {
@@ -12,19 +13,20 @@
     transform: translate(-50%, -50%);
     background-repeat: no-repeat;
     pointer-events: none;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
     opacity: 0;
     box-sizing: border-box;
+    background-size: contain !important;
+    background-position: center !important;
 }
 
 #layer-marco {
-    z-index: 2 !important;
-    background-size: 100% 100%;
-    background-position: center;
+    z-index: 20 !important;
+    background-size: 100% 100% !important;
 }
 
 #layer-paspartu {
-    z-index: 1 !important;
+    z-index: 19 !important;
     background-color: transparent;
     border: none;
 }
@@ -39,9 +41,20 @@
     opacity: 1;
 }
 
+/* Asegurar que las imágenes de producto estén debajo */
+.woocommerce-product-gallery__image,
+.woocommerce-product-gallery__image a,
+.woocommerce-product-gallery__image img,
+.flex-viewport,
+.woocommerce-product-gallery__wrapper img {
+    position: relative;
+    z-index: 15 !important;
+}
+
 /* Ajustes para compatibilidad con Elementor */
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery {
     position: relative !important;
+    overflow: visible !important;
 }
 
 .elementor-widget-woocommerce-product-images .custom-overlay-layer {
@@ -64,7 +77,7 @@
 .woocommerce-product-gallery__image a,
 .woocommerce-product-gallery__image img {
     position: relative;
-    z-index: 5;
+    z-index: 15;
 }
 
 /* Estilos para cuando no hay marco visible */
@@ -96,4 +109,28 @@
 
 .custom-overlay-layer.visible {
     animation: cuadrosFadeIn 0.3s ease-out;
+}
+
+/* Contenedor del shortcode */
+#cuadros-visualizador-container {
+    position: relative !important;
+    display: block;
+    min-height: 300px;
+    overflow: visible !important;
+}
+
+/* Mensajes de depuración */
+.cuadros-notice {
+    padding: 15px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+/* Asegurar que los marcos no se desborden */
+.custom-overlay-layer {
+    max-width: 100%;
+    max-height: 100%;
 }
