@@ -57,6 +57,15 @@ function cuadros_init() {
 
 add_action('plugins_loaded', 'cuadros_init');
 
+// Registrar shortcode globalmente
+function cuadros_register_shortcode() {
+    if (class_exists('Cuadros_Frontend')) {
+        $frontend = new Cuadros_Frontend();
+        add_shortcode('cuadros_visualizador', array($frontend, 'render_visualizador_shortcode'));
+    }
+}
+add_action('init', 'cuadros_register_shortcode');
+
 // Hook de activación
 register_activation_hook(__FILE__, 'cuadros_activate');
 function cuadros_activate() {

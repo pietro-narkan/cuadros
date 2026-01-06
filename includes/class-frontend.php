@@ -6,8 +6,7 @@ class Cuadros_Frontend {
     
     public function __construct() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
-        add_action('woocommerce_before_single_product', array($this, 'maybe_add_overlay_layers'));
-        add_action('wp_footer', array($this, 'output_frontend_script'));
+        add_shortcode('cuadros_visualizador', array($this, 'render_visualizador_shortcode'));
     }
     
     /**
@@ -29,13 +28,18 @@ class Cuadros_Frontend {
     }
     
     /**
-     * Agregar capas de overlay si es necesario
+     * Renderizar visualizador via shortcode
      */
-    public function maybe_add_overlay_layers() {
+    public function render_visualizador_shortcode($atts = array()) {
+        // Verificar si estamos en una página de producto
+        if (!is_product()) {
+            return '<p class="cuadros-notice">' . __('El visualizador de cuadros solo funciona en páginas de producto.', 'cuadros') . '</p>';
+        }
+        
         global $product;
         
         if (!$product || !$product->is_type('variable')) {
-            return;
+            return '<p class="cuadros-notice">' . __('El visualizador de cuadros solo funciona con productos variables.', 'cuadros') . '</p>';
         }
         
         // Verificar si el producto tiene atributos de marco y paspartú
@@ -44,21 +48,31 @@ class Cuadros_Frontend {
         $has_paspartu = isset($attributes['pa_paspartu']);
         
         if (!$has_marco && !$has_paspartu) {
-            return;
+            return '<p class="cuadros-notice">' . __('Este producto no tiene atributos de marco o paspartú configurados.', 'cuadros') . '</p>';
         }
         
+        // Enqueue scripts necesarios
+        $this->enqueue_frontend_scripts();
+        
         // Agregar divs para las capas
-        echo '<div id="layer-marco" class="custom-overlay-layer"></div>';
-        echo '<div id="layer-paspartu" class="custom-overlay-layer"></div>';
+        $output = '<div id="cuadros-visualizador-container">';
+        $output .= '<div id="layer-marco" class="custom-overlay-layer"></div>';
+        $output .= '<div id="layer-paspartu" class="custom-overlay-layer"></div>';
+        $output .= '</div>';
+        
+        // Output del script
+        ob_start();
+        $this->output_frontend_script();
+        $output .= ob_get_clean();
+        
+        return $output;
     }
     
     /**
      * Output del script frontend con la lógica de visualización
      */
     public function output_frontend_script() {
-        if (!is_product()) {
-            return;
-        }
+        // Este método ahora se llama desde el shortcode, no necesita verificar is_product()
         
         $settings = get_option('cuadros_settings', array());
         
@@ -101,7 +115,7 @@ class Cuadros_Frontend {
             for (var key in urlsMarcosRaw) {
                 urlsMarcos[key] = {};
                 for (var orient in urlsMarcosRaw[key]) {
-                    urlsMarcos[key][orient] = urlsMarcosRaw[key][orient].url;
+                    urlsMarcos[key][orient] = urlsMarcosRaw[key][orient];
                 }
             }
             
@@ -109,16 +123,23 @@ class Cuadros_Frontend {
             console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
             console.log('[cuadros] Dimensiones:', dimensiones);
             
-            // 2. PREPARACIÓN DOM
+            // 2. PREPARACIÓN DOM - Buscar la galería de producto
             var $gallery = $('.woocommerce-product-gallery');
             if ($gallery.length === 0) {
                 $gallery = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery');
             }
+            if ($gallery.length === 0) {
+                // Si no encontramos galería, usar el contenedor del shortcode
+                $gallery = $('#cuadros-visualizador-container');
+            }
             
-            // Asegurar que las capas existan
-            if ($gallery.length > 0 && $('#layer-marco').length === 0) {
-                $gallery.prepend('<div id="layer-marco" class="custom-overlay-layer"></div>');
-                $gallery.prepend('<div id="layer-paspartu" class="custom-overlay-layer"></div>');
+            // Asegurar que las capas estén en el lugar correcto
+            if ($gallery.length > 0) {
+                // Mover las capas al contenedor correcto si no están ya allí
+                if ($('#layer-marco').parent()[0] !== $gallery[0]) {
+                    $gallery.prepend($('#layer-marco'));
+                    $gallery.prepend($('#layer-paspartu'));
+                }
             }
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
@@ -254,22 +275,38 @@ class Cuadros_Frontend {
                 }
             }
             
-            // Listeners
-            $('form.variations_form').on('change', 'select', function() {
-                setTimeout(actualizarCapas, 100);
-            });
+            // Listeners para cambios en variaciones
+            function inicializarListeners() {
+                $('form.variations_form').off('change.cuadros').on('change.cuadros', 'select', function() {
+                    setTimeout(actualizarCapas, 100);
+                });
+                
+                $(document).off('woocommerce_variation_has_changed.cuadros').on('woocommerce_variation_has_changed.cuadros', function() {
+                    setTimeout(actualizarCapas, 100);
+                });
+                
+                $('.reset_variations').off('click.cuadros').on('click.cuadros', function() {
+                    $('.custom-overlay-layer').removeClass('visible');
+                    $('.woocommerce-product-gallery__wrapper').css('padding', '0');
+                });
+                
+                // Inicializar
+                setTimeout(actualizarCapas, 500);
+            }
             
-            $(document).on('woocommerce_variation_has_changed', function() {
-                setTimeout(actualizarCapas, 100);
-            });
-            
-            $('.reset_variations').on('click', function() {
-                $('.custom-overlay-layer').removeClass('visible');
-                $('.woocommerce-product-gallery__wrapper').css('padding', '0');
-            });
-            
-            // Inicializar
-            setTimeout(actualizarCapas, 500);
+            // Inicializar listeners inmediatamente si el DOM está listo
+            if ($('form.variations_form').length > 0) {
+                inicializarListeners();
+            } else {
+                // Si no está listo, esperar un momento
+                setTimeout(function() {
+                    if ($('form.variations_form').length > 0) {
+                        inicializarListeners();
+                    } else {
+                        console.log('[cuadros] No se encontró formulario de variaciones');
+                    }
+                }, 1000);
+            }
             
             // Observer para cambios dinámicos (por si hay AJAX)
             if (typeof MutationObserver !== 'undefined') {
