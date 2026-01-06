@@ -133,19 +133,18 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    item.remove();
                     showMessage('success', response.data.message);
-                    
-                    // Recargar lista si no quedan items
-                    if ($('.marco-item').length === 0) {
+                    // Siempre recargar la lista después de eliminar
+                    setTimeout(function() {
                         loadMarcosList();
-                    }
+                    }, 500);
                 } else {
                     showMessage('error', response.data.message);
                     item.removeClass('cuadros-loading');
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.log('[cuadros] Error al eliminar:', xhr.responseText);
                 showMessage('error', 'Error de conexión al eliminar marco.');
                 item.removeClass('cuadros-loading');
             }
