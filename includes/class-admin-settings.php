@@ -112,33 +112,36 @@ class Cuadros_Admin_Settings {
      * Si viene de otro lado (AJAX, API), pasar el valor sin cambios
      */
     public function sanitize_on_admin_form($new_value, $old_value) {
-        // Obtener la configuración actual para preservar marco_images
-        $current_settings = get_option('cuadros_settings', array());
-        $current_marco_images = isset($current_settings['marco_images']) ? $current_settings['marco_images'] : array();
-        
-        // Si el nuevo valor es un array y contiene solo marco_images (AJAX), preservar otros campos existentes
-        if (is_array($new_value) && isset($new_value['marco_images']) && count($new_value) === 1) {
-            error_log('[cuadros] sanitize_on_admin_form: detectado formato AJAX, combinando con configuración existente');
-            // Combinar con la configuración actual, manteniendo colores y dimensiones
-            $merged = $current_settings;
-            $merged['marco_images'] = $new_value['marco_images'];
-            return $merged;
+        // Si el nuevo valor es exactamente igual al antiguo, devolverlo sin cambios
+        if ($new_value === $old_value) {
+            return $new_value;
         }
         
-        // Si viene del formulario de admin (tiene colores o dimensiones), sanitizar y preservar marco_images
+        // Obtener la configuración actual desde la base de datos para preservar marco_images
+        // Usamos get_option directamente para evitar caché
+        wp_cache_delete('cuadros_settings', 'options');
+        $current_settings = get_option('cuadros_settings', array());
+        
+        // Si el nuevo valor es un array y contiene la clave 'marco_images' (viene de AJAX)
+        if (is_array($new_value) && isset($new_value['marco_images'])) {
+            // Para AJAX, simplemente devolver el nuevo valor completo
+            // No mezclar con otros campos para evitar problemas
+            error_log('[cuadros] sanitize_on_admin_form: detectado formato AJAX, devolviendo nuevo valor completo');
+            return $new_value;
+        }
+        
+        // Si viene del formulario de admin (tiene colores o dimensiones), sanitizar
         if (is_array($new_value) && (isset($new_value['paspartu_colors']) || isset($new_value['dimensions']))) {
-            error_log('[cuadros] sanitize_on_admin_form: detectado formulario admin, sanitizando y preservando marco_images');
+            error_log('[cuadros] sanitize_on_admin_form: detectado formulario admin, sanitizando');
             $sanitized = $this->sanitize_settings($new_value);
-            // Asegurar que marco_images se mantenga
-            $sanitized['marco_images'] = $current_marco_images;
+            // Preservar marco_images de la configuración actual
+            if (isset($current_settings['marco_images'])) {
+                $sanitized['marco_images'] = $current_settings['marco_images'];
+            }
             return $sanitized;
         }
         
-        // En cualquier otro caso, preservar marco_images y combinar con nuevo valor
-        if (is_array($new_value)) {
-            $new_value['marco_images'] = $current_marco_images;
-        }
-        
+        // En cualquier otro caso, devolver el nuevo valor sin cambios
         return $new_value;
     }
     

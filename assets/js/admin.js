@@ -296,19 +296,8 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     showMessage('success', response.data.message);
                     resetUploadForm();
-                    // If the upload response includes the updated marcos list, use it
-                    if (response.data && response.data.marcos) {
-                        var marcosPayload = response.data.marcos;
-                        if (Array.isArray(marcosPayload)) {
-                            renderMarcosList(marcosPayload);
-                        } else if (marcosPayload.marco_images && Array.isArray(marcosPayload.marco_images)) {
-                            renderMarcosList(marcosPayload.marco_images);
-                        } else {
-                            loadMarcosList();
-                        }
-                    } else {
-                        loadMarcosList();
-                    }
+                    // Siempre recargar la lista desde el servidor para asegurar consistencia
+                    loadMarcosList();
                     
                     // Cerrar modal después de 2 segundos
                     setTimeout(function() {
