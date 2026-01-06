@@ -279,22 +279,67 @@ class Cuadros_Frontend {
                     var widthPaspartu = (dimensiones[estilo].width - 3) + '%';
                     var heightPaspartu = (dimensiones[estilo].height - 3) + '%';
                     
+                    // Aplicar dimensiones al marco
                     $divMarco.css({
                         'width': widthMarco,
-                        'height': heightMarco
+                        'height': heightMarco,
+                        'max-width': '100%',
+                        'max-height': '100%',
+                        'background-size': '100% 100%',
+                        'background-position': 'center',
+                        'background-repeat': 'no-repeat'
                     });
+                    
+                    // Aplicar dimensiones al paspartú
                     $divPaspartu.css({
                         'width': widthPaspartu,
-                        'height': heightPaspartu
+                        'height': heightPaspartu,
+                        'max-width': '100%',
+                        'max-height': '100%',
+                        'background-size': '100% 100%',
+                        'background-position': 'center',
+                        'background-repeat': 'no-repeat'
                     });
                 } else {
                     // Fallback a valores por defecto
                     if (estilo === 'vertical') {
-                        $divMarco.css({ 'width': '70%', 'height': '90%' });
-                        $divPaspartu.css({ 'width': '67%', 'height': '87%' });
+                        $divMarco.css({ 
+                            'width': '70%', 
+                            'height': '90%',
+                            'max-width': '100%',
+                            'max-height': '100%',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
+                        $divPaspartu.css({ 
+                            'width': '67%', 
+                            'height': '87%',
+                            'max-width': '100%',
+                            'max-height': '100%',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
                     } else {
-                        $divMarco.css({ 'width': '90%', 'height': '70%' });
-                        $divPaspartu.css({ 'width': '87%', 'height': '67%' });
+                        $divMarco.css({ 
+                            'width': '90%', 
+                            'height': '70%',
+                            'max-width': '100%',
+                            'max-height': '100%',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
+                        $divPaspartu.css({ 
+                            'width': '87%', 
+                            'height': '67%',
+                            'max-width': '100%',
+                            'max-height': '100%',
+                            'background-size': '100% 100%',
+                            'background-position': 'center',
+                            'background-repeat': 'no-repeat'
+                        });
                     }
                 }
                 
