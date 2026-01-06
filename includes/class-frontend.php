@@ -209,49 +209,63 @@ class Cuadros_Frontend {
             console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
             console.log('[cuadros] Dimensiones:', dimensiones);
             
-            // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto
-            var $mainImage = $('.woocommerce-product-gallery__image:first img');
-            if ($mainImage.length === 0) {
-                $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
+            // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto de forma robusta
+            var selectors = [
+                '.woocommerce-product-gallery__image img',
+                '.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img',
+                '.woocommerce-product-gallery__wrapper img',
+                '.woocommerce-product-gallery img',
+                '.product img'
+            ];
+
+            var $mainImage = $();
+            for (var i = 0; i < selectors.length; i++) {
+                var $found = $(selectors[i] + ':first');
+                if ($found.length) {
+                    $mainImage = $found;
+                    break;
+                }
             }
-            if ($mainImage.length === 0) {
-                $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
-            }
-            
+
             // Verificar si estamos usando shortcode
             var usingShortcode = $('#cuadros-visualizador-container').length > 0;
-            var $container;
-            
+            var $container = $();
+
             if (usingShortcode) {
-                // Si usamos shortcode, usar su contenedor
                 $container = $('#cuadros-visualizador-container');
-                // Si el contenedor del shortcode no tiene imagen, usar la imagen principal
-                if ($container.find('img').length === 0) {
+                if ($container.find('img').length === 0 && $mainImage.length) {
+                    $container = $mainImage.closest('.woocommerce-product-gallery__image, .woocommerce-product-gallery__wrapper, figure, .product');
+                    if (!$container.length) {
+                        $container = $mainImage.parent();
+                    }
+                }
+            } else if ($mainImage.length) {
+                // Preferir contenedores semánticos cercanos a la imagen
+                $container = $mainImage.closest('.woocommerce-product-gallery__image, .woocommerce-product-gallery__wrapper, figure, .product');
+                if (!$container.length) {
                     $container = $mainImage.parent();
                 }
-            } else {
-                // En modo automático, usar el contenedor de la imagen principal
-                $container = $mainImage.parent();
             }
-            
+
             // Asegurar que las capas estén en el lugar correcto
             if ($container.length > 0) {
-                // Mover las capas al contenedor correcto si no están ya allí
-                if ($('#layer-marco').parent()[0] !== $container[0]) {
-                    $container.append($('#layer-marco'));
-                    $container.append($('#layer-paspartu'));
+                // Mover las capas al contenedor correcto de forma segura
+                $('#layer-marco').detach().appendTo($container);
+                $('#layer-paspartu').detach().appendTo($container);
+
+                // Asegurar que el contenedor tenga posicionamiento relativo solo si es estático
+                var currentPos = $container.css('position');
+                if (!currentPos || currentPos === 'static') {
+                    $container.css('position', 'relative');
                 }
-                
-                // Asegurar que el contenedor tenga posicionamiento relativo
-                $container.css('position', 'relative');
-                
+
                 // Posicionar las capas exactamente sobre la imagen
                 var $img = $container.find('img').first();
                 if ($img.length > 0) {
                     // Obtener tamaño de la imagen
                     var imgWidth = $img.width();
                     var imgHeight = $img.height();
-                    
+
                     // Posicionar las capas sobre la imagen (dentro del contenedor)
                     // Inicialmente ocultas y sin dimensiones fijas
                     $('#layer-marco, #layer-paspartu').css({
