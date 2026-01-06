@@ -21,7 +21,7 @@ class Cuadros_Assets_Manager {
      */
     public function handle_marco_upload() {
         // Verificar nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'cuadros_admin_nonce')) {
+        if (empty($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'cuadros_admin_nonce')) {
             wp_send_json_error(array('message' => 'Error de seguridad: Nonce verification failed'));
         }
         
@@ -67,22 +67,18 @@ class Cuadros_Assets_Manager {
         if ($movefile && !isset($movefile['error'])) {
             // Guardar la información en las opciones del plugin
             $settings = get_option('cuadros_settings', array());
-            
-            if (!isset($settings['marco_images'])) {
+
+            // Asegurar que $settings sea un array
+            if (!is_array($settings)) {
+                $settings = array();
+            }
+
+            if (!isset($settings['marco_images']) || !is_array($settings['marco_images'])) {
                 $settings['marco_images'] = array();
             }
             
-            // Eliminar imagen anterior para esta combinación color/orientación
-            foreach ($settings['marco_images'] as $key => $existing) {
-                if ($existing['color'] === $color && $existing['orientation'] === $orientation) {
-                    // Eliminar archivo físico si existe
-                    if (isset($existing['path']) && file_exists($existing['path'])) {
-                        @unlink($existing['path']);
-                    }
-                    unset($settings['marco_images'][$key]);
-                    break;
-                }
-            }
+            // Nota: ya no eliminamos la imagen anterior para la misma combinación
+            // de color/orientación; permitimos almacenar múltiples imágenes.
             
             // Agregar nueva imagen
             $settings['marco_images'][] = array(
@@ -94,17 +90,60 @@ class Cuadros_Assets_Manager {
                 'uploaded' => current_time('mysql')
             );
             
-            update_option('cuadros_settings', $settings);
+            // Guardar la opción usando update_option sin pasar por filtros de serialización
+            error_log('[cuadros] Attempting to save settings: ' . print_r($settings, true));
+            
+            // Limpiar caché antes de guardar
+            wp_cache_delete('cuadros_settings', 'options');
+            
+            // Usar update_option que es más confiable que add_option
+            $result = update_option('cuadros_settings', $settings);
+            error_log('[cuadros] update_option returned: ' . var_export($result, true));
+            
+            // Limpiar caché después de guardar
+            wp_cache_delete('cuadros_settings', 'options');
+            
+            // Verificar de forma cruda desde la BD
+            global $wpdb;
+            $raw_value = $wpdb->get_var($wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+                'cuadros_settings'
+            ));
+            error_log('[cuadros] Raw DB value: ' . var_export($raw_value, true));
+            
+            $verified = maybe_unserialize($raw_value);
+            error_log('[cuadros] After save, DB value unserialized: ' . print_r($verified, true));
+
+            if (empty($verified) || !isset($verified['marco_images'])) {
+                wp_send_json_error(array(
+                    'message' => __('Error al guardar la configuración del plugin. Revisa los logs.', 'cuadros'),
+                    'debug' => 'option_save_failed'
+                ));
+            }
             
             wp_send_json_success(array(
                 'message' => __('Imagen subida correctamente.', 'cuadros'),
                 'url' => $movefile['url'],
                 'color' => $color,
-                'orientation' => $orientation
+                'orientation' => $orientation,
+                'marcos' => $settings
             ));
         } else {
+            $debug_info = array(
+                'movefile' => $movefile,
+                'files_marco_image' => isset($_FILES['marco_image']) ? $_FILES['marco_image'] : null,
+                'upload_dir' => wp_upload_dir(),
+                'php_last_error' => error_get_last()
+            );
+
+            // Registrar en el log de PHP/WordPress para depuración
+            error_log('[cuadros] Upload failed: ' . print_r($debug_info, true));
+
+            $server_msg = is_array($movefile) && isset($movefile['error']) ? $movefile['error'] : __('Error desconocido en wp_handle_upload.', 'cuadros');
+
             wp_send_json_error(array(
-                'message' => __('Error al subir la imagen:', 'cuadros') . ' ' . $movefile['error']
+                'message' => __('Error al subir la imagen:', 'cuadros') . ' ' . $server_msg,
+                'debug' => $server_msg
             ));
         }
     }
@@ -124,6 +163,20 @@ class Cuadros_Assets_Manager {
         }
         
         $settings = get_option('cuadros_settings', array());
+        // Si get_option devuelve vacío inesperadamente, leer directamente desde la BD como fallback
+        if (empty($settings)) {
+            global $wpdb;
+            $option_name = 'cuadros_settings';
+            $row = $wpdb->get_var($wpdb->prepare("SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1", $option_name));
+            if ($row !== null) {
+                $maybe = maybe_unserialize($row);
+                if (is_array($maybe) && !empty($maybe)) {
+                    $settings = $maybe;
+                    error_log('[cuadros] Fallback read from DB returned settings: ' . print_r($settings, true));
+                }
+            }
+        }
+
         $marcos = isset($settings['marco_images']) ? $settings['marco_images'] : array();
         
         wp_send_json_success(array('marcos' => $marcos));
