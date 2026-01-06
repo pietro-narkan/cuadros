@@ -7,6 +7,10 @@ class Cuadros_Frontend {
     public function __construct() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_shortcode('cuadros_visualizador', array($this, 'render_visualizador_shortcode'));
+        
+        // Funcionalidad automática para productos variables
+        add_action('woocommerce_before_single_product', array($this, 'maybe_add_overlay_layers'));
+        add_action('wp_footer', array($this, 'output_frontend_script_auto'));
     }
     
     /**
@@ -25,6 +29,30 @@ class Cuadros_Frontend {
         );
         
         wp_enqueue_script('jquery');
+    }
+    
+    /**
+     * Agregar capas de overlay automáticamente si es necesario
+     */
+    public function maybe_add_overlay_layers() {
+        global $product;
+        
+        if (!$product || !$product->is_type('variable')) {
+            return;
+        }
+        
+        // Verificar si el producto tiene atributos de marco y paspartú
+        $attributes = $product->get_attributes();
+        $has_marco = isset($attributes['pa_marco']);
+        $has_paspartu = isset($attributes['pa_paspartu']);
+        
+        if (!$has_marco && !$has_paspartu) {
+            return;
+        }
+        
+        // Agregar divs para las capas
+        echo '<div id="layer-marco" class="custom-overlay-layer"></div>';
+        echo '<div id="layer-paspartu" class="custom-overlay-layer"></div>';
     }
     
     /**
@@ -60,10 +88,19 @@ class Cuadros_Frontend {
         $output .= '<div id="layer-paspartu" class="custom-overlay-layer"></div>';
         $output .= '</div>';
         
-        // Output del script
-        ob_start();
-        $this->output_frontend_script();
-        $output .= ob_get_clean();
+        // Solo incluir el script si no está ya cargado automáticamente
+        // Verificar si ya hay capas en la página (modo automático)
+        if (!did_action('woocommerce_before_single_product')) {
+            // Output del script
+            ob_start();
+            $this->output_frontend_script();
+            $output .= ob_get_clean();
+        } else {
+            // Modo automático ya está activo, solo agregar mensaje
+            $output .= '<script type="text/javascript">
+                console.log("[Cuadros] Shortcode detectado en modo automático.");
+            </script>';
+        }
         
         // Agregar mensaje de depuración en la consola
         $output .= '<script type="text/javascript">
@@ -81,10 +118,37 @@ class Cuadros_Frontend {
     }
     
     /**
+     * Output del script frontend automático (sin shortcode)
+     */
+    public function output_frontend_script_auto() {
+        if (!is_product()) {
+            return;
+        }
+        
+        global $product;
+        
+        if (!$product || !$product->is_type('variable')) {
+            return;
+        }
+        
+        // Verificar si el producto tiene atributos de marco y paspartú
+        $attributes = $product->get_attributes();
+        $has_marco = isset($attributes['pa_marco']);
+        $has_paspartu = isset($attributes['pa_paspartu']);
+        
+        if (!$has_marco && !$has_paspartu) {
+            return;
+        }
+        
+        // Output del script
+        $this->output_frontend_script();
+    }
+    
+    /**
      * Output del script frontend con la lógica de visualización
      */
     public function output_frontend_script() {
-        // Este método ahora se llama desde el shortcode, no necesita verificar is_product()
+        // Este método ahora se llama tanto automáticamente como desde el shortcode
         
         $settings = get_option('cuadros_settings', array());
         
@@ -113,6 +177,12 @@ class Cuadros_Frontend {
             }
         }
         
+        // Evitar cargar el script dos veces
+        if (defined('CUADROS_SCRIPT_LOADED')) {
+            return;
+        }
+        define('CUADROS_SCRIPT_LOADED', true);
+        
         ?>
         <script type="text/javascript">
         jQuery(document).ready(function($) {
@@ -140,8 +210,12 @@ class Cuadros_Frontend {
             if ($gallery.length === 0) {
                 $gallery = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery');
             }
-            if ($gallery.length === 0) {
-                // Si no encontramos galería, usar el contenedor del shortcode
+            
+            // Verificar si estamos usando shortcode
+            var usingShortcode = $('#cuadros-visualizador-container').length > 0;
+            
+            if (usingShortcode) {
+                // Si usamos shortcode, usar su contenedor
                 $gallery = $('#cuadros-visualizador-container');
             }
             
@@ -152,6 +226,8 @@ class Cuadros_Frontend {
                     $gallery.prepend($('#layer-marco'));
                     $gallery.prepend($('#layer-paspartu'));
                 }
+            } else {
+                console.log('[cuadros] No se encontró contenedor para las capas');
             }
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE

@@ -38,6 +38,15 @@ function cuadros_check_woocommerce() {
     return true;
 }
 
+// Declarar compatibilidad con WooCommerce
+add_action('before_woocommerce_init', function() {
+    if (class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil')) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('product_block_editor', __FILE__, true);
+    }
+});
+
 // Cargar clases del plugin
 function cuadros_init() {
     if (!cuadros_check_woocommerce()) {
