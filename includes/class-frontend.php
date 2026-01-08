@@ -491,17 +491,28 @@ class Cuadros_Frontend {
                 var marcoVal = $('#pa_marco').val();
                 var paspartuVal = $('#pa_paspartu').val();
                 
-                var imgWidth = $productImage.width();
-                var imgHeight = $productImage.height();
-                var ratio = imgWidth / imgHeight;
+                // Usar la misma lógica de detección de orientación que actualizarCapas
+                var tamanoTexto = encontrarTextoTamano();
+                var orientacion = obtenerOrientacion(tamanoTexto);
                 
-                if (ratio > 0.95 && ratio < 1.05) {
-                    currentEstilo = '1:1';
-                } else if (ratio < 1) {
-                    currentEstilo = 'vertical';
-                } else {
-                    currentEstilo = 'horizontal';
+                // Si no se detectó del texto, usar dimensiones de imagen
+                if (!orientacion) {
+                    var imgWidth = $productImage.width();
+                    var imgHeight = $productImage.height();
+                    if (imgWidth > 0 && imgHeight > 0) {
+                        var ratio = imgWidth / imgHeight;
+                        if (ratio > 0.95 && ratio < 1.05) {
+                            orientacion = '1:1';
+                        } else if (ratio < 1) {
+                            orientacion = 'vertical';
+                        } else {
+                            orientacion = 'horizontal';
+                        }
+                    }
                 }
+                
+                currentEstilo = orientacion || 'vertical';
+                console.log('[cuadros] Lightbox - Orientación detectada:', currentEstilo, 'desde texto:', tamanoTexto);
                 
                 currentMarcoUrl = null;
                 if (marcoVal) {
