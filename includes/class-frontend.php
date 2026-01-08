@@ -466,6 +466,7 @@ class Cuadros_Frontend {
             var currentMarcoUrl = null;
             var currentPaspartuColor = null;
             var currentEstilo = 'vertical';
+            var lightboxActivo = false;
             
             // Actualizar variables de estado
             function actualizarEstadoLightbox() {
@@ -510,8 +511,29 @@ class Cuadros_Frontend {
                 }
             }
             
+            // Función para cerrar PhotoSwipe si está abierto
+            function cerrarPhotoSwipe() {
+                var $pswp = $('.pswp--open, #photoswipe-fullscreen-dialog');
+                if ($pswp.length > 0) {
+                    // Intentar cerrar con el botón
+                    $('.pswp__button--close').trigger('click');
+                    // Si no funciona, ocultar directamente
+                    setTimeout(function() {
+                        $pswp.removeClass('pswp--open pswp--visible pswp--animated-in');
+                        $pswp.attr('aria-hidden', 'true');
+                        $pswp.css('opacity', '0');
+                        $('body').removeClass('pswp-open');
+                    }, 50);
+                }
+            }
+            
             // Función para mostrar lightbox personalizado
             function mostrarLightboxCuadros() {
+                lightboxActivo = true;
+                
+                // Cerrar PhotoSwipe si se abrió
+                cerrarPhotoSwipe();
+                
                 var imgSrc = $productImage.attr('data-large_image') || $productImage.attr('src');
                 
                 // Crear overlay
@@ -522,7 +544,7 @@ class Cuadros_Frontend {
                     width: '100%',
                     height: '100%',
                     backgroundColor: 'rgba(0,0,0,0.95)',
-                    zIndex: 999999,
+                    zIndex: 9999999,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -629,38 +651,74 @@ class Cuadros_Frontend {
                     color: 'white',
                     fontSize: '50px',
                     cursor: 'pointer',
-                    zIndex: 1000000,
+                    zIndex: 10000000,
                     lineHeight: 1
                 });
                 
                 $overlay.append($imgContainer).append($closeBtn);
                 $('body').append($overlay);
                 
+                // Función para cerrar nuestro lightbox
+                function cerrarLightbox() {
+                    $overlay.remove();
+                    lightboxActivo = false;
+                    $(document).off('keydown.cuadrosLightbox');
+                }
+                
                 // Cerrar eventos
                 $overlay.on('click', function(e) {
                     if (e.target === $overlay[0] || e.target === $closeBtn[0]) {
-                        $overlay.remove();
+                        cerrarLightbox();
                     }
+                });
+                
+                $closeBtn.on('click', function() {
+                    cerrarLightbox();
                 });
                 
                 $(document).on('keydown.cuadrosLightbox', function(e) {
                     if (e.keyCode === 27) {
-                        $overlay.remove();
-                        $(document).off('keydown.cuadrosLightbox');
+                        cerrarLightbox();
                     }
                 });
             }
             
-            // Interceptar clic en la galería
-            $(document).on('click', '.woocommerce-product-gallery__image a, .woocommerce-product-gallery__trigger, .woocommerce-product-gallery a[href]', function(e) {
-                // Solo interceptar si hay marco o paspartú
-                if (currentMarcoUrl || currentPaspartuColor) {
+            // Observar y cerrar PhotoSwipe si se abre cuando hay marco/paspartú
+            var pswpObserver = new MutationObserver(function(mutations) {
+                if (!lightboxActivo && (currentMarcoUrl || currentPaspartuColor)) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) {
+                                if (node.classList && (node.classList.contains('pswp') || node.id === 'photoswipe-fullscreen-dialog')) {
+                                    setTimeout(cerrarPhotoSwipe, 10);
+                                }
+                            }
+                        });
+                    });
+                    
+                    // También verificar si PhotoSwipe se hizo visible
+                    var $pswp = $('.pswp--open, #photoswipe-fullscreen-dialog[aria-hidden="false"]');
+                    if ($pswp.length > 0 && !lightboxActivo) {
+                        cerrarPhotoSwipe();
+                    }
+                }
+            });
+            
+            pswpObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+            
+            // Interceptar clic en la galería - usar capture phase
+            document.addEventListener('click', function(e) {
+                var $target = $(e.target);
+                var isGalleryClick = $target.closest('.woocommerce-product-gallery__image a, .woocommerce-product-gallery__trigger, .woocommerce-product-gallery a[href]').length > 0;
+                
+                if (isGalleryClick && (currentMarcoUrl || currentPaspartuColor)) {
                     e.preventDefault();
+                    e.stopPropagation();
                     e.stopImmediatePropagation();
                     mostrarLightboxCuadros();
                     return false;
                 }
-            });
+            }, true); // true = capture phase
             
             // Actualizar estado
             $('form.variations_form').on('change', 'select', function() {
