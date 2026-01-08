@@ -89,7 +89,8 @@ function cuadros_activate() {
         'marco_images' => array(),
         'dimensions' => array(
             'vertical' => array('width' => 60, 'height' => 80),
-            'horizontal' => array('width' => 80, 'height' => 60)
+            'horizontal' => array('width' => 80, 'height' => 60),
+            '1:1' => array('width' => 80, 'height' => 80)
         )
     );
 

@@ -105,6 +105,19 @@ class Cuadros_Admin_Settings {
                 'default_height' => 70
             )
         );
+        
+        add_settings_field(
+            'square_dimensions',
+            __('Dimensiones Cuadradas (1:1)', 'cuadros'),
+            array($this, 'render_dimensions_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section',
+            array(
+                'orientation' => '1:1',
+                'default_width' => 80,
+                'default_height' => 80
+            )
+        );
     }
     
     /**
@@ -171,6 +184,13 @@ class Cuadros_Admin_Settings {
             $sanitized['dimensions']['horizontal'] = array(
                 'width' => absint($input['horizontal_width']),
                 'height' => absint($input['horizontal_height'])
+            );
+        }
+        
+        if (isset($input['1:1_width']) && isset($input['1:1_height'])) {
+            $sanitized['dimensions']['1:1'] = array(
+                'width' => absint($input['1:1_width']),
+                'height' => absint($input['1:1_height'])
             );
         }
         

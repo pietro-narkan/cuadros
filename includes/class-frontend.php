@@ -268,6 +268,7 @@ class Cuadros_Frontend {
                 if (match) {
                     var ancho = parseInt(match[1]);
                     var alto = parseInt(match[2]);
+                    if (ancho === alto) return '1:1';
                     return (ancho < alto) ? 'vertical' : 'horizontal';
                 }
                 return null;
