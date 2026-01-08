@@ -136,7 +136,8 @@ class Cuadros_Frontend {
         $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
         $dimensions = isset($settings['dimensions']) ? $settings['dimensions'] : array(
             'vertical' => array('width' => 60, 'height' => 80),
-            'horizontal' => array('width' => 80, 'height' => 60)
+            'horizontal' => array('width' => 80, 'height' => 60),
+            '1:1' => array('width' => 80, 'height' => 80)
         );
         
         // Estructurar imágenes de marcos para JS (claves en minúsculas para búsqueda insensible)
@@ -296,18 +297,41 @@ class Cuadros_Frontend {
                 }
                 
                 // Calcular dimensiones del marco según orientación
-                var marcoWidthPercent = dimensiones[estilo] ? dimensiones[estilo].width : (estilo === 'vertical' ? 60 : 80);
-                var marcoHeightPercent = dimensiones[estilo] ? dimensiones[estilo].height : (estilo === 'vertical' ? 80 : 60);
+                var marcoWidthPercent, marcoHeightPercent;
+                if (dimensiones[estilo]) {
+                    marcoWidthPercent = dimensiones[estilo].width;
+                    marcoHeightPercent = dimensiones[estilo].height;
+                } else if (estilo === '1:1') {
+                    marcoWidthPercent = 80;
+                    marcoHeightPercent = 80;
+                } else if (estilo === 'vertical') {
+                    marcoWidthPercent = 60;
+                    marcoHeightPercent = 80;
+                } else {
+                    marcoWidthPercent = 80;
+                    marcoHeightPercent = 60;
+                }
                 
                 // El paspartú debe ser ligeramente más pequeño que el marco para quedar dentro
                 var paspartuWidthPercent = marcoWidthPercent - 2.5;
                 var paspartuHeightPercent = marcoHeightPercent - 2.5;
                 
                 // Calcular dimensiones en píxeles
-                var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
-                var marcoHeight = (imgHeight * marcoHeightPercent) / 100;
-                var paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
-                var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                var marcoWidth, marcoHeight, paspartuWidth, paspartuHeight;
+                
+                if (estilo === '1:1') {
+                    // Para formato cuadrado, usar el lado menor como base para mantener proporción 1:1
+                    var minSide = Math.min(imgWidth, imgHeight);
+                    marcoWidth = (minSide * marcoWidthPercent) / 100;
+                    marcoHeight = marcoWidth; // Forzar cuadrado
+                    paspartuWidth = (minSide * paspartuWidthPercent) / 100;
+                    paspartuHeight = paspartuWidth; // Forzar cuadrado
+                } else {
+                    marcoWidth = (imgWidth * marcoWidthPercent) / 100;
+                    marcoHeight = (imgHeight * marcoHeightPercent) / 100;
+                    paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
+                    paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                }
                 
                 // Calcular posiciones centradas (relativas al contenedor, que es el mismo que la imagen)
                 var marcoLeft = (imgWidth - marcoWidth) / 2;
@@ -342,12 +366,16 @@ class Cuadros_Frontend {
                 if (marcoVal) {
                     var marcoValNorm = marcoVal.toLowerCase().replace(/-/g, ' ');
                     
+                    console.log('[cuadros] Buscando marco:', marcoValNorm, 'con orientación:', estilo);
+                    
                     // Buscar coincidencia exacta o parcial
                     for (var key in urlsMarcos) {
                         var keyNorm = key.toLowerCase().replace(/-/g, ' ');
                         if (keyNorm === marcoValNorm || keyNorm.includes(marcoValNorm) || marcoValNorm.includes(keyNorm)) {
+                            console.log('[cuadros] Marco encontrado:', key, 'orientaciones disponibles:', Object.keys(urlsMarcos[key]));
                             if (urlsMarcos[key][estilo]) {
                                 marcoEncontrado = urlsMarcos[key][estilo];
+                                console.log('[cuadros] Usando orientación:', estilo);
                                 break;
                             }
                         }
