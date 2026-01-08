@@ -209,80 +209,73 @@ class Cuadros_Frontend {
             console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
             console.log('[cuadros] Dimensiones:', dimensiones);
             
-            // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto de forma robusta
-            var $mainImage = $('.woocommerce-product-gallery__image:first img');
-            if ($mainImage.length === 0) {
-                $mainImage = $('.elementor-widget-woocommerce-product-images img:first');
+            // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto
+            function encontrarImagenPrincipal() {
+                var selectores = [
+                    '.woocommerce-product-gallery__image:first img',
+                    '.woocommerce-product-gallery__wrapper img:first',
+                    '.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img',
+                    '.woocommerce-product-gallery img:first',
+                    'figure.woocommerce-product-gallery__image img',
+                    '.product-gallery img:first'
+                ];
+                
+                for (var i = 0; i < selectores.length; i++) {
+                    var $img = $(selectores[i]);
+                    if ($img.length > 0 && $img.width() > 0) {
+                        return $img.first();
+                    }
+                }
+                return $();
             }
-            if ($mainImage.length === 0) {
-                $mainImage = $('.woocommerce-product-gallery img:first');
-            }
-            if ($mainImage.length === 0) {
-                $mainImage = $('figure img:first');
-            }
-
-            // Verificar si estamos usando shortcode
-            var usingShortcode = $('#cuadros-visualizador-container').length > 0;
+            
+            var $mainImage = encontrarImagenPrincipal();
             var $container = $();
-
-            if (usingShortcode) {
-                $container = $('#cuadros-visualizador-container');
-            } else if ($mainImage.length > 0) {
-                // Buscar el contenedor más cercano que tenga position relativa o sea un contenedor visual
-                // Prioridad: woocommerce-product-gallery > woocommerce-product-gallery__image > figure > contenedor con img
-                $container = $mainImage.closest('.woocommerce-product-gallery');
-                if (!$container.length) {
+            
+            // Estrategia: Colocar las capas en el padre DIRECTO de la imagen
+            if ($mainImage.length > 0) {
+                // Buscar el contenedor inmediato de la imagen (figure, a, o div)
+                var $imgParent = $mainImage.parent();
+                
+                // Si el padre es un enlace <a>, usar el padre del enlace
+                if ($imgParent.is('a')) {
+                    $container = $imgParent.parent();
+                } else {
+                    $container = $imgParent;
+                }
+                
+                // Si aún no es un buen contenedor, buscar .woocommerce-product-gallery__image
+                if (!$container.length || $container.is('body')) {
                     $container = $mainImage.closest('.woocommerce-product-gallery__image');
                 }
-                if (!$container.length) {
-                    $container = $mainImage.closest('figure');
-                }
-                if (!$container.length) {
-                    $container = $mainImage.closest('.product-image, .product__image, [class*="image"]');
-                }
-                if (!$container.length) {
-                    // Último recurso: parent directo
-                    $container = $mainImage.parent();
-                }
+                
+                console.log('[cuadros] Imagen encontrada:', $mainImage[0]);
+                console.log('[cuadros] Container seleccionado:', $container[0] ? $container[0].className : 'NINGUNO', 'Tag:', $container[0] ? $container[0].tagName : 'N/A');
             }
 
-            // Asegurar que las capas estén en el lugar correcto
+            // Configurar el contenedor y las capas
             if ($container.length > 0) {
-                console.log('[cuadros] Container encontrado:', $container[0].className, 'Tag:', $container[0].tagName);
-                
-                // Mover las capas al contenedor correcto de forma segura
+                // Mover las capas al contenedor
                 $('#layer-marco').detach().appendTo($container);
                 $('#layer-paspartu').detach().appendTo($container);
 
-                // Asegurar que el contenedor tenga posicionamiento relativo
-                var currentPos = $container.css('position');
-                if (currentPos === 'static' || !currentPos) {
-                    $container.css('position', 'relative');
-                    console.log('[cuadros] Set container position to relative');
-                }
-                
-                // Forzar overflow: hidden para evitar desbordamientos
-                $container.css('overflow', 'hidden');
+                // Asegurar posicionamiento relativo en el contenedor
+                $container.css({
+                    'position': 'relative'
+                });
 
-                // Posicionar las capas exactamente sobre la imagen
-                var $img = $container.find('img').first();
-                if ($img.length > 0) {
-                    // Establecer solo propiedades de posicionamiento básicas
-                    // Las dimensiones se calcularán dinámicamente en actualizarCapas()
-                    $('#layer-marco, #layer-paspartu').css({
-                        'position': 'absolute',
-                        'transform': 'none',
-                        'background-size': 'contain',
-                        'background-position': 'center',
-                        'background-repeat': 'no-repeat',
-                        'box-sizing': 'border-box',
-                        'pointer-events': 'none'
-                    });
-                    
-                    console.log('[cuadros] Layers positioned, container:', $container[0]);
-                }
+                // Configurar estilos base de las capas
+                $('#layer-marco, #layer-paspartu').css({
+                    'position': 'absolute',
+                    'pointer-events': 'none',
+                    'box-sizing': 'border-box',
+                    'background-repeat': 'no-repeat',
+                    'z-index': '100'
+                });
+                
+                console.log('[cuadros] Capas configuradas en contenedor');
             } else {
-                console.log('[cuadros] No se encontró contenedor para las capas; capas en:', $('#layer-marco').parent()[0] ? $('#layer-marco').parent()[0].tagName : 'NINGUNO');
+                console.log('[cuadros] No se encontró contenedor adecuado');
             }
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
@@ -323,111 +316,93 @@ class Cuadros_Frontend {
                 var $divPaspartu = $('#layer-paspartu');
                 var $wrapper = $('.woocommerce-product-gallery__wrapper');
                 
-                // A. CAMBIO DE DIMENSIONES - Calcular dimensiones basadas en la imagen real
-                var $mainImage = $('.woocommerce-product-gallery__image:first img');
-                if ($mainImage.length === 0) {
-                    $mainImage = $('.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image:first img');
-                }
-                if ($mainImage.length === 0) {
-                    $mainImage = $('.woocommerce-product-gallery__wrapper img:first');
+                // Buscar la imagen principal actualizada
+                var $currentImage = encontrarImagenPrincipal();
+                if ($currentImage.length === 0) {
+                    console.log('[cuadros] No se encontró imagen principal');
+                    return;
                 }
                 
-                if ($mainImage.length > 0) {
-                    // Método mejorado: usar getBoundingClientRect para obtener posiciones exactas
-                    var imgElement = $mainImage[0];
-                    var containerElement = $container[0];
+                // Obtener el contenedor actual de las capas
+                var $layerContainer = $divMarco.parent();
+                
+                // Obtener dimensiones de la imagen
+                var imgWidth = $currentImage.width();
+                var imgHeight = $currentImage.height();
+                
+                // Usar offset() para obtener posición absoluta en la página
+                var imgOffset = $currentImage.offset();
+                var containerOffset = $layerContainer.offset();
+                
+                // Calcular posición relativa de la imagen respecto al contenedor de las capas
+                var imgRelativeLeft = imgOffset.left - containerOffset.left;
+                var imgRelativeTop = imgOffset.top - containerOffset.top;
+                
+                console.log('[cuadros] Imagen actual:', {
+                    width: imgWidth,
+                    height: imgHeight,
+                    imgOffset: imgOffset,
+                    containerOffset: containerOffset,
+                    relativePosition: { left: imgRelativeLeft, top: imgRelativeTop }
+                });
+                
+                if (imgWidth > 0 && imgHeight > 0) {
+                    // Calcular porcentajes según orientación
+                    var marcoWidthPercent, marcoHeightPercent;
                     
-                    // Obtener dimensiones reales de la imagen
-                    var imgWidth = $mainImage.width();
-                    var imgHeight = $mainImage.height();
-                    
-                    // Obtener posiciones relativas usando getBoundingClientRect
-                    var imgRect = imgElement.getBoundingClientRect();
-                    var containerRect = containerElement.getBoundingClientRect();
-                    
-                    // Calcular offset relativo de la imagen dentro del contenedor
-                    var relativeLeft = imgRect.left - containerRect.left;
-                    var relativeTop = imgRect.top - containerRect.top;
-                    
-                    // Ajustar por scroll y padding del contenedor
-                    var containerPaddingLeft = parseInt($container.css('padding-left')) || 0;
-                    var containerPaddingTop = parseInt($container.css('padding-top')) || 0;
-                    
-                    relativeLeft += containerPaddingLeft;
-                    relativeTop += containerPaddingTop;
-                    
-                    if (imgWidth > 0 && imgHeight > 0) {
-                        // Calcular porcentajes según orientación
-                        var marcoWidthPercent, marcoHeightPercent;
-                        
-                        if (dimensiones[estilo]) {
-                            marcoWidthPercent = dimensiones[estilo].width;
-                            marcoHeightPercent = dimensiones[estilo].height;
+                    if (dimensiones[estilo]) {
+                        marcoWidthPercent = dimensiones[estilo].width;
+                        marcoHeightPercent = dimensiones[estilo].height;
+                    } else {
+                        if (estilo === 'vertical') {
+                            marcoWidthPercent = 60;
+                            marcoHeightPercent = 80;
                         } else {
-                            // Valores por defecto (actualizados)
-                            if (estilo === 'vertical') {
-                                marcoWidthPercent = 60;
-                                marcoHeightPercent = 80;
-                            } else {
-                                marcoWidthPercent = 80;
-                                marcoHeightPercent = 60;
-                            }
+                            marcoWidthPercent = 80;
+                            marcoHeightPercent = 60;
                         }
-                        
-                        var paspartuWidthPercent = marcoWidthPercent - 10;
-                        var paspartuHeightPercent = marcoHeightPercent - 10;
-                        
-                        // Calcular dimensiones en píxeles basadas en la imagen
-                        var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
-                        var marcoHeight = (imgHeight * marcoHeightPercent) / 100;
-                        var paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
-                        var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
-                        
-                        // Calcular posiciones centradas sobre la imagen
-                        var marcoLeft = relativeLeft + (imgWidth - marcoWidth) / 2;
-                        var marcoTop = relativeTop + (imgHeight - marcoHeight) / 2;
-                        var paspartuLeft = relativeLeft + (imgWidth - paspartuWidth) / 2;
-                        var paspartuTop = relativeTop + (imgHeight - paspartuHeight) / 2;
-                        
-                        // Aplicar dimensiones y posicionamiento en píxeles
-                        $divMarco.css({
-                            'width': marcoWidth + 'px',
-                            'height': marcoHeight + 'px',
-                            'left': marcoLeft + 'px',
-                            'top': marcoTop + 'px',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                        
-                        $divPaspartu.css({
-                            'width': paspartuWidth + 'px',
-                            'height': paspartuHeight + 'px',
-                            'left': paspartuLeft + 'px',
-                            'top': paspartuTop + 'px',
-                            'background-size': '100% 100%',
-                            'background-position': 'center',
-                            'background-repeat': 'no-repeat'
-                        });
-                        
-                        console.log('[cuadros] Dimensiones calculadas (método mejorado):', {
-                            imgWidth: imgWidth,
-                            imgHeight: imgHeight,
-                            imgRect: imgRect,
-                            containerRect: containerRect,
-                            relativeLeft: relativeLeft,
-                            relativeTop: relativeTop,
-                            containerPadding: {left: containerPaddingLeft, top: containerPaddingTop},
-                            marcoWidth: marcoWidth,
-                            marcoHeight: marcoHeight,
-                            marcoLeft: marcoLeft,
-                            marcoTop: marcoTop,
-                            paspartuWidth: paspartuWidth,
-                            paspartuHeight: paspartuHeight,
-                            paspartuLeft: paspartuLeft,
-                            paspartuTop: paspartuTop
-                        });
                     }
+                    
+                    var paspartuWidthPercent = marcoWidthPercent - 10;
+                    var paspartuHeightPercent = marcoHeightPercent - 10;
+                    
+                    // Calcular dimensiones en píxeles
+                    var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
+                    var marcoHeight = (imgHeight * marcoHeightPercent) / 100;
+                    var paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
+                    var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                    
+                    // Calcular posiciones centradas SOBRE la imagen
+                    var marcoLeft = imgRelativeLeft + (imgWidth - marcoWidth) / 2;
+                    var marcoTop = imgRelativeTop + (imgHeight - marcoHeight) / 2;
+                    var paspartuLeft = imgRelativeLeft + (imgWidth - paspartuWidth) / 2;
+                    var paspartuTop = imgRelativeTop + (imgHeight - paspartuHeight) / 2;
+                    
+                    // Aplicar estilos al marco
+                    $divMarco.css({
+                        'width': marcoWidth + 'px',
+                        'height': marcoHeight + 'px',
+                        'left': marcoLeft + 'px',
+                        'top': marcoTop + 'px',
+                        'background-size': '100% 100%',
+                        'background-position': 'center',
+                        'background-repeat': 'no-repeat'
+                    });
+                    
+                    // Aplicar estilos al paspartú
+                    $divPaspartu.css({
+                        'width': paspartuWidth + 'px',
+                        'height': paspartuHeight + 'px',
+                        'left': paspartuLeft + 'px',
+                        'top': paspartuTop + 'px'
+                    });
+                    
+                    console.log('[cuadros] Posiciones calculadas:', {
+                        marcoWidth: marcoWidth,
+                        marcoHeight: marcoHeight,
+                        marcoLeft: marcoLeft,
+                        marcoTop: marcoTop
+                    });
                 }
                 
                 // B. RENDERIZADO MARCO - búsqueda insensible a mayúsculas/minúsculas
