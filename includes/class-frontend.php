@@ -462,127 +462,16 @@ class Cuadros_Frontend {
             // Ejecutar inicialmente
             setTimeout(actualizarCapas, 500);
             
-            // 6. LIGHTBOX PHOTOSWIPE CON MARCOS Y PASPARTÚS
-            // Variables para almacenar el estado actual
+            // 6. LIGHTBOX PERSONALIZADO CON MARCOS Y PASPARTÚS
             var currentMarcoUrl = null;
             var currentPaspartuColor = null;
             var currentEstilo = 'vertical';
             
-            // Función para generar imagen compuesta con Canvas
-            function generarImagenCompuesta(callback) {
-                var canvas = document.createElement('canvas');
-                var ctx = canvas.getContext('2d');
-                
-                // Obtener la imagen original en alta resolución
-                var imgSrc = $productImage.attr('data-large_image') || $productImage.attr('data-src') || $productImage.attr('src');
-                
-                var img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                img.onload = function() {
-                    var imgWidth = img.width;
-                    var imgHeight = img.height;
-                    
-                    // Detectar orientación
-                    var ratio = imgWidth / imgHeight;
-                    var estilo;
-                    if (ratio > 0.95 && ratio < 1.05) {
-                        estilo = '1:1';
-                    } else if (ratio < 1) {
-                        estilo = 'vertical';
-                    } else {
-                        estilo = 'horizontal';
-                    }
-                    
-                    // Obtener dimensiones del marco
-                    var marcoWidthPercent, marcoHeightPercent;
-                    if (dimensiones[estilo]) {
-                        marcoWidthPercent = dimensiones[estilo].width;
-                        marcoHeightPercent = dimensiones[estilo].height;
-                    } else if (estilo === '1:1') {
-                        marcoWidthPercent = 80;
-                        marcoHeightPercent = 80;
-                    } else if (estilo === 'vertical') {
-                        marcoWidthPercent = 60;
-                        marcoHeightPercent = 80;
-                    } else {
-                        marcoWidthPercent = 80;
-                        marcoHeightPercent = 60;
-                    }
-                    
-                    var paspartuWidthPercent = marcoWidthPercent - 2.5;
-                    var paspartuHeightPercent = marcoHeightPercent - 2.5;
-                    
-                    // Calcular dimensiones en píxeles
-                    var marcoWidth, marcoHeight, paspartuWidth, paspartuHeight;
-                    
-                    if (estilo === '1:1') {
-                        var minSide = Math.min(imgWidth, imgHeight);
-                        marcoWidth = (minSide * marcoWidthPercent) / 100;
-                        marcoHeight = marcoWidth;
-                        paspartuWidth = (minSide * paspartuWidthPercent) / 100;
-                        paspartuHeight = paspartuWidth;
-                    } else {
-                        marcoWidth = (imgWidth * marcoWidthPercent) / 100;
-                        marcoHeight = (imgHeight * marcoHeightPercent) / 100;
-                        paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
-                        paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
-                    }
-                    
-                    // Posiciones centradas
-                    var marcoLeft = (imgWidth - marcoWidth) / 2;
-                    var marcoTop = (imgHeight - marcoHeight) / 2;
-                    var paspartuLeft = (imgWidth - paspartuWidth) / 2;
-                    var paspartuTop = (imgHeight - paspartuHeight) / 2;
-                    
-                    // Configurar canvas
-                    canvas.width = imgWidth;
-                    canvas.height = imgHeight;
-                    
-                    // 1. Dibujar paspartú (si existe)
-                    if (currentPaspartuColor) {
-                        ctx.fillStyle = currentPaspartuColor;
-                        ctx.fillRect(paspartuLeft, paspartuTop, paspartuWidth, paspartuHeight);
-                    }
-                    
-                    // 2. Dibujar imagen del producto
-                    ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
-                    
-                    // 3. Dibujar marco (si existe)
-                    if (currentMarcoUrl) {
-                        var marcoImg = new Image();
-                        marcoImg.crossOrigin = 'anonymous';
-                        
-                        marcoImg.onload = function() {
-                            ctx.drawImage(marcoImg, marcoLeft, marcoTop, marcoWidth, marcoHeight);
-                            callback(canvas.toDataURL('image/png'));
-                        };
-                        
-                        marcoImg.onerror = function() {
-                            console.log('[cuadros] Error cargando marco para lightbox');
-                            callback(canvas.toDataURL('image/png'));
-                        };
-                        
-                        marcoImg.src = currentMarcoUrl;
-                    } else {
-                        callback(canvas.toDataURL('image/png'));
-                    }
-                };
-                
-                img.onerror = function() {
-                    console.log('[cuadros] Error cargando imagen para lightbox');
-                    callback(null);
-                };
-                
-                img.src = imgSrc;
-            }
-            
-            // Actualizar variables de estado cuando cambian los valores
+            // Actualizar variables de estado
             function actualizarEstadoLightbox() {
                 var marcoVal = $('#pa_marco').val();
                 var paspartuVal = $('#pa_paspartu').val();
                 
-                // Obtener orientación actual
                 var imgWidth = $productImage.width();
                 var imgHeight = $productImage.height();
                 var ratio = imgWidth / imgHeight;
@@ -595,7 +484,6 @@ class Cuadros_Frontend {
                     currentEstilo = 'horizontal';
                 }
                 
-                // Buscar URL del marco
                 currentMarcoUrl = null;
                 if (marcoVal) {
                     var marcoValNorm = marcoVal.toLowerCase().replace(/-/g, ' ');
@@ -610,7 +498,6 @@ class Cuadros_Frontend {
                     }
                 }
                 
-                // Buscar color del paspartú
                 currentPaspartuColor = null;
                 if (paspartuVal) {
                     var paspartuValNorm = paspartuVal.toLowerCase();
@@ -621,98 +508,161 @@ class Cuadros_Frontend {
                         }
                     }
                 }
-                
-                console.log('[cuadros] Estado lightbox actualizado:', {marco: currentMarcoUrl, paspartu: currentPaspartuColor, estilo: currentEstilo});
             }
             
-            // Observar cuando se abre PhotoSwipe y modificar la imagen
-            var pswpObserver = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.addedNodes.length) {
-                        mutation.addedNodes.forEach(function(node) {
-                            if (node.nodeType === 1) {
-                                // Detectar cuando PhotoSwipe se abre
-                                var $pswp = $(node).hasClass('pswp--open') ? $(node) : $(node).find('.pswp--open');
-                                if ($pswp.length === 0 && node.id === 'photoswipe-fullscreen-dialog') {
-                                    $pswp = $(node);
-                                }
-                                
-                                if ($pswp.length > 0 || (node.classList && node.classList.contains('pswp'))) {
-                                    console.log('[cuadros] PhotoSwipe detectado');
-                                    
-                                    // Solo modificar si hay marco o paspartú
-                                    if (currentMarcoUrl || currentPaspartuColor) {
-                                        setTimeout(function() {
-                                            modificarImagenPhotoSwipe();
-                                        }, 100);
-                                    }
-                                }
-                            }
+            // Función para mostrar lightbox personalizado
+            function mostrarLightboxCuadros() {
+                var imgSrc = $productImage.attr('data-large_image') || $productImage.attr('src');
+                
+                // Crear overlay
+                var $overlay = $('<div id="cuadros-lightbox-overlay"></div>').css({
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0,0,0,0.95)',
+                    zIndex: 999999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                });
+                
+                // Contenedor de la imagen
+                var $imgContainer = $('<div id="cuadros-lightbox-container"></div>').css({
+                    position: 'relative',
+                    maxWidth: '90vw',
+                    maxHeight: '90vh'
+                });
+                
+                // Imagen principal
+                var $img = $('<img>').attr('src', imgSrc).css({
+                    maxWidth: '90vw',
+                    maxHeight: '90vh',
+                    display: 'block',
+                    position: 'relative',
+                    zIndex: 10
+                });
+                
+                $imgContainer.append($img);
+                
+                // Esperar a que cargue la imagen para calcular dimensiones
+                $img.on('load', function() {
+                    var imgW = $img.width();
+                    var imgH = $img.height();
+                    
+                    var marcoWidthPercent, marcoHeightPercent;
+                    if (dimensiones[currentEstilo]) {
+                        marcoWidthPercent = dimensiones[currentEstilo].width;
+                        marcoHeightPercent = dimensiones[currentEstilo].height;
+                    } else if (currentEstilo === '1:1') {
+                        marcoWidthPercent = 80;
+                        marcoHeightPercent = 80;
+                    } else if (currentEstilo === 'vertical') {
+                        marcoWidthPercent = 60;
+                        marcoHeightPercent = 80;
+                    } else {
+                        marcoWidthPercent = 80;
+                        marcoHeightPercent = 60;
+                    }
+                    
+                    var paspartuWidthPercent = marcoWidthPercent - 2.5;
+                    var paspartuHeightPercent = marcoHeightPercent - 2.5;
+                    
+                    var marcoW, marcoH, paspartuW, paspartuH;
+                    if (currentEstilo === '1:1') {
+                        var minSide = Math.min(imgW, imgH);
+                        marcoW = (minSide * marcoWidthPercent) / 100;
+                        marcoH = marcoW;
+                        paspartuW = (minSide * paspartuWidthPercent) / 100;
+                        paspartuH = paspartuW;
+                    } else {
+                        marcoW = (imgW * marcoWidthPercent) / 100;
+                        marcoH = (imgH * marcoHeightPercent) / 100;
+                        paspartuW = (imgW * paspartuWidthPercent) / 100;
+                        paspartuH = (imgH * paspartuHeightPercent) / 100;
+                    }
+                    
+                    var marcoL = (imgW - marcoW) / 2;
+                    var marcoT = (imgH - marcoH) / 2;
+                    var paspartuL = (imgW - paspartuW) / 2;
+                    var paspartuT = (imgH - paspartuH) / 2;
+                    
+                    // Agregar paspartú
+                    if (currentPaspartuColor) {
+                        var $paspartu = $('<div></div>').css({
+                            position: 'absolute',
+                            width: paspartuW + 'px',
+                            height: paspartuH + 'px',
+                            left: paspartuL + 'px',
+                            top: paspartuT + 'px',
+                            backgroundColor: currentPaspartuColor,
+                            zIndex: 1
                         });
+                        $imgContainer.append($paspartu);
+                    }
+                    
+                    // Agregar marco
+                    if (currentMarcoUrl) {
+                        var $marco = $('<div></div>').css({
+                            position: 'absolute',
+                            width: marcoW + 'px',
+                            height: marcoH + 'px',
+                            left: marcoL + 'px',
+                            top: marcoT + 'px',
+                            backgroundImage: 'url(' + currentMarcoUrl + ')',
+                            backgroundSize: '100% 100%',
+                            backgroundRepeat: 'no-repeat',
+                            zIndex: 2,
+                            pointerEvents: 'none'
+                        });
+                        $imgContainer.append($marco);
                     }
                 });
-            });
-            
-            // Iniciar observador
-            pswpObserver.observe(document.body, { childList: true, subtree: true });
-            
-            // Función para modificar la imagen en PhotoSwipe
-            function modificarImagenPhotoSwipe() {
-                console.log('[cuadros] Modificando imagen en PhotoSwipe...');
                 
-                // Buscar la imagen activa en PhotoSwipe
-                var $pswpImg = $('.pswp__img:not(.pswp__img--placeholder)').first();
+                // Botón cerrar
+                var $closeBtn = $('<div>&times;</div>').css({
+                    position: 'absolute',
+                    top: '20px',
+                    right: '30px',
+                    color: 'white',
+                    fontSize: '50px',
+                    cursor: 'pointer',
+                    zIndex: 1000000,
+                    lineHeight: 1
+                });
                 
-                if ($pswpImg.length === 0) {
-                    // Intentar con otro selector
-                    $pswpImg = $('.pswp__item:not([style*="display: none"]) .pswp__img').first();
-                }
+                $overlay.append($imgContainer).append($closeBtn);
+                $('body').append($overlay);
                 
-                if ($pswpImg.length === 0) {
-                    console.log('[cuadros] No se encontró imagen en PhotoSwipe, reintentando...');
-                    setTimeout(modificarImagenPhotoSwipe, 200);
-                    return;
-                }
+                // Cerrar eventos
+                $overlay.on('click', function(e) {
+                    if (e.target === $overlay[0] || e.target === $closeBtn[0]) {
+                        $overlay.remove();
+                    }
+                });
                 
-                // Verificar si ya fue modificada
-                if ($pswpImg.attr('data-cuadros-modified') === 'true') {
-                    console.log('[cuadros] Imagen ya modificada');
-                    return;
-                }
-                
-                console.log('[cuadros] Generando imagen compuesta...');
-                
-                generarImagenCompuesta(function(dataUrl) {
-                    if (dataUrl) {
-                        $pswpImg.attr('src', dataUrl);
-                        $pswpImg.attr('data-cuadros-modified', 'true');
-                        console.log('[cuadros] Imagen de PhotoSwipe reemplazada');
+                $(document).on('keydown.cuadrosLightbox', function(e) {
+                    if (e.keyCode === 27) {
+                        $overlay.remove();
+                        $(document).off('keydown.cuadrosLightbox');
                     }
                 });
             }
             
-            // También observar cambios de clase en el elemento pswp existente
-            $(document).on('click', '.woocommerce-product-gallery__image a, .woocommerce-product-gallery__trigger', function() {
+            // Interceptar clic en la galería
+            $(document).on('click', '.woocommerce-product-gallery__image a, .woocommerce-product-gallery__trigger, .woocommerce-product-gallery a[href]', function(e) {
+                // Solo interceptar si hay marco o paspartú
                 if (currentMarcoUrl || currentPaspartuColor) {
-                    console.log('[cuadros] Clic en galería detectado, preparando modificación...');
-                    
-                    // Esperar a que PhotoSwipe se abra
-                    var checkInterval = setInterval(function() {
-                        var $pswp = $('.pswp--open, #photoswipe-fullscreen-dialog[aria-hidden="false"]');
-                        if ($pswp.length > 0) {
-                            clearInterval(checkInterval);
-                            setTimeout(modificarImagenPhotoSwipe, 150);
-                        }
-                    }, 50);
-                    
-                    // Timeout de seguridad
-                    setTimeout(function() {
-                        clearInterval(checkInterval);
-                    }, 3000);
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    mostrarLightboxCuadros();
+                    return false;
                 }
             });
             
-            // Actualizar estado cuando cambian las selecciones
+            // Actualizar estado
             $('form.variations_form').on('change', 'select', function() {
                 setTimeout(actualizarEstadoLightbox, 150);
             });
@@ -721,7 +671,6 @@ class Cuadros_Frontend {
                 setTimeout(actualizarEstadoLightbox, 150);
             });
             
-            // Inicializar estado
             setTimeout(actualizarEstadoLightbox, 600);
         });
         </script>
