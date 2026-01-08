@@ -61,14 +61,6 @@ class Cuadros_Admin_Settings {
             'cuadros-settings'
         );
         
-        // Sección de dimensiones
-        add_settings_section(
-            'cuadros_dimensions_section',
-            __('Dimensiones de Visualización', 'cuadros'),
-            array($this, 'render_dimensions_section'),
-            'cuadros-settings'
-        );
-        
         // Campos para colores de paspartú - se cargan dinámicamente
         add_settings_field(
             'paspartu_colors_dynamic',
@@ -77,46 +69,6 @@ class Cuadros_Admin_Settings {
             'cuadros-settings',
             'cuadros_paspartu_section',
             array()
-        );
-        
-        // Campos para dimensiones
-        add_settings_field(
-            'vertical_dimensions',
-            __('Dimensiones Verticales', 'cuadros'),
-            array($this, 'render_dimensions_field'),
-            'cuadros-settings',
-            'cuadros_dimensions_section',
-            array(
-                'orientation' => 'vertical',
-                'default_width' => 70,
-                'default_height' => 90
-            )
-        );
-        
-        add_settings_field(
-            'horizontal_dimensions',
-            __('Dimensiones Horizontales', 'cuadros'),
-            array($this, 'render_dimensions_field'),
-            'cuadros-settings',
-            'cuadros_dimensions_section',
-            array(
-                'orientation' => 'horizontal',
-                'default_width' => 90,
-                'default_height' => 70
-            )
-        );
-        
-        add_settings_field(
-            'square_dimensions',
-            __('Dimensiones Cuadradas (1:1)', 'cuadros'),
-            array($this, 'render_dimensions_field'),
-            'cuadros-settings',
-            'cuadros_dimensions_section',
-            array(
-                'orientation' => '1:1',
-                'default_width' => 80,
-                'default_height' => 80
-            )
         );
     }
     
@@ -143,13 +95,17 @@ class Cuadros_Admin_Settings {
             return $new_value;
         }
         
-        // Si viene del formulario de admin (tiene colores o dimensiones), sanitizar
-        if (is_array($new_value) && (isset($new_value['paspartu_colors']) || isset($new_value['dimensions']))) {
+        // Si viene del formulario de admin (tiene colores), sanitizar
+        if (is_array($new_value) && isset($new_value['paspartu_colors'])) {
             error_log('[cuadros] sanitize_on_admin_form: detectado formulario admin, sanitizando');
             $sanitized = $this->sanitize_settings($new_value);
             // Preservar marco_images de la configuración actual
             if (isset($current_settings['marco_images'])) {
                 $sanitized['marco_images'] = $current_settings['marco_images'];
+            }
+            // Preservar dimensiones existentes
+            if (isset($current_settings['dimensions'])) {
+                $sanitized['dimensions'] = $current_settings['dimensions'];
             }
             return $sanitized;
         }
@@ -172,32 +128,15 @@ class Cuadros_Admin_Settings {
             }
         }
         
-        // Sanitizar dimensiones
-        if (isset($input['vertical_width']) && isset($input['vertical_height'])) {
-            $sanitized['dimensions']['vertical'] = array(
-                'width' => absint($input['vertical_width']),
-                'height' => absint($input['vertical_height'])
-            );
-        }
-        
-        if (isset($input['horizontal_width']) && isset($input['horizontal_height'])) {
-            $sanitized['dimensions']['horizontal'] = array(
-                'width' => absint($input['horizontal_width']),
-                'height' => absint($input['horizontal_height'])
-            );
-        }
-        
-        if (isset($input['1:1_width']) && isset($input['1:1_height'])) {
-            $sanitized['dimensions']['1:1'] = array(
-                'width' => absint($input['1:1_width']),
-                'height' => absint($input['1:1_height'])
-            );
-        }
-        
         // Mantener imágenes existentes
         $old_settings = get_option('cuadros_settings', array());
         if (isset($old_settings['marco_images'])) {
             $sanitized['marco_images'] = $old_settings['marco_images'];
+        }
+        
+        // Mantener dimensiones existentes
+        if (isset($old_settings['dimensions'])) {
+            $sanitized['dimensions'] = $old_settings['dimensions'];
         }
         
         return $sanitized;
@@ -218,13 +157,6 @@ class Cuadros_Admin_Settings {
         echo '<div id="cuadros-marco-uploader">';
         echo '<button type="button" class="button" id="cuadros-add-marco">' . __('Agregar Nuevo Marco', 'cuadros') . '</button>';
         echo '</div>';
-    }
-    
-    /**
-     * Renderizar sección de dimensiones
-     */
-    public function render_dimensions_section() {
-        echo '<p>' . __('Configura las dimensiones de visualización para los marcos y paspartús. Los valores son porcentajes relativos al contenedor de la imagen.', 'cuadros') . '</p>';
     }
     
     /**
@@ -299,33 +231,6 @@ class Cuadros_Admin_Settings {
                      class="cuadros-color-picker" 
                      data-default-color="' . esc_attr($default) . '" />';
         echo '<p class="description">' . sprintf(__('Color hexadecimal para el paspartú %s.', 'cuadros'), $color_key) . '</p>';
-    }
-    
-    /**
-     * Renderizar campo de dimensiones
-     */
-    public function render_dimensions_field($args) {
-        $settings = get_option('cuadros_settings', array());
-        $orientation = $args['orientation'];
-        
-        $width = isset($settings['dimensions'][$orientation]['width']) ? $settings['dimensions'][$orientation]['width'] : $args['default_width'];
-        $height = isset($settings['dimensions'][$orientation]['height']) ? $settings['dimensions'][$orientation]['height'] : $args['default_height'];
-        
-        echo '<div class="cuadros-dimensions-field">';
-        echo '<label>' . __('Ancho (%):', 'cuadros') . ' ';
-        echo '<input type="number" 
-                     min="1" 
-                     max="100" 
-                     name="cuadros_settings[' . $orientation . '_width]" 
-                     value="' . esc_attr($width) . '" /></label>';
-        
-        echo '<label style="margin-left: 20px;">' . __('Alto (%):', 'cuadros') . ' ';
-        echo '<input type="number" 
-                     min="1" 
-                     max="100" 
-                     name="cuadros_settings[' . $orientation . '_height]" 
-                     value="' . esc_attr($height) . '" /></label>';
-        echo '</div>';
     }
     
     /**

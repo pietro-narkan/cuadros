@@ -135,8 +135,8 @@ class Cuadros_Frontend {
         $marco_images = isset($settings['marco_images']) ? $settings['marco_images'] : array();
         $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
         $dimensions = isset($settings['dimensions']) ? $settings['dimensions'] : array(
-            'vertical' => array('width' => 60, 'height' => 80),
-            'horizontal' => array('width' => 80, 'height' => 60),
+            'vertical' => array('width' => 70, 'height' => 90),
+            'horizontal' => array('width' => 90, 'height' => 70),
             '1:1' => array('width' => 80, 'height' => 80)
         );
         
