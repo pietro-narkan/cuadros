@@ -11,30 +11,29 @@
 .custom-overlay-layer {
     position: absolute !important;
     background-repeat: no-repeat;
-    pointer-events: none; 
+    pointer-events: none;
     transition: opacity 0.3s ease;
-    opacity: 0; 
+    opacity: 0;
     box-sizing: border-box;
     background-size: contain !important;
     background-position: center !important;
     z-index: 20;
     top: 0 !important;
     left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
+    /* width y height se establecerán dinámicamente por JavaScript */
 }
 
 #layer-marco {
-    z-index: 21 !important; 
+    z-index: 21 !important;
 }
 
 #layer-paspartu {
-    z-index: 20 !important; 
+    z-index: 20 !important;
     background-color: transparent;
 }
 
-.custom-overlay-layer.visible { 
-    opacity: 1; 
+.custom-overlay-layer.visible {
+    opacity: 1;
 }
 
 /* Asegurar que las imágenes de producto estén debajo */

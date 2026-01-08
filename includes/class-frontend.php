@@ -160,8 +160,8 @@ class Cuadros_Frontend {
         $marco_images = isset($settings['marco_images']) ? $settings['marco_images'] : array();
         $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
         $dimensions = isset($settings['dimensions']) ? $settings['dimensions'] : array(
-            'vertical' => array('width' => 70, 'height' => 90),
-            'horizontal' => array('width' => 90, 'height' => 70)
+            'vertical' => array('width' => 60, 'height' => 80),
+            'horizontal' => array('width' => 80, 'height' => 60)
         );
         
         // Estructurar imágenes de marcos para JS (claves en minúsculas para búsqueda insensible)
@@ -271,13 +271,12 @@ class Cuadros_Frontend {
                     var imgWidth = $img.width();
                     var imgHeight = $img.height();
 
-                    // Posicionar las capas sobre la imagen (dentro del contenedor)
+                    // Establecer solo propiedades de posicionamiento básicas
+                    // Las dimensiones se calcularán dinámicamente en actualizarCapas()
                     $('#layer-marco, #layer-paspartu').css({
                         'position': 'absolute',
                         'top': '0',
                         'left': '0',
-                        'width': '100%',
-                        'height': '100%',
                         'transform': 'none',
                         'background-size': 'contain',
                         'background-position': 'center',
@@ -350,18 +349,18 @@ class Cuadros_Frontend {
                             marcoWidthPercent = dimensiones[estilo].width;
                             marcoHeightPercent = dimensiones[estilo].height;
                         } else {
-                            // Valores por defecto
+                            // Valores por defecto (actualizados)
                             if (estilo === 'vertical') {
-                                marcoWidthPercent = 70;
-                                marcoHeightPercent = 90;
+                                marcoWidthPercent = 60;
+                                marcoHeightPercent = 80;
                             } else {
-                                marcoWidthPercent = 90;
-                                marcoHeightPercent = 70;
+                                marcoWidthPercent = 80;
+                                marcoHeightPercent = 60;
                             }
                         }
                         
-                        var paspartuWidthPercent = marcoWidthPercent - 3;
-                        var paspartuHeightPercent = marcoHeightPercent - 3;
+                        var paspartuWidthPercent = marcoWidthPercent - 10;
+                        var paspartuHeightPercent = marcoHeightPercent - 10;
                         
                         // Calcular dimensiones en píxeles basadas en la imagen
                         var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
