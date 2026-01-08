@@ -10,7 +10,7 @@ Componentes principales
 - PHP: clases en `includes/`
   - `class-admin-settings.php` — panel de administración, registro de settings y render de campos.
   - `class-assets-manager.php` — uploads, listado y borrado de imágenes (endpoints AJAX).
-  - `class-frontend.php` — inyecta capas en la página de producto y el JS frontend que aplica marcos/paspartús.
+  - `class-frontend.php` — inyecta script en footer que crea y posiciona capas dinámicamente sobre la imagen del producto.
 - JS: `assets/js/admin.js` — UI del admin (modal subida, listar/eliminar marcos) y llamadas AJAX.
 - CSS: `assets/css/frontend.css`, `assets/css/admin.css` — estilos para frontend y admin.
 
@@ -84,10 +84,114 @@ Cambios importantes realizados
 - Se cambió la llave `color` por `modelo` en las nuevas subidas — `class-frontend.php` fue adaptado para aceptar ambos (compatibilidad).
 - JS admin: el modal ahora usa `modelo` (lista tomada desde `pa_marco`) y muestra vista previa del PNG antes de subir.
 
+SOLUCIÓN AL PROBLEMA DE POSICIONAMIENTO (Enero 2026)
+====================================================
+
+Problema Original
+-----------------
+El marco se mostraba desalineado, apareciendo en posiciones incorrectas (esquina superior izquierda, cubriendo el menú del sitio) en lugar de estar centrado sobre la imagen del producto.
+
+Diagnóstico
+-----------
+1. **Creación incorrecta de capas**: Las capas se creaban en PHP usando `woocommerce_before_single_product` hook, lo que las colocaba FUERA de la galería de imágenes.
+2. **Contenedor incorrecto**: El JavaScript intentaba mover las capas a contenedores que no eran los apropiados.
+3. **Cálculos de posición erróneos**: Se usaban métodos como `offset()` y `getBoundingClientRect()` que daban coordenadas absolutas incorrectas.
+4. **Z-index invertido**: El marco aparecía ENCIMA de la imagen en lugar de DETRÁS.
+
+Solución Implementada
+--------------------
+
+### 1. Eliminación del Hook PHP
+**ANTES**: Las capas se creaban en PHP con `add_action('woocommerce_before_single_product', 'maybe_add_overlay_layers')`
+**DESPUÉS**: Se eliminó completamente este hook. Las capas ahora se crean dinámicamente con JavaScript.
+
+### 2. Creación Dinámica de Capas con JavaScript
+```javascript
+// Buscar la imagen del producto
+var $productImage = $('.woocommerce-product-gallery__image').first().find('img').first();
+
+// Buscar el contenedor padre (enlace <a> que envuelve la imagen)
+var $imageLink = $productImage.closest('a');
+var $container = $imageLink.length ? $imageLink : $productImage.parent();
+
+// Crear las capas DENTRO del contenedor de la imagen
+if ($('#layer-marco').length === 0) {
+    $container.prepend('<div id="layer-marco" class="custom-overlay-layer"></div>');
+}
+if ($('#layer-paspartu').length === 0) {
+    $container.prepend('<div id="layer-paspartu" class="custom-overlay-layer"></div>');
+}
+```
+
+### 3. Posicionamiento Correcto
+**Contenedor**: El enlace `<a>` que envuelve la imagen se configura con `position: relative`
+**Capas**: Se posicionan con `position: absolute` relativas al contenedor
+**Cálculo**: Las posiciones se calculan desde (0,0) porque las capas y la imagen están en el mismo contenedor
+
+```javascript
+// Calcular posiciones centradas (relativas al contenedor)
+var marcoLeft = (imgWidth - marcoWidth) / 2;
+var marcoTop = (imgHeight - marcoHeight) / 2;
+```
+
+### 4. Z-index Correcto
+- **Paspartú**: `z-index: 1` (más atrás)
+- **Marco**: `z-index: 2` (encima del paspartú, detrás de la imagen)
+- **Imagen**: `z-index: 10` (encima de todo)
+
+### 5. Dimensiones del Paspartú
+**Problema**: El paspartú no rellenaba completamente el marco
+**Solución**: Se ajustó para que sea ligeramente más pequeño que el marco (2% menos) para quedar perfectamente dentro del borde
+
+```javascript
+// El paspartú debe ser ligeramente más pequeño que el marco para quedar dentro
+var paspartuWidthPercent = marcoWidthPercent - 2;
+var paspartuHeightPercent = marcoHeightPercent - 2;
+```
+
+Resultado Final
+---------------
+- El marco aparece perfectamente centrado sobre la imagen del producto
+- La imagen del producto se ve POR ENCIMA del marco (efecto realista)
+- El paspartú rellena completamente el interior del marco
+- El sistema funciona con diferentes temas de WooCommerce
+- Las capas se reposicionan automáticamente al cambiar variaciones o redimensionar la ventana
+
+Archivos Modificados en la Solución
+-----------------------------------
+1. `includes/class-frontend.php`:
+   - Eliminado hook `woocommerce_before_single_product`
+   - Reescrito completamente el JavaScript para crear capas dinámicamente
+   - Implementado posicionamiento relativo correcto
+   - Ajustadas dimensiones del paspartú
+
+2. `assets/css/frontend.css`:
+   - Eliminadas posiciones fijas (`top: 0`, `left: 0`)
+   - Corregidos z-index para el orden correcto de capas
+   - Configurado `overflow: visible` para permitir marcos más grandes que la imagen
+
+Cómo Probar la Solución
+-----------------------
+1. Ir a una página de producto con atributos `pa_marco` y `pa_paspartu`
+2. Seleccionar un marco y paspartú en las variaciones
+3. Verificar que:
+   - El marco aparece centrado sobre la imagen del producto
+   - La imagen se ve por encima del marco
+   - El paspartú rellena el interior del marco
+   - Al cambiar variaciones, las capas se actualizan correctamente
+
+Logs de Depuración
+------------------
+El sistema incluye logs detallados en la consola del navegador con prefijo `[cuadros]`:
+- Detección de imagen y contenedor
+- Dimensiones calculadas
+- Posiciones aplicadas
+- Marcos y paspartús encontrados/aplicados
+
 Frontend (producto)
 -------------------
-- `class-frontend.php` inyecta dos capas: `#layer-marco` y `#layer-paspartu` en la galería de producto.
-- JavaScript inyectado usa los selects de variaciones (`#pa_marco`, `#pa_paspartu`) para elegir qué marco y color aplicar.
+- `class-frontend.php` crea dinámicamente las capas `#layer-marco` y `#layer-paspartu` dentro del contenedor de la imagen del producto.
+- JavaScript detecta cambios en los selects de variaciones (`#pa_marco`, `#pa_paspartu`) para aplicar marcos y colores.
 - Lógica para orientación: detecta texto tipo `800x1200` en opciones de variación y decide `vertical`/`horizontal`.
 - Busca marcos de forma flexible (coincidencia exacta o case-insensitive) y muestra `background-image` sobre el `#layer-marco`; para paspartú aplica `background-color` desde `paspartu_colors`.
 
@@ -106,7 +210,7 @@ jQuery.ajax({
 });
 ```
    - También revisa la BD: `SELECT option_value FROM wp_options WHERE option_name = 'cuadros_settings';` y busca `marco_images` (serializado).
-4) En un producto con atributos `pa_marco` y `pa_paspartu`, selecciona variaciones y verifica que capas se muestran y se actualiza la imagen/paspartú.
+4) En un producto con atributos `pa_marco` y `pa_paspartu`, selecciona variaciones y verifica que capas se muestran correctamente centradas sobre la imagen.
 
 Depuración (pasos rápidos)
 --------------------------
@@ -119,6 +223,10 @@ Depuración (pasos rápidos)
 - Si eliminar un marco no desaparece de la UI:
   1. Borra desde la UI y ejecuta `cuadros_debug_status` para confirmar si `marco_images` se actualizó.
   2. Revisa `debug.log` para trazas añadidas en `delete_marco` (se registran `delete_marco: ...`).
+- Si el marco no aparece centrado:
+  1. Abre las herramientas de desarrollador (F12) y busca logs con prefijo `[cuadros]`
+  2. Verifica que se detecte correctamente la imagen y el contenedor
+  3. Revisa las dimensiones y posiciones calculadas en los logs
 
 Notas para producción
 ---------------------
@@ -126,17 +234,15 @@ Notas para producción
 - Permisos: los endpoints requieren `manage_options`; para entornos multisite o roles personalizados revisa la política.
 - Caché de objetos: el plugin usa `wp_cache_delete('cuadros_settings','options')` en puntos críticos. En entornos con objetos cache (Redis, Memcached) asegúrate que el flush se propaga.
 - Migración: si antes usabas `color` como key, el frontend sigue soportándolo; las nuevas subidas usan `modelo`.
+- Compatibilidad: La solución funciona con temas estándar de WooCommerce, Elementor y diferentes estructuras de galería.
 
 Archivos modificados (resumen)
 -----------------------------
 - `includes/class-assets-manager.php` — upload, get, delete, modelos, paspartu colors, debug status
 - `includes/class-admin-settings.php` — registro settings, pre-update filter, render dinámico de paspartu colors
-- `includes/class-frontend.php` — adaptación a `modelo` y mejoras de logging y matching
+- `includes/class-frontend.php` — **REESCRITO COMPLETAMENTE** para crear capas dinámicamente y posicionarlas correctamente
 - `assets/js/admin.js` — modal, preview, load models, delete flow
-
-Si quieres que genere además:
-- Un changelog con diffs (extracto de los parches aplicados), o
-- Un README en formato más formal (en `docs/CHANGELOG.md` o `README.md`) — dime cuál prefieres y lo creo.
+- `assets/css/frontend.css` — corregidos z-index y eliminadas posiciones fijas
 
 --
-Documento generado automáticamente por el asistente de desarrollo. Guarda este archivo en `wp-content/plugins/cuadros/DOCUMENTATION.md`.
+Documento actualizado automáticamente por el asistente de desarrollo. Guarda este archivo en `wp-content/plugins/cuadros/DOCUMENTATION.md`.
