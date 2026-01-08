@@ -462,7 +462,7 @@ class Cuadros_Frontend {
             // Ejecutar inicialmente
             setTimeout(actualizarCapas, 500);
             
-            // 6. LIGHTBOX CON MARCOS Y PASPARTÚS
+            // 6. LIGHTBOX PHOTOSWIPE CON MARCOS Y PASPARTÚS
             // Variables para almacenar el estado actual
             var currentMarcoUrl = null;
             var currentPaspartuColor = null;
@@ -621,56 +621,95 @@ class Cuadros_Frontend {
                         }
                     }
                 }
+                
+                console.log('[cuadros] Estado lightbox actualizado:', {marco: currentMarcoUrl, paspartu: currentPaspartuColor, estilo: currentEstilo});
             }
             
-            // Interceptar clic en la imagen para el lightbox
-            $container.on('click', 'a', function(e) {
-                // Solo interceptar si hay marco o paspartú seleccionado
-                if (!currentMarcoUrl && !currentPaspartuColor) {
-                    return; // Dejar comportamiento normal
+            // Observar cuando se abre PhotoSwipe y modificar la imagen
+            var pswpObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) {
+                                // Detectar cuando PhotoSwipe se abre
+                                var $pswp = $(node).hasClass('pswp--open') ? $(node) : $(node).find('.pswp--open');
+                                if ($pswp.length === 0 && node.id === 'photoswipe-fullscreen-dialog') {
+                                    $pswp = $(node);
+                                }
+                                
+                                if ($pswp.length > 0 || (node.classList && node.classList.contains('pswp'))) {
+                                    console.log('[cuadros] PhotoSwipe detectado');
+                                    
+                                    // Solo modificar si hay marco o paspartú
+                                    if (currentMarcoUrl || currentPaspartuColor) {
+                                        setTimeout(function() {
+                                            modificarImagenPhotoSwipe();
+                                        }, 100);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Iniciar observador
+            pswpObserver.observe(document.body, { childList: true, subtree: true });
+            
+            // Función para modificar la imagen en PhotoSwipe
+            function modificarImagenPhotoSwipe() {
+                console.log('[cuadros] Modificando imagen en PhotoSwipe...');
+                
+                // Buscar la imagen activa en PhotoSwipe
+                var $pswpImg = $('.pswp__img:not(.pswp__img--placeholder)').first();
+                
+                if ($pswpImg.length === 0) {
+                    // Intentar con otro selector
+                    $pswpImg = $('.pswp__item:not([style*="display: none"]) .pswp__img').first();
                 }
                 
-                e.preventDefault();
-                e.stopPropagation();
+                if ($pswpImg.length === 0) {
+                    console.log('[cuadros] No se encontró imagen en PhotoSwipe, reintentando...');
+                    setTimeout(modificarImagenPhotoSwipe, 200);
+                    return;
+                }
                 
-                console.log('[cuadros] Generando imagen compuesta para lightbox...');
+                // Verificar si ya fue modificada
+                if ($pswpImg.attr('data-cuadros-modified') === 'true') {
+                    console.log('[cuadros] Imagen ya modificada');
+                    return;
+                }
                 
-                // Mostrar indicador de carga
-                var $loading = $('<div id="cuadros-lightbox-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;"><div style="color:white;font-size:18px;">Generando vista previa...</div></div>');
-                $('body').append($loading);
+                console.log('[cuadros] Generando imagen compuesta...');
                 
                 generarImagenCompuesta(function(dataUrl) {
-                    $loading.remove();
-                    
-                    if (!dataUrl) {
-                        console.log('[cuadros] Error generando imagen, usando lightbox normal');
-                        window.location.href = $productImage.attr('data-large_image') || $productImage.attr('src');
-                        return;
+                    if (dataUrl) {
+                        $pswpImg.attr('src', dataUrl);
+                        $pswpImg.attr('data-cuadros-modified', 'true');
+                        console.log('[cuadros] Imagen de PhotoSwipe reemplazada');
                     }
-                    
-                    // Crear lightbox personalizado
-                    var $lightbox = $('<div id="cuadros-lightbox" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;">' +
-                        '<img src="' + dataUrl + '" style="max-width:90%;max-height:90%;object-fit:contain;box-shadow:0 0 30px rgba(0,0,0,0.5);">' +
-                        '<div style="position:absolute;top:20px;right:30px;color:white;font-size:40px;cursor:pointer;line-height:1;">&times;</div>' +
-                        '</div>');
-                    
-                    $('body').append($lightbox);
-                    
-                    // Cerrar al hacer clic
-                    $lightbox.on('click', function() {
-                        $lightbox.remove();
-                    });
-                    
-                    // Cerrar con ESC
-                    $(document).on('keydown.cuadrosLightbox', function(e) {
-                        if (e.keyCode === 27) {
-                            $lightbox.remove();
-                            $(document).off('keydown.cuadrosLightbox');
-                        }
-                    });
-                    
-                    console.log('[cuadros] Lightbox mostrado con imagen compuesta');
                 });
+            }
+            
+            // También observar cambios de clase en el elemento pswp existente
+            $(document).on('click', '.woocommerce-product-gallery__image a, .woocommerce-product-gallery__trigger', function() {
+                if (currentMarcoUrl || currentPaspartuColor) {
+                    console.log('[cuadros] Clic en galería detectado, preparando modificación...');
+                    
+                    // Esperar a que PhotoSwipe se abra
+                    var checkInterval = setInterval(function() {
+                        var $pswp = $('.pswp--open, #photoswipe-fullscreen-dialog[aria-hidden="false"]');
+                        if ($pswp.length > 0) {
+                            clearInterval(checkInterval);
+                            setTimeout(modificarImagenPhotoSwipe, 150);
+                        }
+                    }, 50);
+                    
+                    // Timeout de seguridad
+                    setTimeout(function() {
+                        clearInterval(checkInterval);
+                    }, 3000);
+                }
             });
             
             // Actualizar estado cuando cambian las selecciones
