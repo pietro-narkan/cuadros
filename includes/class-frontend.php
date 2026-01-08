@@ -461,6 +461,229 @@ class Cuadros_Frontend {
             
             // Ejecutar inicialmente
             setTimeout(actualizarCapas, 500);
+            
+            // 6. LIGHTBOX CON MARCOS Y PASPARTÚS
+            // Variables para almacenar el estado actual
+            var currentMarcoUrl = null;
+            var currentPaspartuColor = null;
+            var currentEstilo = 'vertical';
+            
+            // Función para generar imagen compuesta con Canvas
+            function generarImagenCompuesta(callback) {
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                
+                // Obtener la imagen original en alta resolución
+                var imgSrc = $productImage.attr('data-large_image') || $productImage.attr('data-src') || $productImage.attr('src');
+                
+                var img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = function() {
+                    var imgWidth = img.width;
+                    var imgHeight = img.height;
+                    
+                    // Detectar orientación
+                    var ratio = imgWidth / imgHeight;
+                    var estilo;
+                    if (ratio > 0.95 && ratio < 1.05) {
+                        estilo = '1:1';
+                    } else if (ratio < 1) {
+                        estilo = 'vertical';
+                    } else {
+                        estilo = 'horizontal';
+                    }
+                    
+                    // Obtener dimensiones del marco
+                    var marcoWidthPercent, marcoHeightPercent;
+                    if (dimensiones[estilo]) {
+                        marcoWidthPercent = dimensiones[estilo].width;
+                        marcoHeightPercent = dimensiones[estilo].height;
+                    } else if (estilo === '1:1') {
+                        marcoWidthPercent = 80;
+                        marcoHeightPercent = 80;
+                    } else if (estilo === 'vertical') {
+                        marcoWidthPercent = 60;
+                        marcoHeightPercent = 80;
+                    } else {
+                        marcoWidthPercent = 80;
+                        marcoHeightPercent = 60;
+                    }
+                    
+                    var paspartuWidthPercent = marcoWidthPercent - 2.5;
+                    var paspartuHeightPercent = marcoHeightPercent - 2.5;
+                    
+                    // Calcular dimensiones en píxeles
+                    var marcoWidth, marcoHeight, paspartuWidth, paspartuHeight;
+                    
+                    if (estilo === '1:1') {
+                        var minSide = Math.min(imgWidth, imgHeight);
+                        marcoWidth = (minSide * marcoWidthPercent) / 100;
+                        marcoHeight = marcoWidth;
+                        paspartuWidth = (minSide * paspartuWidthPercent) / 100;
+                        paspartuHeight = paspartuWidth;
+                    } else {
+                        marcoWidth = (imgWidth * marcoWidthPercent) / 100;
+                        marcoHeight = (imgHeight * marcoHeightPercent) / 100;
+                        paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
+                        paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                    }
+                    
+                    // Posiciones centradas
+                    var marcoLeft = (imgWidth - marcoWidth) / 2;
+                    var marcoTop = (imgHeight - marcoHeight) / 2;
+                    var paspartuLeft = (imgWidth - paspartuWidth) / 2;
+                    var paspartuTop = (imgHeight - paspartuHeight) / 2;
+                    
+                    // Configurar canvas
+                    canvas.width = imgWidth;
+                    canvas.height = imgHeight;
+                    
+                    // 1. Dibujar paspartú (si existe)
+                    if (currentPaspartuColor) {
+                        ctx.fillStyle = currentPaspartuColor;
+                        ctx.fillRect(paspartuLeft, paspartuTop, paspartuWidth, paspartuHeight);
+                    }
+                    
+                    // 2. Dibujar imagen del producto
+                    ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
+                    
+                    // 3. Dibujar marco (si existe)
+                    if (currentMarcoUrl) {
+                        var marcoImg = new Image();
+                        marcoImg.crossOrigin = 'anonymous';
+                        
+                        marcoImg.onload = function() {
+                            ctx.drawImage(marcoImg, marcoLeft, marcoTop, marcoWidth, marcoHeight);
+                            callback(canvas.toDataURL('image/png'));
+                        };
+                        
+                        marcoImg.onerror = function() {
+                            console.log('[cuadros] Error cargando marco para lightbox');
+                            callback(canvas.toDataURL('image/png'));
+                        };
+                        
+                        marcoImg.src = currentMarcoUrl;
+                    } else {
+                        callback(canvas.toDataURL('image/png'));
+                    }
+                };
+                
+                img.onerror = function() {
+                    console.log('[cuadros] Error cargando imagen para lightbox');
+                    callback(null);
+                };
+                
+                img.src = imgSrc;
+            }
+            
+            // Actualizar variables de estado cuando cambian los valores
+            function actualizarEstadoLightbox() {
+                var marcoVal = $('#pa_marco').val();
+                var paspartuVal = $('#pa_paspartu').val();
+                
+                // Obtener orientación actual
+                var imgWidth = $productImage.width();
+                var imgHeight = $productImage.height();
+                var ratio = imgWidth / imgHeight;
+                
+                if (ratio > 0.95 && ratio < 1.05) {
+                    currentEstilo = '1:1';
+                } else if (ratio < 1) {
+                    currentEstilo = 'vertical';
+                } else {
+                    currentEstilo = 'horizontal';
+                }
+                
+                // Buscar URL del marco
+                currentMarcoUrl = null;
+                if (marcoVal) {
+                    var marcoValNorm = marcoVal.toLowerCase().replace(/-/g, ' ');
+                    for (var key in urlsMarcos) {
+                        var keyNorm = key.toLowerCase().replace(/-/g, ' ');
+                        if (keyNorm === marcoValNorm || keyNorm.includes(marcoValNorm) || marcoValNorm.includes(keyNorm)) {
+                            if (urlsMarcos[key][currentEstilo]) {
+                                currentMarcoUrl = urlsMarcos[key][currentEstilo];
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Buscar color del paspartú
+                currentPaspartuColor = null;
+                if (paspartuVal) {
+                    var paspartuValNorm = paspartuVal.toLowerCase();
+                    for (var key in coloresPaspartu) {
+                        if (key.toLowerCase() === paspartuValNorm) {
+                            currentPaspartuColor = coloresPaspartu[key];
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Interceptar clic en la imagen para el lightbox
+            $container.on('click', 'a', function(e) {
+                // Solo interceptar si hay marco o paspartú seleccionado
+                if (!currentMarcoUrl && !currentPaspartuColor) {
+                    return; // Dejar comportamiento normal
+                }
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('[cuadros] Generando imagen compuesta para lightbox...');
+                
+                // Mostrar indicador de carga
+                var $loading = $('<div id="cuadros-lightbox-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;"><div style="color:white;font-size:18px;">Generando vista previa...</div></div>');
+                $('body').append($loading);
+                
+                generarImagenCompuesta(function(dataUrl) {
+                    $loading.remove();
+                    
+                    if (!dataUrl) {
+                        console.log('[cuadros] Error generando imagen, usando lightbox normal');
+                        window.location.href = $productImage.attr('data-large_image') || $productImage.attr('src');
+                        return;
+                    }
+                    
+                    // Crear lightbox personalizado
+                    var $lightbox = $('<div id="cuadros-lightbox" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;">' +
+                        '<img src="' + dataUrl + '" style="max-width:90%;max-height:90%;object-fit:contain;box-shadow:0 0 30px rgba(0,0,0,0.5);">' +
+                        '<div style="position:absolute;top:20px;right:30px;color:white;font-size:40px;cursor:pointer;line-height:1;">&times;</div>' +
+                        '</div>');
+                    
+                    $('body').append($lightbox);
+                    
+                    // Cerrar al hacer clic
+                    $lightbox.on('click', function() {
+                        $lightbox.remove();
+                    });
+                    
+                    // Cerrar con ESC
+                    $(document).on('keydown.cuadrosLightbox', function(e) {
+                        if (e.keyCode === 27) {
+                            $lightbox.remove();
+                            $(document).off('keydown.cuadrosLightbox');
+                        }
+                    });
+                    
+                    console.log('[cuadros] Lightbox mostrado con imagen compuesta');
+                });
+            });
+            
+            // Actualizar estado cuando cambian las selecciones
+            $('form.variations_form').on('change', 'select', function() {
+                setTimeout(actualizarEstadoLightbox, 150);
+            });
+            
+            $(document).on('woocommerce_variation_has_changed', function() {
+                setTimeout(actualizarEstadoLightbox, 150);
+            });
+            
+            // Inicializar estado
+            setTimeout(actualizarEstadoLightbox, 600);
         });
         </script>
         <?php
