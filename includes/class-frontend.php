@@ -211,15 +211,12 @@ class Cuadros_Frontend {
             
             // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto
             function encontrarImagenPrincipal() {
-                // Buscar específicamente la primera imagen de la galería
-                var $img = $('.woocommerce-product-gallery__image:first img.wp-post-image');
+                // Buscar específicamente la imagen del producto (no logos ni otras imágenes)
+                var $img = $('figure.woocommerce-product-gallery__image img.wp-post-image').first();
                 if ($img.length === 0) {
-                    $img = $('.woocommerce-product-gallery__image:first img');
+                    $img = $('.woocommerce-product-gallery__image img').first();
                 }
-                if ($img.length === 0) {
-                    $img = $('.woocommerce-product-gallery img:first');
-                }
-                return $img.first();
+                return $img;
             }
             
             // Función para configurar las capas
@@ -231,29 +228,31 @@ class Cuadros_Frontend {
                     return false;
                 }
                 
-                // El contenedor correcto es el figure.woocommerce-product-gallery__image
-                var $figure = $mainImage.closest('figure.woocommerce-product-gallery__image, .woocommerce-product-gallery__image');
+                console.log('[cuadros] Imagen encontrada:', $mainImage.attr('src'));
                 
-                if ($figure.length === 0) {
-                    console.log('[cuadros] No se encontró figure contenedor');
+                // Buscar el enlace <a> que contiene la imagen
+                var $link = $mainImage.closest('a');
+                
+                if ($link.length === 0) {
+                    console.log('[cuadros] No se encontró enlace contenedor');
                     return false;
                 }
                 
-                console.log('[cuadros] Figure contenedor encontrado:', $figure[0].tagName, $figure[0].className);
+                // El enlace será nuestro contenedor de referencia
+                // Configurarlo como posición relativa
+                $link.css({
+                    'position': 'relative',
+                    'display': 'block'
+                });
                 
                 var $divMarco = $('#layer-marco');
                 var $divPaspartu = $('#layer-paspartu');
                 
-                // Mover las capas DENTRO del figure
-                $divPaspartu.detach().prependTo($figure);
-                $divMarco.detach().prependTo($figure);
+                // Mover las capas DENTRO del enlace, ANTES de la imagen
+                $divPaspartu.detach().prependTo($link);
+                $divMarco.detach().prependTo($link);
                 
-                // Configurar el figure como contenedor relativo
-                $figure.css({
-                    'position': 'relative'
-                });
-                
-                // El marco y paspartú deben estar DETRÁS de la imagen
+                // Configurar las capas
                 $divPaspartu.css({
                     'position': 'absolute',
                     'pointer-events': 'none',
@@ -269,27 +268,22 @@ class Cuadros_Frontend {
                     'z-index': '2'
                 });
                 
-                // El enlace y la imagen deben estar ENCIMA
-                $figure.find('a').css({
+                // La imagen debe estar ENCIMA del marco
+                $mainImage.css({
                     'position': 'relative',
                     'z-index': '10',
                     'display': 'block'
                 });
                 
-                $mainImage.css({
-                    'position': 'relative',
-                    'z-index': '10'
-                });
-                
-                console.log('[cuadros] Capas insertadas en figure');
+                console.log('[cuadros] Capas insertadas en enlace:', $link[0]);
                 return true;
             }
             
-            // Configurar capas después de que la página cargue completamente
+            // Configurar capas después de que la página cargue
             setTimeout(function() {
                 configurarCapas();
-                actualizarCapas();
-            }, 300);
+                setTimeout(actualizarCapas, 100);
+            }, 500);
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
             function encontrarTextoTamano() {
@@ -340,27 +334,14 @@ class Cuadros_Frontend {
                 var imgWidth = $currentImage.width();
                 var imgHeight = $currentImage.height();
                 
-                // Obtener el figure contenedor
-                var $figure = $currentImage.closest('figure.woocommerce-product-gallery__image, .woocommerce-product-gallery__image');
-                
-                // Calcular la posición de la imagen dentro del figure
-                // La imagen puede estar dentro de un enlace <a>
-                var $link = $currentImage.parent('a');
+                // Como las capas están dentro del mismo contenedor que la imagen,
+                // y la imagen ocupa todo el espacio, las posiciones son relativas a (0,0)
                 var imgLeft = 0;
                 var imgTop = 0;
                 
-                if ($link.length) {
-                    // Obtener posición del enlace dentro del figure
-                    var linkPos = $link.position();
-                    imgLeft = linkPos.left;
-                    imgTop = linkPos.top;
-                }
-                
                 console.log('[cuadros] Imagen:', {
                     width: imgWidth,
-                    height: imgHeight,
-                    left: imgLeft,
-                    top: imgTop
+                    height: imgHeight
                 });
                 
                 if (imgWidth > 0 && imgHeight > 0) {
