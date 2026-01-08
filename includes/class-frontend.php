@@ -298,8 +298,9 @@ class Cuadros_Frontend {
                 var marcoWidthPercent = dimensiones[estilo] ? dimensiones[estilo].width : (estilo === 'vertical' ? 60 : 80);
                 var marcoHeightPercent = dimensiones[estilo] ? dimensiones[estilo].height : (estilo === 'vertical' ? 80 : 60);
                 
-                var paspartuWidthPercent = marcoWidthPercent - 10;
-                var paspartuHeightPercent = marcoHeightPercent - 10;
+                // El paspartú debe tener las MISMAS dimensiones que el marco para rellenarlo completamente
+                var paspartuWidthPercent = marcoWidthPercent;
+                var paspartuHeightPercent = marcoHeightPercent;
                 
                 // Calcular dimensiones en píxeles
                 var marcoWidth = (imgWidth * marcoWidthPercent) / 100;
