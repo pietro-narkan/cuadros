@@ -267,27 +267,22 @@ class Cuadros_Frontend {
                 // Posicionar las capas exactamente sobre la imagen
                 var $img = $container.find('img').first();
                 if ($img.length > 0) {
-                    // Obtener tamaño de la imagen
-                    var imgWidth = $img.width();
-                    var imgHeight = $img.height();
-
                     // Establecer solo propiedades de posicionamiento básicas
                     // Las dimensiones se calcularán dinámicamente en actualizarCapas()
                     $('#layer-marco, #layer-paspartu').css({
                         'position': 'absolute',
-                        'top': '0',
-                        'left': '0',
                         'transform': 'none',
                         'background-size': 'contain',
                         'background-position': 'center',
                         'background-repeat': 'no-repeat',
-                        'box-sizing': 'border-box'
+                        'box-sizing': 'border-box',
+                        'pointer-events': 'none'
                     });
                     
-                    console.log('[cuadros] Layers positioned, img size:', imgWidth, 'x', imgHeight);
+                    console.log('[cuadros] Layers positioned, container:', $container[0]);
                 }
             } else {
-                console.log('[cuadros] No se encontró contenedor para las capas; capas en:', $('#layer-marco').parent()[0].tagName);
+                console.log('[cuadros] No se encontró contenedor para las capas; capas en:', $('#layer-marco').parent()[0] ? $('#layer-marco').parent()[0].tagName : 'NINGUNO');
             }
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
@@ -338,8 +333,28 @@ class Cuadros_Frontend {
                 }
                 
                 if ($mainImage.length > 0) {
+                    // Método mejorado: usar getBoundingClientRect para obtener posiciones exactas
+                    var imgElement = $mainImage[0];
+                    var containerElement = $container[0];
+                    
+                    // Obtener dimensiones reales de la imagen
                     var imgWidth = $mainImage.width();
                     var imgHeight = $mainImage.height();
+                    
+                    // Obtener posiciones relativas usando getBoundingClientRect
+                    var imgRect = imgElement.getBoundingClientRect();
+                    var containerRect = containerElement.getBoundingClientRect();
+                    
+                    // Calcular offset relativo de la imagen dentro del contenedor
+                    var relativeLeft = imgRect.left - containerRect.left;
+                    var relativeTop = imgRect.top - containerRect.top;
+                    
+                    // Ajustar por scroll y padding del contenedor
+                    var containerPaddingLeft = parseInt($container.css('padding-left')) || 0;
+                    var containerPaddingTop = parseInt($container.css('padding-top')) || 0;
+                    
+                    relativeLeft += containerPaddingLeft;
+                    relativeTop += containerPaddingTop;
                     
                     if (imgWidth > 0 && imgHeight > 0) {
                         // Calcular porcentajes según orientación
@@ -368,11 +383,11 @@ class Cuadros_Frontend {
                         var paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
                         var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
                         
-                        // Calcular posiciones centradas
-                        var marcoLeft = (imgWidth - marcoWidth) / 2;
-                        var marcoTop = (imgHeight - marcoHeight) / 2;
-                        var paspartuLeft = (imgWidth - paspartuWidth) / 2;
-                        var paspartuTop = (imgHeight - paspartuHeight) / 2;
+                        // Calcular posiciones centradas sobre la imagen
+                        var marcoLeft = relativeLeft + (imgWidth - marcoWidth) / 2;
+                        var marcoTop = relativeTop + (imgHeight - marcoHeight) / 2;
+                        var paspartuLeft = relativeLeft + (imgWidth - paspartuWidth) / 2;
+                        var paspartuTop = relativeTop + (imgHeight - paspartuHeight) / 2;
                         
                         // Aplicar dimensiones y posicionamiento en píxeles
                         $divMarco.css({
@@ -395,13 +410,22 @@ class Cuadros_Frontend {
                             'background-repeat': 'no-repeat'
                         });
                         
-                        console.log('[cuadros] Dimensiones calculadas:', {
+                        console.log('[cuadros] Dimensiones calculadas (método mejorado):', {
                             imgWidth: imgWidth,
                             imgHeight: imgHeight,
+                            imgRect: imgRect,
+                            containerRect: containerRect,
+                            relativeLeft: relativeLeft,
+                            relativeTop: relativeTop,
+                            containerPadding: {left: containerPaddingLeft, top: containerPaddingTop},
                             marcoWidth: marcoWidth,
                             marcoHeight: marcoHeight,
+                            marcoLeft: marcoLeft,
+                            marcoTop: marcoTop,
                             paspartuWidth: paspartuWidth,
-                            paspartuHeight: paspartuHeight
+                            paspartuHeight: paspartuHeight,
+                            paspartuLeft: paspartuLeft,
+                            paspartuTop: paspartuTop
                         });
                     }
                 }

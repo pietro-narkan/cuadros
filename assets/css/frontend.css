@@ -18,9 +18,7 @@
     background-size: contain !important;
     background-position: center !important;
     z-index: 20;
-    top: 0 !important;
-    left: 0 !important;
-    /* width y height se establecerán dinámicamente por JavaScript */
+    /* top, left, width y height se establecerán dinámicamente por JavaScript */
 }
 
 #layer-marco {
