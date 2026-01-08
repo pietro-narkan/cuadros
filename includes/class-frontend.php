@@ -467,6 +467,24 @@ class Cuadros_Frontend {
             var currentPaspartuColor = null;
             var currentEstilo = 'vertical';
             var lightboxActivo = false;
+            var currentSlideIndex = 0;
+            var galleryImages = [];
+            
+            // Obtener todas las imágenes de la galería
+            function obtenerImagenesGaleria() {
+                galleryImages = [];
+                $('.woocommerce-product-gallery__image').each(function(index) {
+                    var $img = $(this).find('img');
+                    var $link = $(this).find('a');
+                    galleryImages.push({
+                        index: index,
+                        thumb: $img.attr('src'),
+                        large: $link.attr('href') || $img.attr('data-large_image') || $img.attr('src'),
+                        alt: $img.attr('alt') || ''
+                    });
+                });
+                console.log('[cuadros] Imágenes de galería:', galleryImages.length);
+            }
             
             // Actualizar variables de estado
             function actualizarEstadoLightbox() {
@@ -509,32 +527,15 @@ class Cuadros_Frontend {
                         }
                     }
                 }
+                
+                // Actualizar lista de imágenes
+                obtenerImagenesGaleria();
             }
             
-            // Función para cerrar PhotoSwipe si está abierto
-            function cerrarPhotoSwipe() {
-                var $pswp = $('.pswp--open, #photoswipe-fullscreen-dialog');
-                if ($pswp.length > 0) {
-                    // Intentar cerrar con el botón
-                    $('.pswp__button--close').trigger('click');
-                    // Si no funciona, ocultar directamente
-                    setTimeout(function() {
-                        $pswp.removeClass('pswp--open pswp--visible pswp--animated-in');
-                        $pswp.attr('aria-hidden', 'true');
-                        $pswp.css('opacity', '0');
-                        $('body').removeClass('pswp-open');
-                    }, 50);
-                }
-            }
-            
-            // Función para mostrar lightbox personalizado
-            function mostrarLightboxCuadros() {
+            // Función para mostrar lightbox personalizado con navegación
+            function mostrarLightboxCuadros(startIndex) {
                 lightboxActivo = true;
-                
-                // Cerrar PhotoSwipe si se abrió
-                cerrarPhotoSwipe();
-                
-                var imgSrc = $productImage.attr('data-large_image') || $productImage.attr('src');
+                currentSlideIndex = startIndex || 0;
                 
                 // Crear overlay
                 var $overlay = $('<div id="cuadros-lightbox-overlay"></div>').css({
@@ -547,127 +548,198 @@ class Cuadros_Frontend {
                     zIndex: 9999999,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
+                    justifyContent: 'center'
                 });
                 
                 // Contenedor de la imagen
                 var $imgContainer = $('<div id="cuadros-lightbox-container"></div>').css({
                     position: 'relative',
-                    maxWidth: '90vw',
-                    maxHeight: '90vh'
-                });
-                
-                // Imagen principal
-                var $img = $('<img>').attr('src', imgSrc).css({
-                    maxWidth: '90vw',
-                    maxHeight: '90vh',
-                    display: 'block',
-                    position: 'relative',
-                    zIndex: 10
-                });
-                
-                $imgContainer.append($img);
-                
-                // Esperar a que cargue la imagen para calcular dimensiones
-                $img.on('load', function() {
-                    var imgW = $img.width();
-                    var imgH = $img.height();
-                    
-                    var marcoWidthPercent, marcoHeightPercent;
-                    if (dimensiones[currentEstilo]) {
-                        marcoWidthPercent = dimensiones[currentEstilo].width;
-                        marcoHeightPercent = dimensiones[currentEstilo].height;
-                    } else if (currentEstilo === '1:1') {
-                        marcoWidthPercent = 80;
-                        marcoHeightPercent = 80;
-                    } else if (currentEstilo === 'vertical') {
-                        marcoWidthPercent = 60;
-                        marcoHeightPercent = 80;
-                    } else {
-                        marcoWidthPercent = 80;
-                        marcoHeightPercent = 60;
-                    }
-                    
-                    var paspartuWidthPercent = marcoWidthPercent - 2.5;
-                    var paspartuHeightPercent = marcoHeightPercent - 2.5;
-                    
-                    var marcoW, marcoH, paspartuW, paspartuH;
-                    if (currentEstilo === '1:1') {
-                        var minSide = Math.min(imgW, imgH);
-                        marcoW = (minSide * marcoWidthPercent) / 100;
-                        marcoH = marcoW;
-                        paspartuW = (minSide * paspartuWidthPercent) / 100;
-                        paspartuH = paspartuW;
-                    } else {
-                        marcoW = (imgW * marcoWidthPercent) / 100;
-                        marcoH = (imgH * marcoHeightPercent) / 100;
-                        paspartuW = (imgW * paspartuWidthPercent) / 100;
-                        paspartuH = (imgH * paspartuHeightPercent) / 100;
-                    }
-                    
-                    var marcoL = (imgW - marcoW) / 2;
-                    var marcoT = (imgH - marcoH) / 2;
-                    var paspartuL = (imgW - paspartuW) / 2;
-                    var paspartuT = (imgH - paspartuH) / 2;
-                    
-                    // Agregar paspartú
-                    if (currentPaspartuColor) {
-                        var $paspartu = $('<div></div>').css({
-                            position: 'absolute',
-                            width: paspartuW + 'px',
-                            height: paspartuH + 'px',
-                            left: paspartuL + 'px',
-                            top: paspartuT + 'px',
-                            backgroundColor: currentPaspartuColor,
-                            zIndex: 1
-                        });
-                        $imgContainer.append($paspartu);
-                    }
-                    
-                    // Agregar marco
-                    if (currentMarcoUrl) {
-                        var $marco = $('<div></div>').css({
-                            position: 'absolute',
-                            width: marcoW + 'px',
-                            height: marcoH + 'px',
-                            left: marcoL + 'px',
-                            top: marcoT + 'px',
-                            backgroundImage: 'url(' + currentMarcoUrl + ')',
-                            backgroundSize: '100% 100%',
-                            backgroundRepeat: 'no-repeat',
-                            zIndex: 2,
-                            pointerEvents: 'none'
-                        });
-                        $imgContainer.append($marco);
-                    }
+                    maxWidth: '85vw',
+                    maxHeight: '85vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 });
                 
                 // Botón cerrar
-                var $closeBtn = $('<div>&times;</div>').css({
+                var $closeBtn = $('<div class="cuadros-lb-close">&times;</div>').css({
                     position: 'absolute',
-                    top: '20px',
-                    right: '30px',
+                    top: '15px',
+                    right: '20px',
+                    color: 'white',
+                    fontSize: '45px',
+                    cursor: 'pointer',
+                    zIndex: 10000001,
+                    lineHeight: 1,
+                    padding: '5px 15px'
+                });
+                
+                // Flechas de navegación
+                var $prevBtn = $('<div class="cuadros-lb-prev">&#10094;</div>').css({
+                    position: 'absolute',
+                    left: '15px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     color: 'white',
                     fontSize: '50px',
                     cursor: 'pointer',
-                    zIndex: 10000000,
-                    lineHeight: 1
+                    zIndex: 10000001,
+                    padding: '15px',
+                    userSelect: 'none',
+                    opacity: galleryImages.length > 1 ? 1 : 0
                 });
                 
-                $overlay.append($imgContainer).append($closeBtn);
+                var $nextBtn = $('<div class="cuadros-lb-next">&#10095;</div>').css({
+                    position: 'absolute',
+                    right: '15px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'white',
+                    fontSize: '50px',
+                    cursor: 'pointer',
+                    zIndex: 10000001,
+                    padding: '15px',
+                    userSelect: 'none',
+                    opacity: galleryImages.length > 1 ? 1 : 0
+                });
+                
+                // Contador
+                var $counter = $('<div class="cuadros-lb-counter"></div>').css({
+                    position: 'absolute',
+                    top: '20px',
+                    left: '20px',
+                    color: 'white',
+                    fontSize: '16px',
+                    zIndex: 10000001
+                });
+                
+                $overlay.append($imgContainer).append($closeBtn).append($prevBtn).append($nextBtn).append($counter);
                 $('body').append($overlay);
                 
-                // Función para cerrar nuestro lightbox
+                // Función para mostrar imagen específica
+                function mostrarImagen(index) {
+                    if (index < 0) index = galleryImages.length - 1;
+                    if (index >= galleryImages.length) index = 0;
+                    currentSlideIndex = index;
+                    
+                    var imgData = galleryImages[index];
+                    $imgContainer.empty();
+                    
+                    // Actualizar contador
+                    $counter.text((index + 1) + ' / ' + galleryImages.length);
+                    
+                    // Crear imagen
+                    var $img = $('<img>').attr('src', imgData.large).attr('alt', imgData.alt).css({
+                        maxWidth: '85vw',
+                        maxHeight: '85vh',
+                        display: 'block',
+                        position: 'relative',
+                        zIndex: 10
+                    });
+                    
+                    $imgContainer.append($img);
+                    
+                    // Solo agregar marco/paspartú en la primera imagen (index 0)
+                    if (index === 0 && (currentMarcoUrl || currentPaspartuColor)) {
+                        $img.on('load', function() {
+                            var imgW = $img.width();
+                            var imgH = $img.height();
+                            
+                            var marcoWidthPercent, marcoHeightPercent;
+                            if (dimensiones[currentEstilo]) {
+                                marcoWidthPercent = dimensiones[currentEstilo].width;
+                                marcoHeightPercent = dimensiones[currentEstilo].height;
+                            } else if (currentEstilo === '1:1') {
+                                marcoWidthPercent = 80;
+                                marcoHeightPercent = 80;
+                            } else if (currentEstilo === 'vertical') {
+                                marcoWidthPercent = 60;
+                                marcoHeightPercent = 80;
+                            } else {
+                                marcoWidthPercent = 80;
+                                marcoHeightPercent = 60;
+                            }
+                            
+                            var paspartuWidthPercent = marcoWidthPercent - 2.5;
+                            var paspartuHeightPercent = marcoHeightPercent - 2.5;
+                            
+                            var marcoW, marcoH, paspartuW, paspartuH;
+                            if (currentEstilo === '1:1') {
+                                var minSide = Math.min(imgW, imgH);
+                                marcoW = (minSide * marcoWidthPercent) / 100;
+                                marcoH = marcoW;
+                                paspartuW = (minSide * paspartuWidthPercent) / 100;
+                                paspartuH = paspartuW;
+                            } else {
+                                marcoW = (imgW * marcoWidthPercent) / 100;
+                                marcoH = (imgH * marcoHeightPercent) / 100;
+                                paspartuW = (imgW * paspartuWidthPercent) / 100;
+                                paspartuH = (imgH * paspartuHeightPercent) / 100;
+                            }
+                            
+                            var marcoL = (imgW - marcoW) / 2;
+                            var marcoT = (imgH - marcoH) / 2;
+                            var paspartuL = (imgW - paspartuW) / 2;
+                            var paspartuT = (imgH - paspartuH) / 2;
+                            
+                            // Agregar paspartú
+                            if (currentPaspartuColor) {
+                                var $paspartu = $('<div class="cuadros-lb-paspartu"></div>').css({
+                                    position: 'absolute',
+                                    width: paspartuW + 'px',
+                                    height: paspartuH + 'px',
+                                    left: paspartuL + 'px',
+                                    top: paspartuT + 'px',
+                                    backgroundColor: currentPaspartuColor,
+                                    zIndex: 1
+                                });
+                                $imgContainer.append($paspartu);
+                            }
+                            
+                            // Agregar marco
+                            if (currentMarcoUrl) {
+                                var $marco = $('<div class="cuadros-lb-marco"></div>').css({
+                                    position: 'absolute',
+                                    width: marcoW + 'px',
+                                    height: marcoH + 'px',
+                                    left: marcoL + 'px',
+                                    top: marcoT + 'px',
+                                    backgroundImage: 'url(' + currentMarcoUrl + ')',
+                                    backgroundSize: '100% 100%',
+                                    backgroundRepeat: 'no-repeat',
+                                    zIndex: 2,
+                                    pointerEvents: 'none'
+                                });
+                                $imgContainer.append($marco);
+                            }
+                        });
+                    }
+                }
+                
+                // Mostrar imagen inicial
+                mostrarImagen(currentSlideIndex);
+                
+                // Función para cerrar
                 function cerrarLightbox() {
                     $overlay.remove();
                     lightboxActivo = false;
                     $(document).off('keydown.cuadrosLightbox');
                 }
                 
-                // Cerrar eventos
+                // Eventos de navegación
+                $prevBtn.on('click', function(e) {
+                    e.stopPropagation();
+                    mostrarImagen(currentSlideIndex - 1);
+                });
+                
+                $nextBtn.on('click', function(e) {
+                    e.stopPropagation();
+                    mostrarImagen(currentSlideIndex + 1);
+                });
+                
+                // Cerrar al hacer clic en overlay o botón cerrar
                 $overlay.on('click', function(e) {
-                    if (e.target === $overlay[0] || e.target === $closeBtn[0]) {
+                    if (e.target === $overlay[0]) {
                         cerrarLightbox();
                     }
                 });
@@ -676,49 +748,42 @@ class Cuadros_Frontend {
                     cerrarLightbox();
                 });
                 
+                // Teclado: ESC para cerrar, flechas para navegar
                 $(document).on('keydown.cuadrosLightbox', function(e) {
-                    if (e.keyCode === 27) {
+                    if (e.keyCode === 27) { // ESC
                         cerrarLightbox();
+                    } else if (e.keyCode === 37) { // Flecha izquierda
+                        mostrarImagen(currentSlideIndex - 1);
+                    } else if (e.keyCode === 39) { // Flecha derecha
+                        mostrarImagen(currentSlideIndex + 1);
                     }
                 });
             }
             
-            // Observar y cerrar PhotoSwipe si se abre cuando hay marco/paspartú
-            var pswpObserver = new MutationObserver(function(mutations) {
-                if (!lightboxActivo && (currentMarcoUrl || currentPaspartuColor)) {
-                    mutations.forEach(function(mutation) {
-                        mutation.addedNodes.forEach(function(node) {
-                            if (node.nodeType === 1) {
-                                if (node.classList && (node.classList.contains('pswp') || node.id === 'photoswipe-fullscreen-dialog')) {
-                                    setTimeout(cerrarPhotoSwipe, 10);
-                                }
-                            }
-                        });
-                    });
-                    
-                    // También verificar si PhotoSwipe se hizo visible
-                    var $pswp = $('.pswp--open, #photoswipe-fullscreen-dialog[aria-hidden="false"]');
-                    if ($pswp.length > 0 && !lightboxActivo) {
-                        cerrarPhotoSwipe();
-                    }
-                }
-            });
-            
-            pswpObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden'] });
-            
-            // Interceptar clic en la galería - usar capture phase
+            // Interceptar clic SOLO en la primera imagen de la galería
             document.addEventListener('click', function(e) {
                 var $target = $(e.target);
-                var isGalleryClick = $target.closest('.woocommerce-product-gallery__image a, .woocommerce-product-gallery__trigger, .woocommerce-product-gallery a[href]').length > 0;
                 
-                if (isGalleryClick && (currentMarcoUrl || currentPaspartuColor)) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    mostrarLightboxCuadros();
-                    return false;
+                // Verificar si es la primera imagen de la galería
+                var $galleryImage = $target.closest('.woocommerce-product-gallery__image');
+                if ($galleryImage.length === 0) return;
+                
+                // Obtener índice de la imagen
+                var imageIndex = $galleryImage.index();
+                
+                // Solo interceptar si es la primera imagen (index 0) Y hay marco/paspartú
+                if (imageIndex === 0 && (currentMarcoUrl || currentPaspartuColor)) {
+                    var isClickable = $target.closest('a, .woocommerce-product-gallery__trigger').length > 0 || $target.is('img');
+                    
+                    if (isClickable) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        mostrarLightboxCuadros(0);
+                        return false;
+                    }
                 }
-            }, true); // true = capture phase
+            }, true);
             
             // Actualizar estado
             $('form.variations_form').on('change', 'select', function() {
