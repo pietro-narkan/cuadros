@@ -211,22 +211,15 @@ class Cuadros_Frontend {
             
             // 2. PREPARACIÓN DOM - Buscar la imagen principal del producto
             function encontrarImagenPrincipal() {
-                var selectores = [
-                    '.woocommerce-product-gallery__image:first img',
-                    '.woocommerce-product-gallery__wrapper img:first',
-                    '.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img',
-                    '.woocommerce-product-gallery img:first',
-                    'figure.woocommerce-product-gallery__image img',
-                    '.product-gallery img:first'
-                ];
-                
-                for (var i = 0; i < selectores.length; i++) {
-                    var $img = $(selectores[i]);
-                    if ($img.length > 0 && $img.width() > 0) {
-                        return $img.first();
-                    }
+                // Buscar específicamente la primera imagen de la galería
+                var $img = $('.woocommerce-product-gallery__image:first img.wp-post-image');
+                if ($img.length === 0) {
+                    $img = $('.woocommerce-product-gallery__image:first img');
                 }
-                return $();
+                if ($img.length === 0) {
+                    $img = $('.woocommerce-product-gallery img:first');
+                }
+                return $img.first();
             }
             
             // Función para configurar las capas
@@ -238,83 +231,65 @@ class Cuadros_Frontend {
                     return false;
                 }
                 
-                // Buscar el contenedor .woocommerce-product-gallery__image que contiene la imagen
-                var $imageContainer = $mainImage.closest('.woocommerce-product-gallery__image');
+                // El contenedor correcto es el figure.woocommerce-product-gallery__image
+                var $figure = $mainImage.closest('figure.woocommerce-product-gallery__image, .woocommerce-product-gallery__image');
                 
-                if ($imageContainer.length === 0) {
-                    // Fallback: usar el padre del enlace o de la imagen
-                    var $parent = $mainImage.parent();
-                    if ($parent.is('a')) {
-                        $imageContainer = $parent.parent();
-                    } else {
-                        $imageContainer = $parent;
-                    }
+                if ($figure.length === 0) {
+                    console.log('[cuadros] No se encontró figure contenedor');
+                    return false;
                 }
                 
-                console.log('[cuadros] Contenedor de imagen:', $imageContainer[0] ? $imageContainer[0].className : 'NINGUNO');
+                console.log('[cuadros] Figure contenedor encontrado:', $figure[0].tagName, $figure[0].className);
                 
-                // Mover las capas al contenedor de la imagen
                 var $divMarco = $('#layer-marco');
                 var $divPaspartu = $('#layer-paspartu');
                 
-                if ($divMarco.length && $imageContainer.length) {
-                    $divMarco.detach().appendTo($imageContainer);
-                    $divPaspartu.detach().appendTo($imageContainer);
-                    
-                    // Configurar el contenedor
-                    $imageContainer.css({
-                        'position': 'relative'
-                    });
-                    
-                    // IMPORTANTE: El marco debe estar DETRÁS de la imagen (z-index bajo)
-                    // El paspartú debe estar aún más atrás
-                    $divPaspartu.css({
-                        'position': 'absolute',
-                        'pointer-events': 'none',
-                        'box-sizing': 'border-box',
-                        'z-index': '1'  // Más atrás
-                    });
-                    
-                    $divMarco.css({
-                        'position': 'absolute',
-                        'pointer-events': 'none',
-                        'box-sizing': 'border-box',
-                        'background-repeat': 'no-repeat',
-                        'z-index': '2'  // Detrás de la imagen pero delante del paspartú
-                    });
-                    
-                    // La imagen debe estar encima de todo
-                    $mainImage.css({
-                        'position': 'relative',
-                        'z-index': '10'
-                    });
-                    
-                    // Si la imagen está dentro de un enlace, también ajustar el enlace
-                    var $imgLink = $mainImage.parent('a');
-                    if ($imgLink.length) {
-                        $imgLink.css({
-                            'position': 'relative',
-                            'z-index': '10',
-                            'display': 'block'
-                        });
-                    }
-                    
-                    console.log('[cuadros] Capas configuradas correctamente');
-                    return true;
-                }
+                // Mover las capas DENTRO del figure
+                $divPaspartu.detach().prependTo($figure);
+                $divMarco.detach().prependTo($figure);
                 
-                return false;
+                // Configurar el figure como contenedor relativo
+                $figure.css({
+                    'position': 'relative'
+                });
+                
+                // El marco y paspartú deben estar DETRÁS de la imagen
+                $divPaspartu.css({
+                    'position': 'absolute',
+                    'pointer-events': 'none',
+                    'box-sizing': 'border-box',
+                    'z-index': '1'
+                });
+                
+                $divMarco.css({
+                    'position': 'absolute',
+                    'pointer-events': 'none',
+                    'box-sizing': 'border-box',
+                    'background-repeat': 'no-repeat',
+                    'z-index': '2'
+                });
+                
+                // El enlace y la imagen deben estar ENCIMA
+                $figure.find('a').css({
+                    'position': 'relative',
+                    'z-index': '10',
+                    'display': 'block'
+                });
+                
+                $mainImage.css({
+                    'position': 'relative',
+                    'z-index': '10'
+                });
+                
+                console.log('[cuadros] Capas insertadas en figure');
+                return true;
             }
             
-            // Configurar capas inicialmente
-            var capasConfiguradas = configurarCapas();
-            
-            // Si no se configuraron, intentar de nuevo después de un momento
-            if (!capasConfiguradas) {
-                setTimeout(function() {
-                    configurarCapas();
-                }, 500);
-            }
+            // Configurar capas después de que la página cargue completamente
+            setTimeout(function() {
+                configurarCapas();
+                actualizarCapas();
+            }, 300);
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
             function encontrarTextoTamano() {
@@ -354,7 +329,7 @@ class Cuadros_Frontend {
                 var $divPaspartu = $('#layer-paspartu');
                 var $wrapper = $('.woocommerce-product-gallery__wrapper');
                 
-                // Buscar la imagen principal actualizada
+                // Buscar la imagen principal
                 var $currentImage = encontrarImagenPrincipal();
                 if ($currentImage.length === 0) {
                     console.log('[cuadros] No se encontró imagen principal');
@@ -365,21 +340,27 @@ class Cuadros_Frontend {
                 var imgWidth = $currentImage.width();
                 var imgHeight = $currentImage.height();
                 
-                // Obtener la posición de la imagen usando position() relativo al padre posicionado
-                var imgPosition = $currentImage.position();
+                // Obtener el figure contenedor
+                var $figure = $currentImage.closest('figure.woocommerce-product-gallery__image, .woocommerce-product-gallery__image');
                 
-                // Si la imagen está dentro de un enlace, sumar la posición del enlace
-                var $imgLink = $currentImage.parent('a');
-                if ($imgLink.length) {
-                    var linkPos = $imgLink.position();
-                    imgPosition.left += linkPos.left;
-                    imgPosition.top += linkPos.top;
+                // Calcular la posición de la imagen dentro del figure
+                // La imagen puede estar dentro de un enlace <a>
+                var $link = $currentImage.parent('a');
+                var imgLeft = 0;
+                var imgTop = 0;
+                
+                if ($link.length) {
+                    // Obtener posición del enlace dentro del figure
+                    var linkPos = $link.position();
+                    imgLeft = linkPos.left;
+                    imgTop = linkPos.top;
                 }
                 
-                console.log('[cuadros] Imagen actual:', {
+                console.log('[cuadros] Imagen:', {
                     width: imgWidth,
                     height: imgHeight,
-                    position: imgPosition
+                    left: imgLeft,
+                    top: imgTop
                 });
                 
                 if (imgWidth > 0 && imgHeight > 0) {
@@ -409,11 +390,10 @@ class Cuadros_Frontend {
                     var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
                     
                     // Calcular posiciones centradas SOBRE la imagen
-                    // El marco debe rodear la imagen, así que lo hacemos más grande
-                    var marcoLeft = imgPosition.left + (imgWidth - marcoWidth) / 2;
-                    var marcoTop = imgPosition.top + (imgHeight - marcoHeight) / 2;
-                    var paspartuLeft = imgPosition.left + (imgWidth - paspartuWidth) / 2;
-                    var paspartuTop = imgPosition.top + (imgHeight - paspartuHeight) / 2;
+                    var marcoLeft = imgLeft + (imgWidth - marcoWidth) / 2;
+                    var marcoTop = imgTop + (imgHeight - marcoHeight) / 2;
+                    var paspartuLeft = imgLeft + (imgWidth - paspartuWidth) / 2;
+                    var paspartuTop = imgTop + (imgHeight - paspartuHeight) / 2;
                     
                     // Aplicar estilos al marco
                     $divMarco.css({
