@@ -287,13 +287,27 @@ class Cuadros_Frontend {
                 var paspartuVal = $('#pa_paspartu').val();
                 var tamanoTexto = encontrarTextoTamano();
                 var orientacion = obtenerOrientacion(tamanoTexto);
-                var estilo = orientacion || 'vertical';
-                
-                console.log('[cuadros] actualizarCapas:', {marco: marcoVal, paspartu: paspartuVal, orientation: estilo});
                 
                 // Obtener dimensiones actuales de la imagen
                 var imgWidth = $productImage.width();
                 var imgHeight = $productImage.height();
+                
+                // Si no se detectó orientación del texto, detectar por dimensiones de imagen
+                if (!orientacion && imgWidth > 0 && imgHeight > 0) {
+                    var ratio = imgWidth / imgHeight;
+                    if (ratio > 0.95 && ratio < 1.05) {
+                        orientacion = '1:1';
+                        console.log('[cuadros] Orientación detectada por imagen: 1:1 (cuadrado)');
+                    } else if (ratio < 1) {
+                        orientacion = 'vertical';
+                    } else {
+                        orientacion = 'horizontal';
+                    }
+                }
+                
+                var estilo = orientacion || 'vertical';
+                
+                console.log('[cuadros] actualizarCapas:', {marco: marcoVal, paspartu: paspartuVal, orientation: estilo, tamanoTexto: tamanoTexto});
                 
                 console.log('[cuadros] Dimensiones imagen:', imgWidth, 'x', imgHeight);
                 
