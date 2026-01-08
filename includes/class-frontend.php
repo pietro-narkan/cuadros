@@ -269,8 +269,14 @@ class Cuadros_Frontend {
                 if (match) {
                     var ancho = parseInt(match[1]);
                     var alto = parseInt(match[2]);
-                    if (ancho === alto) return '1:1';
-                    return (ancho < alto) ? 'vertical' : 'horizontal';
+                    console.log('[cuadros] Detectando orientación - ancho:', ancho, 'alto:', alto);
+                    if (ancho === alto) {
+                        console.log('[cuadros] Orientación detectada: 1:1 (cuadrado)');
+                        return '1:1';
+                    }
+                    var orient = (ancho < alto) ? 'vertical' : 'horizontal';
+                    console.log('[cuadros] Orientación detectada:', orient);
+                    return orient;
                 }
                 return null;
             }
