@@ -4,8 +4,6 @@
 .woocommerce-product-gallery__image,
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image {
     position: relative !important;
-    display: inline-block;
-    overflow: hidden;
 }
 
 .custom-overlay-layer {
@@ -17,31 +15,39 @@
     box-sizing: border-box;
     background-size: contain !important;
     background-position: center !important;
-    z-index: 20;
     /* top, left, width y height se establecerán dinámicamente por JavaScript */
 }
 
-#layer-marco {
-    z-index: 21 !important;
+/* IMPORTANTE: El marco debe estar DETRÁS de la imagen del producto */
+#layer-paspartu {
+    z-index: 1 !important;
+    background-color: transparent;
 }
 
-#layer-paspartu {
-    z-index: 20 !important;
-    background-color: transparent;
+#layer-marco {
+    z-index: 2 !important;
 }
 
 .custom-overlay-layer.visible {
     opacity: 1;
 }
 
-/* Asegurar que las imágenes de producto estén debajo */
+/* La imagen del producto debe estar POR ENCIMA del marco */
 .woocommerce-product-gallery__image img,
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img {
-    position: relative;
+    position: relative !important;
     z-index: 10 !important;
     display: block;
     width: 100%;
     height: auto;
+}
+
+/* El enlace de la imagen también debe estar encima */
+.woocommerce-product-gallery__image>a,
+.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image>a {
+    position: relative !important;
+    z-index: 10 !important;
+    display: block;
 }
 
 /* Contenedor del shortcode */
@@ -74,17 +80,9 @@
     z-index: 1;
 }
 
-/* Asegurar que el contenedor de la imagen tenga posicionamiento relativo */
-.woocommerce-product-gallery__image a,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image a {
-    position: relative !important;
-    display: inline-block;
-    overflow: hidden;
-}
-
 /* Asegurar que las capas no se desborden */
 .woocommerce-product-gallery__image,
 .elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image,
 #cuadros-visualizador-container {
-    overflow: hidden !important;
+    overflow: visible !important;
 }

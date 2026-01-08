@@ -229,53 +229,91 @@ class Cuadros_Frontend {
                 return $();
             }
             
-            var $mainImage = encontrarImagenPrincipal();
-            var $container = $();
-            
-            // Estrategia: Colocar las capas en el padre DIRECTO de la imagen
-            if ($mainImage.length > 0) {
-                // Buscar el contenedor inmediato de la imagen (figure, a, o div)
-                var $imgParent = $mainImage.parent();
+            // Función para configurar las capas
+            function configurarCapas() {
+                var $mainImage = encontrarImagenPrincipal();
                 
-                // Si el padre es un enlace <a>, usar el padre del enlace
-                if ($imgParent.is('a')) {
-                    $container = $imgParent.parent();
-                } else {
-                    $container = $imgParent;
+                if ($mainImage.length === 0) {
+                    console.log('[cuadros] No se encontró imagen principal');
+                    return false;
                 }
                 
-                // Si aún no es un buen contenedor, buscar .woocommerce-product-gallery__image
-                if (!$container.length || $container.is('body')) {
-                    $container = $mainImage.closest('.woocommerce-product-gallery__image');
+                // Buscar el contenedor .woocommerce-product-gallery__image que contiene la imagen
+                var $imageContainer = $mainImage.closest('.woocommerce-product-gallery__image');
+                
+                if ($imageContainer.length === 0) {
+                    // Fallback: usar el padre del enlace o de la imagen
+                    var $parent = $mainImage.parent();
+                    if ($parent.is('a')) {
+                        $imageContainer = $parent.parent();
+                    } else {
+                        $imageContainer = $parent;
+                    }
                 }
                 
-                console.log('[cuadros] Imagen encontrada:', $mainImage[0]);
-                console.log('[cuadros] Container seleccionado:', $container[0] ? $container[0].className : 'NINGUNO', 'Tag:', $container[0] ? $container[0].tagName : 'N/A');
+                console.log('[cuadros] Contenedor de imagen:', $imageContainer[0] ? $imageContainer[0].className : 'NINGUNO');
+                
+                // Mover las capas al contenedor de la imagen
+                var $divMarco = $('#layer-marco');
+                var $divPaspartu = $('#layer-paspartu');
+                
+                if ($divMarco.length && $imageContainer.length) {
+                    $divMarco.detach().appendTo($imageContainer);
+                    $divPaspartu.detach().appendTo($imageContainer);
+                    
+                    // Configurar el contenedor
+                    $imageContainer.css({
+                        'position': 'relative'
+                    });
+                    
+                    // IMPORTANTE: El marco debe estar DETRÁS de la imagen (z-index bajo)
+                    // El paspartú debe estar aún más atrás
+                    $divPaspartu.css({
+                        'position': 'absolute',
+                        'pointer-events': 'none',
+                        'box-sizing': 'border-box',
+                        'z-index': '1'  // Más atrás
+                    });
+                    
+                    $divMarco.css({
+                        'position': 'absolute',
+                        'pointer-events': 'none',
+                        'box-sizing': 'border-box',
+                        'background-repeat': 'no-repeat',
+                        'z-index': '2'  // Detrás de la imagen pero delante del paspartú
+                    });
+                    
+                    // La imagen debe estar encima de todo
+                    $mainImage.css({
+                        'position': 'relative',
+                        'z-index': '10'
+                    });
+                    
+                    // Si la imagen está dentro de un enlace, también ajustar el enlace
+                    var $imgLink = $mainImage.parent('a');
+                    if ($imgLink.length) {
+                        $imgLink.css({
+                            'position': 'relative',
+                            'z-index': '10',
+                            'display': 'block'
+                        });
+                    }
+                    
+                    console.log('[cuadros] Capas configuradas correctamente');
+                    return true;
+                }
+                
+                return false;
             }
-
-            // Configurar el contenedor y las capas
-            if ($container.length > 0) {
-                // Mover las capas al contenedor
-                $('#layer-marco').detach().appendTo($container);
-                $('#layer-paspartu').detach().appendTo($container);
-
-                // Asegurar posicionamiento relativo en el contenedor
-                $container.css({
-                    'position': 'relative'
-                });
-
-                // Configurar estilos base de las capas
-                $('#layer-marco, #layer-paspartu').css({
-                    'position': 'absolute',
-                    'pointer-events': 'none',
-                    'box-sizing': 'border-box',
-                    'background-repeat': 'no-repeat',
-                    'z-index': '100'
-                });
-                
-                console.log('[cuadros] Capas configuradas en contenedor');
-            } else {
-                console.log('[cuadros] No se encontró contenedor adecuado');
+            
+            // Configurar capas inicialmente
+            var capasConfiguradas = configurarCapas();
+            
+            // Si no se configuraron, intentar de nuevo después de un momento
+            if (!capasConfiguradas) {
+                setTimeout(function() {
+                    configurarCapas();
+                }, 500);
             }
             
             // 3. LÓGICA DE DETECCIÓN INTELIGENTE
@@ -323,27 +361,25 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                // Obtener el contenedor actual de las capas
-                var $layerContainer = $divMarco.parent();
-                
                 // Obtener dimensiones de la imagen
                 var imgWidth = $currentImage.width();
                 var imgHeight = $currentImage.height();
                 
-                // Usar offset() para obtener posición absoluta en la página
-                var imgOffset = $currentImage.offset();
-                var containerOffset = $layerContainer.offset();
+                // Obtener la posición de la imagen usando position() relativo al padre posicionado
+                var imgPosition = $currentImage.position();
                 
-                // Calcular posición relativa de la imagen respecto al contenedor de las capas
-                var imgRelativeLeft = imgOffset.left - containerOffset.left;
-                var imgRelativeTop = imgOffset.top - containerOffset.top;
+                // Si la imagen está dentro de un enlace, sumar la posición del enlace
+                var $imgLink = $currentImage.parent('a');
+                if ($imgLink.length) {
+                    var linkPos = $imgLink.position();
+                    imgPosition.left += linkPos.left;
+                    imgPosition.top += linkPos.top;
+                }
                 
                 console.log('[cuadros] Imagen actual:', {
                     width: imgWidth,
                     height: imgHeight,
-                    imgOffset: imgOffset,
-                    containerOffset: containerOffset,
-                    relativePosition: { left: imgRelativeLeft, top: imgRelativeTop }
+                    position: imgPosition
                 });
                 
                 if (imgWidth > 0 && imgHeight > 0) {
@@ -373,10 +409,11 @@ class Cuadros_Frontend {
                     var paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
                     
                     // Calcular posiciones centradas SOBRE la imagen
-                    var marcoLeft = imgRelativeLeft + (imgWidth - marcoWidth) / 2;
-                    var marcoTop = imgRelativeTop + (imgHeight - marcoHeight) / 2;
-                    var paspartuLeft = imgRelativeLeft + (imgWidth - paspartuWidth) / 2;
-                    var paspartuTop = imgRelativeTop + (imgHeight - paspartuHeight) / 2;
+                    // El marco debe rodear la imagen, así que lo hacemos más grande
+                    var marcoLeft = imgPosition.left + (imgWidth - marcoWidth) / 2;
+                    var marcoTop = imgPosition.top + (imgHeight - marcoHeight) / 2;
+                    var paspartuLeft = imgPosition.left + (imgWidth - paspartuWidth) / 2;
+                    var paspartuTop = imgPosition.top + (imgHeight - paspartuHeight) / 2;
                     
                     // Aplicar estilos al marco
                     $divMarco.css({
