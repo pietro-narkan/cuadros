@@ -178,29 +178,56 @@ class Cuadros_Frontend {
             
             // ========== FUNCIONES AUXILIARES ==========
             function detectarOrientacion() {
-                // Primero intentar detectar del selector de tamaño
-                var texto = "";
+                // Buscar en TODOS los selectores de variaciones
+                var orientacionDetectada = null;
+                
                 $('form.variations_form select').each(function() {
+                    var val = $(this).val();
                     var opt = $(this).find('option:selected').text();
-                    if (opt && opt.match(/\d+\s*[xX]\s*\d+/)) {
-                        texto = opt;
+                    var textoCompleto = (val + ' ' + opt).toLowerCase();
+                    
+                    console.log('[cuadros] Analizando selector:', textoCompleto);
+                    
+                    // Detectar "1:1" o "1x1" o "cuadrado"
+                    if (textoCompleto.match(/1\s*[:\-x]\s*1/) || textoCompleto.includes('cuadrado') || textoCompleto.includes('square')) {
+                        orientacionDetectada = '1:1';
+                        return false; // break
+                    }
+                    
+                    // Detectar "horizontal" o "landscape"
+                    if (textoCompleto.includes('horizontal') || textoCompleto.includes('landscape') || textoCompleto.includes('apaisado')) {
+                        orientacionDetectada = 'horizontal';
+                        return false;
+                    }
+                    
+                    // Detectar "vertical" o "portrait"
+                    if (textoCompleto.includes('vertical') || textoCompleto.includes('portrait') || textoCompleto.includes('retrato')) {
+                        orientacionDetectada = 'vertical';
+                        return false;
+                    }
+                    
+                    // Detectar dimensiones tipo "800x1200"
+                    var match = textoCompleto.match(/(\d+)\s*[xX]\s*(\d+)/);
+                    if (match) {
+                        var ancho = parseInt(match[1]);
+                        var alto = parseInt(match[2]);
+                        if (Math.abs(ancho - alto) < 5) {
+                            orientacionDetectada = '1:1';
+                        } else {
+                            orientacionDetectada = (ancho < alto) ? 'vertical' : 'horizontal';
+                        }
                         return false;
                     }
                 });
                 
-                if (texto) {
-                    var match = texto.match(/(\d+)\s*[xX]\s*(\d+)/);
-                    if (match) {
-                        var ancho = parseInt(match[1]);
-                        var alto = parseInt(match[2]);
-                        if (Math.abs(ancho - alto) < 5) return '1:1';
-                        return (ancho < alto) ? 'vertical' : 'horizontal';
-                    }
+                if (orientacionDetectada) {
+                    console.log('[cuadros] Orientación detectada del selector:', orientacionDetectada);
+                    return orientacionDetectada;
                 }
                 
                 // Fallback: detectar por dimensiones de imagen
-                var imgW = $productImage.width();
-                var imgH = $productImage.height();
+                var imgW = $productImage[0].naturalWidth || $productImage.width();
+                var imgH = $productImage[0].naturalHeight || $productImage.height();
                 if (imgW > 0 && imgH > 0) {
                     var ratio = imgW / imgH;
                     if (ratio > 0.95 && ratio < 1.05) return '1:1';
@@ -265,20 +292,9 @@ class Cuadros_Frontend {
                 
                 // Si no hay marco ni paspartú, restaurar estado original
                 if (!hayMarco && !hayPaspartu) {
-                    $wrapper.css({
-                        'width': '',
-                        'height': ''
-                    });
-                    $imagenWrapper.css({
-                        'padding': '0',
-                        'width': '',
-                        'height': ''
-                    });
-                    $productImage.css({
-                        'width': '',
-                        'height': '',
-                        'object-fit': ''
-                    });
+                    $wrapper.css({ 'width': '', 'height': '' });
+                    $imagenWrapper.css({ 'padding': '0', 'width': '', 'height': '' });
+                    $productImage.css({ 'width': '', 'height': '', 'object-fit': '', 'max-width': '100%' });
                     $marcoLayer.css('opacity', '0');
                     $paspartuLayer.css('opacity', '0');
                     return;
@@ -289,56 +305,59 @@ class Cuadros_Frontend {
                 var paddingPaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
                 var paddingTotal = paddingMarco + paddingPaspartu;
                 
-                // Obtener dimensiones de la imagen
-                var imgNaturalWidth = $productImage[0].naturalWidth || $productImage.width();
-                var imgNaturalHeight = $productImage[0].naturalHeight || $productImage.height();
-                var imgCurrentWidth = $productImage.width();
-                var imgCurrentHeight = $productImage.height();
+                // Obtener dimensiones originales de la imagen
+                var imgNaturalW = $productImage[0].naturalWidth;
+                var imgNaturalH = $productImage[0].naturalHeight;
                 
-                // Para 1:1, forzar formato cuadrado
+                // Obtener ancho máximo disponible
+                var maxContainerWidth = $container.parent().width() || 400;
+                
+                // Calcular tamaño de la imagen según orientación
+                var imgWidth, imgHeight;
+                
                 if (orientacion === '1:1') {
-                    // Usar el lado mayor para hacer un cuadrado
-                    var sideSize = Math.max(imgCurrentWidth, imgCurrentHeight);
-                    // Limitar al ancho del contenedor padre
-                    var maxWidth = $container.parent().width() || $container.width();
-                    if (sideSize + (paddingTotal * 2) > maxWidth) {
-                        sideSize = maxWidth - (paddingTotal * 2);
-                    }
+                    // Para 1:1: hacer cuadrado usando el lado menor de la imagen natural
+                    var baseSize = Math.min(imgNaturalW, imgNaturalH);
+                    // Limitar al contenedor disponible
+                    var maxSize = maxContainerWidth - (paddingTotal * 2);
+                    imgWidth = imgHeight = Math.min(baseSize, maxSize);
                     
-                    // Aplicar tamaño cuadrado a la imagen
-                    $productImage.css({
-                        'width': sideSize + 'px',
-                        'height': sideSize + 'px',
-                        'object-fit': 'cover'
-                    });
-                    
-                    $imagenWrapper.css({
-                        'padding': paddingTotal + 'px',
-                        'width': '',
-                        'height': ''
-                    });
-                    
-                    console.log('[cuadros] Formato 1:1 - Cuadrado:', sideSize + 'px');
+                    console.log('[cuadros] 1:1 - Cuadrado de', imgWidth, 'px');
+                } else if (orientacion === 'horizontal') {
+                    // Horizontal: ancho > alto
+                    imgWidth = maxContainerWidth - (paddingTotal * 2);
+                    imgHeight = imgWidth * 0.75; // Ratio 4:3 aproximado
                 } else {
-                    // Para vertical/horizontal, mantener proporción original
-                    $productImage.css({
-                        'width': '',
-                        'height': '',
-                        'object-fit': ''
-                    });
-                    
-                    $imagenWrapper.css({
-                        'padding': paddingTotal + 'px',
-                        'width': '',
-                        'height': ''
-                    });
+                    // Vertical: alto > ancho (mantener proporción original pero limitado)
+                    var maxImgWidth = maxContainerWidth - (paddingTotal * 2);
+                    var ratio = imgNaturalH / imgNaturalW;
+                    imgWidth = maxImgWidth;
+                    imgHeight = maxImgWidth * ratio;
                 }
+                
+                // Aplicar estilos a la imagen
+                $productImage.css({
+                    'width': imgWidth + 'px',
+                    'height': imgHeight + 'px',
+                    'max-width': 'none',
+                    'object-fit': 'cover',
+                    'display': 'block'
+                });
+                
+                // Aplicar padding al wrapper de la imagen
+                $imagenWrapper.css({
+                    'padding': paddingTotal + 'px'
+                });
                 
                 // Configurar capa del marco (cubre todo el wrapper)
                 if (hayMarco) {
                     $marcoLayer.css({
                         'background-image': 'url(' + marcoUrl + ')',
-                        'opacity': '1'
+                        'opacity': '1',
+                        'top': '0',
+                        'left': '0',
+                        'right': '0',
+                        'bottom': '0'
                     });
                 } else {
                     $marcoLayer.css({
@@ -347,7 +366,7 @@ class Cuadros_Frontend {
                     });
                 }
                 
-                // Configurar capa del paspartú - debe cubrir desde el borde interno del marco hasta el borde de la imagen
+                // Configurar capa del paspartú - DEBE rellenar entre el marco y la imagen
                 if (hayPaspartu) {
                     $paspartuLayer.css({
                         'top': paddingMarco + 'px',
@@ -362,6 +381,8 @@ class Cuadros_Frontend {
                         'opacity': '0'
                     });
                 }
+                
+                console.log('[cuadros] Dimensiones finales - Imagen:', imgWidth, 'x', imgHeight, '- Padding total:', paddingTotal);
             }
             
             // ========== EVENT LISTENERS ==========
@@ -374,16 +395,8 @@ class Cuadros_Frontend {
             });
             
             $('.reset_variations').on('click', function() {
-                $imagenWrapper.css({
-                    'padding': '0',
-                    'width': '',
-                    'height': ''
-                });
-                $productImage.css({
-                    'width': '',
-                    'height': '',
-                    'object-fit': ''
-                });
+                $imagenWrapper.css({ 'padding': '0', 'width': '', 'height': '' });
+                $productImage.css({ 'width': '', 'height': '', 'object-fit': '', 'max-width': '100%' });
                 $marcoLayer.css('opacity', '0');
                 $paspartuLayer.css('opacity', '0');
             });
