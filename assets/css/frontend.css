@@ -18,7 +18,15 @@
     transition: all 0.3s ease;
 }
 
-/* Capa del marco - cubre todo el wrapper */
+/* Capa del paspartú - DETRÁS del marco, entre marco e imagen */
+#layer-paspartu {
+    position: absolute !important;
+    pointer-events: none;
+    z-index: 1 !important;
+    transition: opacity 0.3s ease;
+}
+
+/* Capa del marco - ENCIMA del paspartú */
 #layer-marco {
     position: absolute !important;
     top: 0 !important;
@@ -28,16 +36,8 @@
     pointer-events: none;
     background-size: 100% 100% !important;
     background-repeat: no-repeat !important;
-    z-index: 1 !important;
-    transition: opacity 0.3s ease;
-}
-
-/* Capa del paspartú - entre el marco y la imagen */
-#layer-paspartu {
-    position: absolute !important;
-    pointer-events: none;
     z-index: 2 !important;
-    transition: opacity 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 
 /* Wrapper de la imagen - contiene la imagen con padding */

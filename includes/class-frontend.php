@@ -142,6 +142,16 @@ class Cuadros_Frontend {
                 'transition': 'all 0.3s ease'
             });
             
+            // PASPARTÚ: z-index 1 (más atrás)
+            $paspartuLayer.css({
+                'position': 'absolute',
+                'pointer-events': 'none',
+                'opacity': '0',
+                'transition': 'opacity 0.3s ease',
+                'z-index': '1'
+            });
+            
+            // MARCO: z-index 2 (encima del paspartú)
             $marcoLayer.css({
                 'position': 'absolute',
                 'top': '0',
@@ -153,17 +163,10 @@ class Cuadros_Frontend {
                 'background-repeat': 'no-repeat',
                 'opacity': '0',
                 'transition': 'opacity 0.3s ease',
-                'z-index': '1'
-            });
-            
-            $paspartuLayer.css({
-                'position': 'absolute',
-                'pointer-events': 'none',
-                'opacity': '0',
-                'transition': 'opacity 0.3s ease',
                 'z-index': '2'
             });
             
+            // IMAGEN: z-index 3 (encima de todo)
             $imagenWrapper.css({
                 'position': 'relative',
                 'z-index': '3',
@@ -182,17 +185,31 @@ class Cuadros_Frontend {
                 var orientacionDetectada = null;
                 
                 $('form.variations_form select').each(function() {
-                    var val = $(this).val();
-                    var opt = $(this).find('option:selected').text();
-                    var textoCompleto = (val + ' ' + opt).toLowerCase();
+                    var selectId = $(this).attr('id') || '';
+                    var val = $(this).val() || '';
+                    var opt = $(this).find('option:selected').text() || '';
+                    var textoCompleto = (selectId + ' ' + val + ' ' + opt).toLowerCase();
                     
-                    console.log('[cuadros] Analizando selector:', textoCompleto);
+                    console.log('[cuadros] Analizando selector ID:', selectId, '- Valor:', val, '- Texto:', opt);
                     
-                    // Detectar "1:1" o "1x1" o "cuadrado"
+                    // Detectar "1:1" o "1x1" o "cuadrado" - PRIORIDAD ALTA
                     if (textoCompleto.match(/1\s*[:\-x]\s*1/) || textoCompleto.includes('cuadrado') || textoCompleto.includes('square')) {
                         orientacionDetectada = '1:1';
+                        console.log('[cuadros] >>> Detectado 1:1');
                         return false; // break
                     }
+                });
+                
+                // Si encontramos 1:1, retornar inmediatamente
+                if (orientacionDetectada === '1:1') {
+                    return '1:1';
+                }
+                
+                // Segunda pasada: buscar horizontal/vertical o dimensiones
+                $('form.variations_form select').each(function() {
+                    var val = $(this).val() || '';
+                    var opt = $(this).find('option:selected').text() || '';
+                    var textoCompleto = (val + ' ' + opt).toLowerCase();
                     
                     // Detectar "horizontal" o "landscape"
                     if (textoCompleto.includes('horizontal') || textoCompleto.includes('landscape') || textoCompleto.includes('apaisado')) {
@@ -206,22 +223,23 @@ class Cuadros_Frontend {
                         return false;
                     }
                     
-                    // Detectar dimensiones tipo "800x1200"
-                    var match = textoCompleto.match(/(\d+)\s*[xX]\s*(\d+)/);
-                    if (match) {
-                        var ancho = parseInt(match[1]);
-                        var alto = parseInt(match[2]);
-                        if (Math.abs(ancho - alto) < 5) {
-                            orientacionDetectada = '1:1';
-                        } else {
-                            orientacionDetectada = (ancho < alto) ? 'vertical' : 'horizontal';
+                    // Detectar dimensiones tipo "60x40" - SOLO si no hay otra detección
+                    if (!orientacionDetectada) {
+                        var match = textoCompleto.match(/(\d+)\s*[xX]\s*(\d+)/);
+                        if (match) {
+                            var ancho = parseInt(match[1]);
+                            var alto = parseInt(match[2]);
+                            if (Math.abs(ancho - alto) <= 5) {
+                                orientacionDetectada = '1:1';
+                            } else {
+                                orientacionDetectada = (ancho < alto) ? 'vertical' : 'horizontal';
+                            }
                         }
-                        return false;
                     }
                 });
                 
                 if (orientacionDetectada) {
-                    console.log('[cuadros] Orientación detectada del selector:', orientacionDetectada);
+                    console.log('[cuadros] Orientación final:', orientacionDetectada);
                     return orientacionDetectada;
                 }
                 
@@ -366,20 +384,20 @@ class Cuadros_Frontend {
                     });
                 }
                 
-                // Configurar capa del paspartú - DEBE rellenar entre el marco y la imagen
+                // El paspartú se aplica como BORDE de la imagen, no como capa separada
+                // Esto crea el efecto de color entre el marco y la imagen
                 if (hayPaspartu) {
-                    $paspartuLayer.css({
-                        'top': paddingMarco + 'px',
-                        'left': paddingMarco + 'px',
-                        'right': paddingMarco + 'px',
-                        'bottom': paddingMarco + 'px',
-                        'background-color': paspartuColor,
-                        'opacity': '1'
+                    $imagenWrapper.css({
+                        'padding': paddingTotal + 'px',
+                        'background-color': paspartuColor
                     });
+                    $paspartuLayer.css('opacity', '0'); // No usamos la capa separada
                 } else {
-                    $paspartuLayer.css({
-                        'opacity': '0'
+                    $imagenWrapper.css({
+                        'padding': paddingTotal + 'px',
+                        'background-color': 'transparent'
                     });
+                    $paspartuLayer.css('opacity', '0');
                 }
                 
                 console.log('[cuadros] Dimensiones finales - Imagen:', imgWidth, 'x', imgHeight, '- Padding total:', paddingTotal);
