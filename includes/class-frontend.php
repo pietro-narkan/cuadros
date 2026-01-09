@@ -331,7 +331,7 @@ class Cuadros_Frontend {
                 
                 var $overlay = $('<div id="cuadros-lightbox"></div>').css({
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.95)', zIndex: 999999,
+                    background: 'rgba(0,0,0,0.9)', zIndex: 999999,
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                 });
                 
@@ -352,15 +352,14 @@ class Cuadros_Frontend {
                     position: 'relative', width: lbW + 'px', height: lbH + 'px'
                 });
                 
-                // Paspartú
-                if (currentPaspartuColor) {
-                    $('<div></div>').css({
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        background: currentPaspartuColor, zIndex: 1
-                    }).appendTo($container);
-                }
+                // Fondo: paspartú o blanco por defecto
+                var fondoColor = currentPaspartuColor || '#ffffff';
+                $('<div></div>').css({
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    background: fondoColor, zIndex: 1
+                }).appendTo($container);
                 
-                // Imagen
+                // Imagen - usar contain para que se vea completa sin recortar
                 var imgSize = currentPaspartuColor ? IMAGEN_PORCENTAJE : (IMAGEN_PORCENTAJE + 5);
                 var imgW = lbW * (imgSize / 100);
                 var imgH = lbH * (imgSize / 100);
@@ -370,10 +369,13 @@ class Cuadros_Frontend {
                     top: (lbH - imgH) / 2 + 'px',
                     left: (lbW - imgW) / 2 + 'px',
                     width: imgW + 'px', height: imgH + 'px',
-                    zIndex: 2, overflow: 'hidden'
+                    zIndex: 2, overflow: 'hidden',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }).append(
                     $('<img>').attr('src', imgSrc).css({
-                        width: '100%', height: '100%', objectFit: 'cover'
+                        maxWidth: '100%', maxHeight: '100%', 
+                        width: 'auto', height: 'auto',
+                        objectFit: 'contain'
                     })
                 ).appendTo($container);
                 
