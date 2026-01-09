@@ -1,20 +1,18 @@
 <?php
 /**
  * Clase para la lógica frontend del plugin Cuadros
+ * 
+ * NUEVO ENFOQUE: El marco y paspartú se posicionan ALREDEDOR de la imagen,
+ * no detrás. La imagen mantiene su tamaño y proporción original.
  */
 class Cuadros_Frontend {
     
     public function __construct() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_shortcode('cuadros_visualizador', array($this, 'render_visualizador_shortcode'));
-        
-        // Script en el footer para manejar todo
         add_action('wp_footer', array($this, 'output_frontend_script_auto'));
     }
     
-    /**
-     * Enqueue scripts y estilos frontend
-     */
     public function enqueue_frontend_scripts() {
         if (!is_product()) {
             return;
@@ -30,75 +28,29 @@ class Cuadros_Frontend {
         wp_enqueue_script('jquery');
     }
     
-    /**
-     * Renderizar visualizador via shortcode
-     */
     public function render_visualizador_shortcode($atts = array()) {
-        // Verificar si estamos en una página de producto
         if (!is_product()) {
-            return '<p class="cuadros-notice">' . __('El visualizador de cuadros solo funciona en páginas de producto.', 'cuadros') . '</p>';
+            return '<p class="cuadros-notice">' . __('El visualizador solo funciona en páginas de producto.', 'cuadros') . '</p>';
         }
         
         global $product;
         
         if (!$product || !$product->is_type('variable')) {
-            return '<p class="cuadros-notice">' . __('El visualizador de cuadros solo funciona con productos variables.', 'cuadros') . '</p>';
+            return '<p class="cuadros-notice">' . __('El visualizador solo funciona con productos variables.', 'cuadros') . '</p>';
         }
         
-        // Verificar si el producto tiene atributos de marco y paspartú
         $attributes = $product->get_attributes();
         $has_marco = isset($attributes['pa_marco']);
         $has_paspartu = isset($attributes['pa_paspartu']);
         
         if (!$has_marco && !$has_paspartu) {
-            return '<p class="cuadros-notice">' . __('Este producto no tiene atributos de marco o paspartú configurados.', 'cuadros') . '</p>';
+            return '<p class="cuadros-notice">' . __('Este producto no tiene atributos de marco o paspartú.', 'cuadros') . '</p>';
         }
         
-        // Enqueue scripts necesarios
         $this->enqueue_frontend_scripts();
-        
-        // Agregar divs para las capas
-        $output = '<div id="cuadros-visualizador-container">';
-        $output .= '<div id="layer-marco" class="custom-overlay-layer"></div>';
-        $output .= '<div id="layer-paspartu" class="custom-overlay-layer"></div>';
-        $output .= '</div>';
-        
-        // Solo incluir el script si no está ya cargado automáticamente
-        // Verificar si ya hay capas en la página (modo automático)
-        if (!did_action('woocommerce_before_single_product')) {
-            // Output del script
-            ob_start();
-            $this->output_frontend_script();
-            $output .= ob_get_clean();
-        } else {
-            // Modo automático ya está activo, solo agregar mensaje
-            $output .= '<script type="text/javascript">
-                console.log("[Cuadros] Shortcode detectado en modo automático.");
-            </script>';
-        }
-        
-        // Agregar mensaje de depuración en la consola
-        $output .= '<script type="text/javascript">
-            console.log("[Cuadros] Shortcode cargado correctamente.");
-            console.log("[Cuadros] Contenedor ID: #cuadros-visualizador-container");
-            console.log("[Cuadros] Posición en DOM:", document.getElementById("cuadros-visualizador-container") ? "ENCONTRADO" : "NO ENCONTRADO");
-            if (document.getElementById("cuadros-visualizador-container")) {
-                var rect = document.getElementById("cuadros-visualizador-container").getBoundingClientRect();
-                console.log("[Cuadros] Posición (x, y):", rect.left + "px, " + rect.top + "px");
-                console.log("[Cuadros] Dimensión (ancho x alto):", rect.width + "px x " + rect.height + "px");
-                console.log("[Cuadros] Estilos aplicados:", window.getComputedStyle(document.getElementById("cuadros-visualizador-container")));
-            }
-            // Verificar si hay capas
-            console.log("[Cuadros] Capa marco:", document.getElementById("layer-marco") ? "ENCONTRADA" : "NO ENCONTRADA");
-            console.log("[Cuadros] Capa paspartú:", document.getElementById("layer-paspartu") ? "ENCONTRADA" : "NO ENCONTRADA");
-        </script>';
-        
-        return $output;
+        return '<div id="cuadros-visualizador-container"></div>';
     }
     
-    /**
-     * Output del script frontend automático (sin shortcode)
-     */
     public function output_frontend_script_auto() {
         if (!is_product()) {
             return;
@@ -110,54 +62,33 @@ class Cuadros_Frontend {
             return;
         }
         
-        // Verificar si el producto tiene atributos de marco y paspartú
         $attributes = $product->get_attributes();
-        $has_marco = isset($attributes['pa_marco']);
-        $has_paspartu = isset($attributes['pa_paspartu']);
-        
-        if (!$has_marco && !$has_paspartu) {
+        if (!isset($attributes['pa_marco']) && !isset($attributes['pa_paspartu'])) {
             return;
         }
         
-        // Output del script
         $this->output_frontend_script();
     }
     
-    /**
-     * Output del script frontend con la lógica de visualización
-     */
     public function output_frontend_script() {
-        // Este método ahora se llama tanto automáticamente como desde el shortcode
-        
         $settings = get_option('cuadros_settings', array());
         
-        // Preparar datos para JavaScript
         $marco_images = isset($settings['marco_images']) ? $settings['marco_images'] : array();
         $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
-        $dimensions = isset($settings['dimensions']) ? $settings['dimensions'] : array(
-            'vertical' => array('width' => 70, 'height' => 90),
-            'horizontal' => array('width' => 90, 'height' => 70),
-            '1:1' => array('width' => 80, 'height' => 80)
-        );
         
-        // Estructurar imágenes de marcos para JS (claves en minúsculas para búsqueda insensible)
+        // Estructurar marcos para JS
         $urls_marcos = array();
         foreach ($marco_images as $marco) {
-            // Soportar tanto 'modelo' (nuevo) como 'color' (antiguo)
             $key = isset($marco['modelo']) ? $marco['modelo'] : (isset($marco['color']) ? $marco['color'] : null);
-            
             if ($key && isset($marco['orientation']) && isset($marco['url'])) {
-                // Usar minúsculas para la clave
                 $normalized_key = strtolower($key);
                 if (!isset($urls_marcos[$normalized_key])) {
                     $urls_marcos[$normalized_key] = array();
                 }
-                // Guardar la URL directamente
                 $urls_marcos[$normalized_key][$marco['orientation']] = $marco['url'];
             }
         }
         
-        // Evitar cargar el script dos veces
         if (defined('CUADROS_SCRIPT_LOADED')) {
             return;
         }
@@ -167,118 +98,87 @@ class Cuadros_Frontend {
         <script type="text/javascript">
         jQuery(document).ready(function($) {
             
-            // 1. CONFIGURACIÓN DE DATOS
-            var urlsMarcosRaw = <?php echo json_encode($urls_marcos); ?>;
+            // ========== CONFIGURACIÓN ==========
+            var urlsMarcos = <?php echo json_encode($urls_marcos); ?>;
             var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
-            var dimensiones = <?php echo json_encode($dimensions); ?>;
             
-            var urlsMarcos = {};
-            for (var key in urlsMarcosRaw) {
-                urlsMarcos[key] = {};
-                for (var orient in urlsMarcosRaw[key]) {
-                    urlsMarcos[key][orient] = urlsMarcosRaw[key][orient];
-                }
-            }
+            // Grosor del marco y paspartú en píxeles (ajustable)
+            var GROSOR_MARCO = 15;      // Grosor del borde del marco
+            var GROSOR_PASPARTU = 25;   // Grosor del paspartú (espacio entre marco e imagen)
             
-            console.log('[cuadros] Marcos disponibles:', urlsMarcos);
-            console.log('[cuadros] Paspartús disponibles:', coloresPaspartu);
+            console.log('[cuadros] Marcos:', Object.keys(urlsMarcos));
+            console.log('[cuadros] Paspartús:', Object.keys(coloresPaspartu));
             
-            // 2. CREAR LAS CAPAS DINÁMICAMENTE
-            // Buscar la imagen del producto
-            var $productImage = $('.woocommerce-product-gallery__image').first().find('img').first();
+            // ========== BUSCAR ELEMENTOS ==========
+            var $galleryImage = $('.woocommerce-product-gallery__image').first();
+            var $productImage = $galleryImage.find('img').first();
+            var $imageLink = $productImage.closest('a');
+            var $container = $imageLink.length ? $imageLink : $productImage.parent();
             
             if ($productImage.length === 0) {
                 console.log('[cuadros] No se encontró imagen del producto');
                 return;
             }
             
-            // Buscar el contenedor padre de la imagen (el <a> o el figure)
-            var $imageLink = $productImage.closest('a');
-            var $container = $imageLink.length ? $imageLink : $productImage.parent();
+            // ========== CREAR ESTRUCTURA ==========
+            // Crear wrapper que contendrá todo (marco + paspartú + imagen)
+            var $wrapper = $('<div id="cuadros-wrapper"></div>');
+            var $marcoLayer = $('<div id="layer-marco"></div>');
+            var $paspartuLayer = $('<div id="layer-paspartu"></div>');
+            var $imagenWrapper = $('<div id="cuadros-imagen-wrapper"></div>');
             
-            console.log('[cuadros] Contenedor encontrado:', $container[0].tagName);
+            // Insertar wrapper antes de la imagen y mover la imagen dentro
+            $productImage.before($wrapper);
+            $wrapper.append($marcoLayer);
+            $wrapper.append($paspartuLayer);
+            $wrapper.append($imagenWrapper);
+            $imagenWrapper.append($productImage);
             
-            // Configurar el contenedor
-            $container.css({
+            // ========== ESTILOS BASE ==========
+            $wrapper.css({
                 'position': 'relative',
-                'display': 'block'
+                'display': 'inline-block',
+                'max-width': '100%',
+                'transition': 'all 0.3s ease'
             });
             
-            // Crear las capas si no existen
-            if ($('#layer-marco').length === 0) {
-                $container.prepend('<div id="layer-marco" class="custom-overlay-layer"></div>');
-            }
-            if ($('#layer-paspartu').length === 0) {
-                $container.prepend('<div id="layer-paspartu" class="custom-overlay-layer"></div>');
-            }
-            
-            var $divMarco = $('#layer-marco');
-            var $divPaspartu = $('#layer-paspartu');
-            
-            // Asegurar que las capas estén en el contenedor correcto
-            if (!$divMarco.parent().is($container)) {
-                $divMarco.detach().prependTo($container);
-            }
-            if (!$divPaspartu.parent().is($container)) {
-                $divPaspartu.detach().prependTo($container);
-            }
-            
-            // Estilos base para las capas - DETRÁS de la imagen
-            $divPaspartu.css({
+            $marcoLayer.css({
                 'position': 'absolute',
+                'top': '0',
+                'left': '0',
+                'right': '0',
+                'bottom': '0',
                 'pointer-events': 'none',
-                'z-index': '1',
-                'opacity': '0',
-                'transition': 'opacity 0.3s, width 0.3s, height 0.3s, left 0.3s, top 0.3s'
-            });
-            
-            $divMarco.css({
-                'position': 'absolute',
-                'pointer-events': 'none',
-                'z-index': '2',
-                'opacity': '0',
-                'transition': 'opacity 0.3s, width 0.3s, height 0.3s, left 0.3s, top 0.3s',
                 'background-size': '100% 100%',
-                'background-repeat': 'no-repeat'
+                'background-repeat': 'no-repeat',
+                'opacity': '0',
+                'transition': 'opacity 0.3s ease',
+                'z-index': '1'
             });
             
-            // La imagen debe estar ENCIMA y se redimensionará para caber dentro del paspartú
-            $productImage.css({
+            $paspartuLayer.css({
                 'position': 'absolute',
-                'z-index': '10',
-                'transition': 'width 0.3s, height 0.3s, left 0.3s, top 0.3s'
+                'pointer-events': 'none',
+                'opacity': '0',
+                'transition': 'opacity 0.3s ease',
+                'z-index': '2'
             });
             
-            // Guardar dimensiones originales de la imagen
-            var originalImgWidth = $productImage.width();
-            var originalImgHeight = $productImage.height();
+            $imagenWrapper.css({
+                'position': 'relative',
+                'z-index': '3',
+                'line-height': '0'
+            });
             
-            console.log('[cuadros] Capas creadas y configuradas');
+            $productImage.css({
+                'display': 'block',
+                'max-width': '100%',
+                'height': 'auto'
+            });
             
-            // Asegurar que el contenedor tenga altura fija basada en la imagen original
-            function actualizarAlturaContenedor() {
-                if (originalImgHeight > 0) {
-                    $container.css({
-                        'min-height': originalImgHeight + 'px'
-                    });
-                }
-            }
-            
-            // Esperar a que la imagen cargue para obtener dimensiones originales
-            if ($productImage[0].complete) {
-                originalImgWidth = $productImage.width();
-                originalImgHeight = $productImage.height();
-                actualizarAlturaContenedor();
-            } else {
-                $productImage.on('load', function() {
-                    originalImgWidth = $productImage.width();
-                    originalImgHeight = $productImage.height();
-                    actualizarAlturaContenedor();
-                });
-            }
-            
-            // 3. FUNCIONES AUXILIARES
-            function encontrarTextoTamano() {
+            // ========== FUNCIONES AUXILIARES ==========
+            function detectarOrientacion() {
+                // Primero intentar detectar del selector de tamaño
                 var texto = "";
                 $('form.variations_form select').each(function() {
                     var opt = $(this).find('option:selected').text();
@@ -287,268 +187,161 @@ class Cuadros_Frontend {
                         return false;
                     }
                 });
-                return texto;
+                
+                if (texto) {
+                    var match = texto.match(/(\d+)\s*[xX]\s*(\d+)/);
+                    if (match) {
+                        var ancho = parseInt(match[1]);
+                        var alto = parseInt(match[2]);
+                        if (Math.abs(ancho - alto) < 5) return '1:1';
+                        return (ancho < alto) ? 'vertical' : 'horizontal';
+                    }
+                }
+                
+                // Fallback: detectar por dimensiones de imagen
+                var imgW = $productImage.width();
+                var imgH = $productImage.height();
+                if (imgW > 0 && imgH > 0) {
+                    var ratio = imgW / imgH;
+                    if (ratio > 0.95 && ratio < 1.05) return '1:1';
+                    return (ratio < 1) ? 'vertical' : 'horizontal';
+                }
+                
+                return 'vertical';
             }
             
-            function obtenerOrientacion(texto) {
-                if (!texto) return null;
-                var match = texto.match(/(\d+)\s*[xX]\s*(\d+)/);
-                if (match) {
-                    var ancho = parseInt(match[1]);
-                    var alto = parseInt(match[2]);
-                    console.log('[cuadros] Detectando orientación - ancho:', ancho, 'alto:', alto);
-                    if (ancho === alto) {
-                        console.log('[cuadros] Orientación detectada: 1:1 (cuadrado)');
-                        return '1:1';
+            function buscarMarco(marcoVal, orientacion) {
+                if (!marcoVal) return null;
+                
+                var marcoValNorm = marcoVal.toLowerCase().replace(/-/g, ' ');
+                
+                for (var key in urlsMarcos) {
+                    var keyNorm = key.toLowerCase().replace(/-/g, ' ');
+                    if (keyNorm === marcoValNorm || keyNorm.includes(marcoValNorm) || marcoValNorm.includes(keyNorm)) {
+                        // Buscar orientación exacta o fallback
+                        if (urlsMarcos[key][orientacion]) {
+                            return urlsMarcos[key][orientacion];
+                        }
+                        // Fallback: usar cualquier orientación disponible
+                        for (var orient in urlsMarcos[key]) {
+                            return urlsMarcos[key][orient];
+                        }
                     }
-                    var orient = (ancho < alto) ? 'vertical' : 'horizontal';
-                    console.log('[cuadros] Orientación detectada:', orient);
-                    return orient;
                 }
                 return null;
             }
             
-            // 4. FUNCIÓN PRINCIPAL
-            function actualizarCapas() {
+            function buscarPaspartu(paspartuVal) {
+                if (!paspartuVal) return null;
+                
+                var paspartuValNorm = paspartuVal.toLowerCase();
+                for (var key in coloresPaspartu) {
+                    if (key.toLowerCase() === paspartuValNorm) {
+                        return coloresPaspartu[key];
+                    }
+                }
+                return null;
+            }
+            
+            // ========== FUNCIÓN PRINCIPAL ==========
+            function actualizarVisualizacion() {
                 var marcoVal = $('#pa_marco').val();
                 var paspartuVal = $('#pa_paspartu').val();
-                var tamanoTexto = encontrarTextoTamano();
-                var orientacion = obtenerOrientacion(tamanoTexto);
+                var orientacion = detectarOrientacion();
                 
-                // Usar dimensiones originales del contenedor
-                var imgWidth = originalImgWidth || $container.width();
-                var imgHeight = originalImgHeight || $container.height();
+                var marcoUrl = buscarMarco(marcoVal, orientacion);
+                var paspartuColor = buscarPaspartu(paspartuVal);
                 
-                // Si no se detectó orientación del texto, detectar por dimensiones de imagen
-                if (!orientacion && imgWidth > 0 && imgHeight > 0) {
-                    var ratio = imgWidth / imgHeight;
-                    if (ratio > 0.95 && ratio < 1.05) {
-                        orientacion = '1:1';
-                        console.log('[cuadros] Orientación detectada por imagen: 1:1 (cuadrado)');
-                    } else if (ratio < 1) {
-                        orientacion = 'vertical';
-                    } else {
-                        orientacion = 'horizontal';
-                    }
-                }
+                var hayMarco = marcoUrl !== null;
+                var hayPaspartu = paspartuColor !== null;
                 
-                var estilo = orientacion || 'vertical';
-                
-                console.log('[cuadros] actualizarCapas:', {marco: marcoVal, paspartu: paspartuVal, orientation: estilo, tamanoTexto: tamanoTexto});
-                
-                console.log('[cuadros] Dimensiones contenedor:', imgWidth, 'x', imgHeight);
-                
-                if (imgWidth <= 0 || imgHeight <= 0) {
-                    console.log('[cuadros] Contenedor sin dimensiones válidas');
-                    return;
-                }
-                
-                // Verificar si hay marco o paspartú seleccionado
-                var hayMarco = marcoVal && marcoVal !== '';
-                var hayPaspartu = paspartuVal && paspartuVal !== '';
-                
-                // Si no hay marco ni paspartú, restaurar imagen a tamaño original
-                if (!hayMarco && !hayPaspartu) {
-                    $productImage.css({
-                        'position': 'relative',
-                        'width': '100%',
-                        'height': 'auto',
-                        'left': '0',
-                        'top': '0'
-                    });
-                    $divMarco.css('opacity', '0');
-                    $divPaspartu.css('opacity', '0');
-                    console.log('[cuadros] Sin marco/paspartú - imagen restaurada');
-                    return;
-                }
-                
-                // Calcular dimensiones del marco según orientación
-                var marcoWidthPercent, marcoHeightPercent;
-                if (dimensiones[estilo]) {
-                    marcoWidthPercent = dimensiones[estilo].width;
-                    marcoHeightPercent = dimensiones[estilo].height;
-                } else if (estilo === '1:1') {
-                    marcoWidthPercent = 80;
-                    marcoHeightPercent = 80;
-                } else if (estilo === 'vertical') {
-                    marcoWidthPercent = 60;
-                    marcoHeightPercent = 80;
-                } else {
-                    marcoWidthPercent = 80;
-                    marcoHeightPercent = 60;
-                }
-                
-                // El paspartú debe ser ligeramente más pequeño que el marco para quedar dentro
-                var paspartuWidthPercent = marcoWidthPercent - 2.5;
-                var paspartuHeightPercent = marcoHeightPercent - 2.5;
-                
-                // La imagen del producto debe caber DENTRO del paspartú
-                // Dejamos un margen para que se vea el paspartú alrededor
-                var imagenWidthPercent = paspartuWidthPercent - 8; // 8% menos que el paspartú
-                var imagenHeightPercent = paspartuHeightPercent - 8;
-                
-                // Calcular dimensiones en píxeles
-                var marcoWidth, marcoHeight, paspartuWidth, paspartuHeight, imagenWidth, imagenHeight;
-                
-                if (estilo === '1:1') {
-                    // Para formato cuadrado, usar el lado menor como base para mantener proporción 1:1
-                    var minSide = Math.min(imgWidth, imgHeight);
-                    marcoWidth = (minSide * marcoWidthPercent) / 100;
-                    marcoHeight = marcoWidth; // Forzar cuadrado
-                    paspartuWidth = (minSide * paspartuWidthPercent) / 100;
-                    paspartuHeight = paspartuWidth; // Forzar cuadrado
-                    imagenWidth = (minSide * imagenWidthPercent) / 100;
-                    imagenHeight = imagenWidth; // Forzar cuadrado
-                } else {
-                    marcoWidth = (imgWidth * marcoWidthPercent) / 100;
-                    marcoHeight = (imgHeight * marcoHeightPercent) / 100;
-                    paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
-                    paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
-                    imagenWidth = (imgWidth * imagenWidthPercent) / 100;
-                    imagenHeight = (imgHeight * imagenHeightPercent) / 100;
-                }
-                
-                // Calcular posiciones centradas (relativas al contenedor)
-                var marcoLeft = (imgWidth - marcoWidth) / 2;
-                var marcoTop = (imgHeight - marcoHeight) / 2;
-                var paspartuLeft = (imgWidth - paspartuWidth) / 2;
-                var paspartuTop = (imgHeight - paspartuHeight) / 2;
-                var imagenLeft = (imgWidth - imagenWidth) / 2;
-                var imagenTop = (imgHeight - imagenHeight) / 2;
-                
-                console.log('[cuadros] Posiciones:', {
-                    marcoLeft: marcoLeft,
-                    marcoTop: marcoTop,
-                    marcoWidth: marcoWidth,
-                    marcoHeight: marcoHeight,
-                    imagenWidth: imagenWidth,
-                    imagenHeight: imagenHeight
+                console.log('[cuadros] Actualizar:', {
+                    marco: marcoVal,
+                    paspartu: paspartuVal,
+                    orientacion: orientacion,
+                    hayMarco: hayMarco,
+                    hayPaspartu: hayPaspartu
                 });
                 
-                // Aplicar posiciones al marco
-                $divMarco.css({
-                    'width': marcoWidth + 'px',
-                    'height': marcoHeight + 'px',
-                    'left': marcoLeft + 'px',
-                    'top': marcoTop + 'px'
+                // Calcular padding según lo que esté activo
+                var paddingMarco = hayMarco ? GROSOR_MARCO : 0;
+                var paddingPaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
+                var paddingTotal = paddingMarco + paddingPaspartu;
+                
+                // Aplicar padding al wrapper de la imagen (esto crea el espacio para marco y paspartú)
+                $imagenWrapper.css({
+                    'padding': paddingTotal + 'px'
                 });
                 
-                // Aplicar posiciones al paspartú
-                $divPaspartu.css({
-                    'width': paspartuWidth + 'px',
-                    'height': paspartuHeight + 'px',
-                    'left': paspartuLeft + 'px',
-                    'top': paspartuTop + 'px'
-                });
-                
-                // Redimensionar y posicionar la imagen del producto DENTRO del paspartú
-                $productImage.css({
-                    'position': 'absolute',
-                    'width': imagenWidth + 'px',
-                    'height': imagenHeight + 'px',
-                    'left': imagenLeft + 'px',
-                    'top': imagenTop + 'px',
-                    'object-fit': 'cover' // Mantener proporción y cubrir el área
-                });
-                
-                // Buscar y mostrar marco
-                var marcoEncontrado = null;
-                if (marcoVal) {
-                    var marcoValNorm = marcoVal.toLowerCase().replace(/-/g, ' ');
-                    
-                    console.log('[cuadros] Buscando marco:', marcoValNorm, 'con orientación:', estilo);
-                    
-                    // Buscar coincidencia exacta o parcial
-                    for (var key in urlsMarcos) {
-                        var keyNorm = key.toLowerCase().replace(/-/g, ' ');
-                        if (keyNorm === marcoValNorm || keyNorm.includes(marcoValNorm) || marcoValNorm.includes(keyNorm)) {
-                            console.log('[cuadros] Marco encontrado:', key, 'orientaciones disponibles:', Object.keys(urlsMarcos[key]));
-                            if (urlsMarcos[key][estilo]) {
-                                marcoEncontrado = urlsMarcos[key][estilo];
-                                console.log('[cuadros] Usando orientación:', estilo);
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if (marcoEncontrado) {
-                    console.log('[cuadros] Mostrando marco:', marcoEncontrado);
-                    $divMarco.css({
-                        'background-image': 'url(' + marcoEncontrado + ')',
+                // Configurar capa del marco (cubre todo el wrapper)
+                if (hayMarco) {
+                    $marcoLayer.css({
+                        'background-image': 'url(' + marcoUrl + ')',
                         'opacity': '1'
                     });
                 } else {
-                    $divMarco.css('opacity', '0');
+                    $marcoLayer.css({
+                        'background-image': 'none',
+                        'opacity': '0'
+                    });
                 }
                 
-                // Buscar y mostrar paspartú
-                var paspartuEncontrado = null;
-                if (paspartuVal) {
-                    var paspartuValNorm = paspartuVal.toLowerCase();
-                    for (var key in coloresPaspartu) {
-                        if (key.toLowerCase() === paspartuValNorm) {
-                            paspartuEncontrado = coloresPaspartu[key];
-                            break;
-                        }
-                    }
-                }
-                
-                if (paspartuEncontrado) {
-                    console.log('[cuadros] Mostrando paspartú:', paspartuEncontrado);
-                    $divPaspartu.css({
-                        'background-color': paspartuEncontrado,
+                // Configurar capa del paspartú (entre el marco y la imagen)
+                if (hayPaspartu) {
+                    $paspartuLayer.css({
+                        'top': paddingMarco + 'px',
+                        'left': paddingMarco + 'px',
+                        'right': paddingMarco + 'px',
+                        'bottom': paddingMarco + 'px',
+                        'background-color': paspartuColor,
                         'opacity': '1'
                     });
                 } else {
-                    $divPaspartu.css('opacity', '0');
+                    $paspartuLayer.css({
+                        'opacity': '0'
+                    });
                 }
             }
             
-            // 5. LISTENERS
+            // ========== EVENT LISTENERS ==========
             $('form.variations_form').on('change', 'select', function() {
-                setTimeout(actualizarCapas, 100);
+                setTimeout(actualizarVisualizacion, 100);
             });
             
             $(document).on('woocommerce_variation_has_changed', function() {
-                setTimeout(actualizarCapas, 100);
+                setTimeout(actualizarVisualizacion, 100);
             });
             
             $('.reset_variations').on('click', function() {
-                $divMarco.css('opacity', '0');
-                $divPaspartu.css('opacity', '0');
-                // Restaurar imagen a tamaño original
-                $productImage.css({
-                    'position': 'relative',
-                    'width': '100%',
-                    'height': 'auto',
-                    'left': '0',
-                    'top': '0'
-                });
+                $imagenWrapper.css('padding', '0');
+                $marcoLayer.css('opacity', '0');
+                $paspartuLayer.css('opacity', '0');
             });
             
-            // Recalcular al cambiar tamaño de ventana
             $(window).on('resize', function() {
-                setTimeout(actualizarCapas, 100);
+                setTimeout(actualizarVisualizacion, 100);
             });
             
             // Ejecutar cuando la imagen cargue
-            $productImage.on('load', function() {
-                actualizarCapas();
-            });
+            if ($productImage[0].complete) {
+                setTimeout(actualizarVisualizacion, 300);
+            } else {
+                $productImage.on('load', function() {
+                    setTimeout(actualizarVisualizacion, 100);
+                });
+            }
             
             // Ejecutar inicialmente
-            setTimeout(actualizarCapas, 500);
+            setTimeout(actualizarVisualizacion, 500);
             
-            // 6. LIGHTBOX PERSONALIZADO CON MARCOS Y PASPARTÚS
+
+            // ========== LIGHTBOX PERSONALIZADO ==========
             var currentMarcoUrl = null;
             var currentPaspartuColor = null;
-            var currentEstilo = 'vertical';
             var lightboxActivo = false;
             var currentSlideIndex = 0;
             var galleryImages = [];
             
-            // Obtener todas las imágenes de la galería
             function obtenerImagenesGaleria() {
                 galleryImages = [];
                 $('.woocommerce-product-gallery__image').each(function(index) {
@@ -561,78 +354,26 @@ class Cuadros_Frontend {
                         alt: $img.attr('alt') || ''
                     });
                 });
-                console.log('[cuadros] Imágenes de galería:', galleryImages.length);
             }
             
-            // Actualizar variables de estado
             function actualizarEstadoLightbox() {
                 var marcoVal = $('#pa_marco').val();
                 var paspartuVal = $('#pa_paspartu').val();
+                var orientacion = detectarOrientacion();
                 
-                // Usar la misma lógica de detección de orientación que actualizarCapas
-                var tamanoTexto = encontrarTextoTamano();
-                var orientacion = obtenerOrientacion(tamanoTexto);
-                
-                // Si no se detectó del texto, usar dimensiones de imagen
-                if (!orientacion) {
-                    var imgWidth = $productImage.width();
-                    var imgHeight = $productImage.height();
-                    if (imgWidth > 0 && imgHeight > 0) {
-                        var ratio = imgWidth / imgHeight;
-                        if (ratio > 0.95 && ratio < 1.05) {
-                            orientacion = '1:1';
-                        } else if (ratio < 1) {
-                            orientacion = 'vertical';
-                        } else {
-                            orientacion = 'horizontal';
-                        }
-                    }
-                }
-                
-                currentEstilo = orientacion || 'vertical';
-                console.log('[cuadros] Lightbox - Orientación detectada:', currentEstilo, 'desde texto:', tamanoTexto);
-                
-                currentMarcoUrl = null;
-                if (marcoVal) {
-                    var marcoValNorm = marcoVal.toLowerCase().replace(/-/g, ' ');
-                    for (var key in urlsMarcos) {
-                        var keyNorm = key.toLowerCase().replace(/-/g, ' ');
-                        if (keyNorm === marcoValNorm || keyNorm.includes(marcoValNorm) || marcoValNorm.includes(keyNorm)) {
-                            if (urlsMarcos[key][currentEstilo]) {
-                                currentMarcoUrl = urlsMarcos[key][currentEstilo];
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                currentPaspartuColor = null;
-                if (paspartuVal) {
-                    var paspartuValNorm = paspartuVal.toLowerCase();
-                    for (var key in coloresPaspartu) {
-                        if (key.toLowerCase() === paspartuValNorm) {
-                            currentPaspartuColor = coloresPaspartu[key];
-                            break;
-                        }
-                    }
-                }
-                
-                // Actualizar lista de imágenes
+                currentMarcoUrl = buscarMarco(marcoVal, orientacion);
+                currentPaspartuColor = buscarPaspartu(paspartuVal);
                 obtenerImagenesGaleria();
             }
             
-            // Función para mostrar lightbox personalizado con navegación
             function mostrarLightboxCuadros(startIndex) {
                 lightboxActivo = true;
                 currentSlideIndex = startIndex || 0;
                 
-                // Crear overlay
                 var $overlay = $('<div id="cuadros-lightbox-overlay"></div>').css({
                     position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
+                    top: 0, left: 0,
+                    width: '100%', height: '100%',
                     backgroundColor: 'rgba(0,0,0,0.95)',
                     zIndex: 9999999,
                     display: 'flex',
@@ -640,63 +381,45 @@ class Cuadros_Frontend {
                     justifyContent: 'center'
                 });
                 
-                // Contenedor de la imagen
                 var $imgContainer = $('<div id="cuadros-lightbox-container"></div>').css({
                     position: 'relative',
-                    maxWidth: '85vw',
-                    maxHeight: '85vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    display: 'inline-block'
                 });
                 
-                // Botón cerrar
                 var $closeBtn = $('<div class="cuadros-lb-close">&times;</div>').css({
                     position: 'absolute',
-                    top: '15px',
-                    right: '20px',
+                    top: '15px', right: '20px',
                     color: 'white',
                     fontSize: '45px',
                     cursor: 'pointer',
-                    zIndex: 10000001,
-                    lineHeight: 1,
-                    padding: '5px 15px'
+                    zIndex: 10000001
                 });
                 
-                // Flechas de navegación
                 var $prevBtn = $('<div class="cuadros-lb-prev">&#10094;</div>').css({
                     position: 'absolute',
-                    left: '15px',
-                    top: '50%',
+                    left: '15px', top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'white',
                     fontSize: '50px',
                     cursor: 'pointer',
                     zIndex: 10000001,
-                    padding: '15px',
-                    userSelect: 'none',
                     opacity: galleryImages.length > 1 ? 1 : 0
                 });
                 
                 var $nextBtn = $('<div class="cuadros-lb-next">&#10095;</div>').css({
                     position: 'absolute',
-                    right: '15px',
-                    top: '50%',
+                    right: '15px', top: '50%',
                     transform: 'translateY(-50%)',
                     color: 'white',
                     fontSize: '50px',
                     cursor: 'pointer',
                     zIndex: 10000001,
-                    padding: '15px',
-                    userSelect: 'none',
                     opacity: galleryImages.length > 1 ? 1 : 0
                 });
                 
-                // Contador
                 var $counter = $('<div class="cuadros-lb-counter"></div>').css({
                     position: 'absolute',
-                    top: '20px',
-                    left: '20px',
+                    top: '20px', left: '20px',
                     color: 'white',
                     fontSize: '16px',
                     zIndex: 10000001
@@ -705,7 +428,6 @@ class Cuadros_Frontend {
                 $overlay.append($imgContainer).append($closeBtn).append($prevBtn).append($nextBtn).append($counter);
                 $('body').append($overlay);
                 
-                // Función para mostrar imagen específica
                 function mostrarImagen(index) {
                     if (index < 0) index = galleryImages.length - 1;
                     if (index >= galleryImages.length) index = 0;
@@ -713,137 +435,68 @@ class Cuadros_Frontend {
                     
                     var imgData = galleryImages[index];
                     $imgContainer.empty();
-                    
-                    // Actualizar contador
                     $counter.text((index + 1) + ' / ' + galleryImages.length);
                     
-                    // Crear imagen
-                    var $img = $('<img>').attr('src', imgData.large).attr('alt', imgData.alt).css({
-                        maxWidth: '85vw',
-                        maxHeight: '85vh',
-                        display: 'block',
+                    // Crear estructura: marco > paspartú > imagen
+                    var hayMarco = index === 0 && currentMarcoUrl;
+                    var hayPaspartu = index === 0 && currentPaspartuColor;
+                    
+                    var paddingMarco = hayMarco ? GROSOR_MARCO : 0;
+                    var paddingPaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
+                    var paddingTotal = paddingMarco + paddingPaspartu;
+                    
+                    var $lbWrapper = $('<div class="cuadros-lb-wrapper"></div>').css({
                         position: 'relative',
-                        zIndex: 10
+                        display: 'inline-block'
                     });
                     
-                    $imgContainer.append($img);
+                    var $lbMarco = $('<div class="cuadros-lb-marco"></div>').css({
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundSize: '100% 100%',
+                        backgroundRepeat: 'no-repeat',
+                        zIndex: 1,
+                        opacity: hayMarco ? 1 : 0,
+                        backgroundImage: hayMarco ? 'url(' + currentMarcoUrl + ')' : 'none'
+                    });
                     
-                    // Solo agregar marco/paspartú en la primera imagen (index 0)
-                    if (index === 0 && (currentMarcoUrl || currentPaspartuColor)) {
-                        $img.on('load', function() {
-                            var imgW = $img.width();
-                            var imgH = $img.height();
-                            
-                            var marcoWidthPercent, marcoHeightPercent;
-                            if (dimensiones[currentEstilo]) {
-                                marcoWidthPercent = dimensiones[currentEstilo].width;
-                                marcoHeightPercent = dimensiones[currentEstilo].height;
-                            } else if (currentEstilo === '1:1') {
-                                marcoWidthPercent = 80;
-                                marcoHeightPercent = 80;
-                            } else if (currentEstilo === 'vertical') {
-                                marcoWidthPercent = 60;
-                                marcoHeightPercent = 80;
-                            } else {
-                                marcoWidthPercent = 80;
-                                marcoHeightPercent = 60;
-                            }
-                            
-                            var paspartuWidthPercent = marcoWidthPercent - 2.5;
-                            var paspartuHeightPercent = marcoHeightPercent - 2.5;
-                            
-                            // La imagen debe caber DENTRO del paspartú
-                            var imagenWidthPercent = paspartuWidthPercent - 8;
-                            var imagenHeightPercent = paspartuHeightPercent - 8;
-                            
-                            var marcoW, marcoH, paspartuW, paspartuH, imagenW, imagenH;
-                            if (currentEstilo === '1:1') {
-                                var minSide = Math.min(imgW, imgH);
-                                marcoW = (minSide * marcoWidthPercent) / 100;
-                                marcoH = marcoW;
-                                paspartuW = (minSide * paspartuWidthPercent) / 100;
-                                paspartuH = paspartuW;
-                                imagenW = (minSide * imagenWidthPercent) / 100;
-                                imagenH = imagenW;
-                            } else {
-                                marcoW = (imgW * marcoWidthPercent) / 100;
-                                marcoH = (imgH * marcoHeightPercent) / 100;
-                                paspartuW = (imgW * paspartuWidthPercent) / 100;
-                                paspartuH = (imgH * paspartuHeightPercent) / 100;
-                                imagenW = (imgW * imagenWidthPercent) / 100;
-                                imagenH = (imgH * imagenHeightPercent) / 100;
-                            }
-                            
-                            var marcoL = (imgW - marcoW) / 2;
-                            var marcoT = (imgH - marcoH) / 2;
-                            var paspartuL = (imgW - paspartuW) / 2;
-                            var paspartuT = (imgH - paspartuH) / 2;
-                            var imagenL = (imgW - imagenW) / 2;
-                            var imagenT = (imgH - imagenH) / 2;
-                            
-                            // Redimensionar la imagen para que quepa dentro del paspartú
-                            $img.css({
-                                'position': 'absolute',
-                                'width': imagenW + 'px',
-                                'height': imagenH + 'px',
-                                'left': imagenL + 'px',
-                                'top': imagenT + 'px',
-                                'maxWidth': 'none',
-                                'maxHeight': 'none',
-                                'objectFit': 'cover'
-                            });
-                            
-                            // Ajustar el contenedor para mantener las dimensiones originales
-                            $imgContainer.css({
-                                'width': imgW + 'px',
-                                'height': imgH + 'px'
-                            });
-                            
-                            // Agregar paspartú
-                            if (currentPaspartuColor) {
-                                var $paspartu = $('<div class="cuadros-lb-paspartu"></div>').css({
-                                    position: 'absolute',
-                                    width: paspartuW + 'px',
-                                    height: paspartuH + 'px',
-                                    left: paspartuL + 'px',
-                                    top: paspartuT + 'px',
-                                    backgroundColor: currentPaspartuColor,
-                                    zIndex: 1
-                                });
-                                $imgContainer.append($paspartu);
-                            }
-                            
-                            // Agregar marco
-                            if (currentMarcoUrl) {
-                                var $marco = $('<div class="cuadros-lb-marco"></div>').css({
-                                    position: 'absolute',
-                                    width: marcoW + 'px',
-                                    height: marcoH + 'px',
-                                    left: marcoL + 'px',
-                                    top: marcoT + 'px',
-                                    backgroundImage: 'url(' + currentMarcoUrl + ')',
-                                    backgroundSize: '100% 100%',
-                                    backgroundRepeat: 'no-repeat',
-                                    zIndex: 2,
-                                    pointerEvents: 'none'
-                                });
-                                $imgContainer.append($marco);
-                            }
-                        });
-                    }
+                    var $lbPaspartu = $('<div class="cuadros-lb-paspartu"></div>').css({
+                        position: 'absolute',
+                        top: paddingMarco + 'px',
+                        left: paddingMarco + 'px',
+                        right: paddingMarco + 'px',
+                        bottom: paddingMarco + 'px',
+                        backgroundColor: hayPaspartu ? currentPaspartuColor : 'transparent',
+                        zIndex: 2,
+                        opacity: hayPaspartu ? 1 : 0
+                    });
+                    
+                    var $lbImgWrapper = $('<div class="cuadros-lb-img-wrapper"></div>').css({
+                        position: 'relative',
+                        zIndex: 3,
+                        padding: paddingTotal + 'px',
+                        lineHeight: 0
+                    });
+                    
+                    var $img = $('<img>').attr('src', imgData.large).attr('alt', imgData.alt).css({
+                        maxWidth: '80vw',
+                        maxHeight: '80vh',
+                        display: 'block'
+                    });
+                    
+                    $lbImgWrapper.append($img);
+                    $lbWrapper.append($lbMarco).append($lbPaspartu).append($lbImgWrapper);
+                    $imgContainer.append($lbWrapper);
                 }
                 
-                // Mostrar imagen inicial
                 mostrarImagen(currentSlideIndex);
                 
-                // Función para cerrar
                 function cerrarLightbox() {
                     $overlay.remove();
                     lightboxActivo = false;
                     $(document).off('keydown.cuadrosLightbox');
                 }
                 
-                // Eventos de navegación
                 $prevBtn.on('click', function(e) {
                     e.stopPropagation();
                     mostrarImagen(currentSlideIndex - 1);
@@ -854,44 +507,29 @@ class Cuadros_Frontend {
                     mostrarImagen(currentSlideIndex + 1);
                 });
                 
-                // Cerrar al hacer clic en overlay o botón cerrar
                 $overlay.on('click', function(e) {
-                    if (e.target === $overlay[0]) {
-                        cerrarLightbox();
-                    }
+                    if (e.target === $overlay[0]) cerrarLightbox();
                 });
                 
-                $closeBtn.on('click', function() {
-                    cerrarLightbox();
-                });
+                $closeBtn.on('click', cerrarLightbox);
                 
-                // Teclado: ESC para cerrar, flechas para navegar
                 $(document).on('keydown.cuadrosLightbox', function(e) {
-                    if (e.keyCode === 27) { // ESC
-                        cerrarLightbox();
-                    } else if (e.keyCode === 37) { // Flecha izquierda
-                        mostrarImagen(currentSlideIndex - 1);
-                    } else if (e.keyCode === 39) { // Flecha derecha
-                        mostrarImagen(currentSlideIndex + 1);
-                    }
+                    if (e.keyCode === 27) cerrarLightbox();
+                    else if (e.keyCode === 37) mostrarImagen(currentSlideIndex - 1);
+                    else if (e.keyCode === 39) mostrarImagen(currentSlideIndex + 1);
                 });
             }
             
-            // Interceptar clic SOLO en la primera imagen de la galería
+            // Interceptar clic en la primera imagen
             document.addEventListener('click', function(e) {
                 var $target = $(e.target);
+                var $galleryImg = $target.closest('.woocommerce-product-gallery__image');
+                if ($galleryImg.length === 0) return;
                 
-                // Verificar si es la primera imagen de la galería
-                var $galleryImage = $target.closest('.woocommerce-product-gallery__image');
-                if ($galleryImage.length === 0) return;
+                var imageIndex = $galleryImg.index();
                 
-                // Obtener índice de la imagen
-                var imageIndex = $galleryImage.index();
-                
-                // Solo interceptar si es la primera imagen (index 0) Y hay marco/paspartú
                 if (imageIndex === 0 && (currentMarcoUrl || currentPaspartuColor)) {
-                    var isClickable = $target.closest('a, .woocommerce-product-gallery__trigger').length > 0 || $target.is('img');
-                    
+                    var isClickable = $target.closest('a, .woocommerce-product-gallery__trigger, #cuadros-wrapper').length > 0 || $target.is('img');
                     if (isClickable) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -902,7 +540,7 @@ class Cuadros_Frontend {
                 }
             }, true);
             
-            // Actualizar estado
+            // Actualizar estado del lightbox
             $('form.variations_form').on('change', 'select', function() {
                 setTimeout(actualizarEstadoLightbox, 150);
             });

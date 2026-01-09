@@ -1,77 +1,67 @@
-/* Estilos Base para el Plugin Cuadros */
+/* ===========================================
+   Plugin Cuadros - Estilos Frontend
+   NUEVO ENFOQUE: Marco y paspartú ALREDEDOR de la imagen
+   =========================================== */
+
+/* Contenedor principal de la galería */
 .woocommerce-product-gallery,
 .woocommerce-product-gallery__wrapper,
-.woocommerce-product-gallery__image,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image {
+.woocommerce-product-gallery__image {
     position: relative !important;
 }
 
-/* Contenedor de la imagen debe tener posición relativa para las capas absolutas */
-.woocommerce-product-gallery__image > a,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image > a {
+/* Wrapper principal que contiene todo */
+#cuadros-wrapper {
     position: relative !important;
-    display: block !important;
+    display: inline-block !important;
+    max-width: 100% !important;
+    transition: all 0.3s ease;
 }
 
-.custom-overlay-layer {
-    position: absolute !important;
-    background-repeat: no-repeat;
-    pointer-events: none;
-    transition: opacity 0.3s ease, width 0.3s ease, height 0.3s ease, left 0.3s ease, top 0.3s ease;
-    opacity: 0;
-    box-sizing: border-box;
-    background-size: contain !important;
-    background-position: center !important;
-    /* top, left, width y height se establecerán dinámicamente por JavaScript */
-}
-
-/* IMPORTANTE: El marco debe estar DETRÁS de la imagen del producto */
-#layer-paspartu {
-    z-index: 1 !important;
-    background-color: transparent;
-}
-
+/* Capa del marco - cubre todo el wrapper */
 #layer-marco {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    pointer-events: none;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    z-index: 1 !important;
+    transition: opacity 0.3s ease;
+}
+
+/* Capa del paspartú - entre el marco y la imagen */
+#layer-paspartu {
+    position: absolute !important;
+    pointer-events: none;
     z-index: 2 !important;
+    transition: opacity 0.3s ease, top 0.3s ease, left 0.3s ease, right 0.3s ease, bottom 0.3s ease;
 }
 
-.custom-overlay-layer.visible {
-    opacity: 1;
-}
-
-/* La imagen del producto debe estar POR ENCIMA del marco */
-.woocommerce-product-gallery__image img,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image img {
+/* Wrapper de la imagen - contiene la imagen con padding */
+#cuadros-imagen-wrapper {
     position: relative !important;
-    z-index: 10 !important;
-    display: block;
-    transition: width 0.3s ease, height 0.3s ease, left 0.3s ease, top 0.3s ease;
-    object-fit: cover;
+    z-index: 3 !important;
+    line-height: 0 !important;
+    transition: padding 0.3s ease;
 }
 
-/* El enlace de la imagen también debe estar encima */
-.woocommerce-product-gallery__image>a,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image>a {
-    position: relative !important;
-    z-index: 10 !important;
+/* La imagen del producto */
+#cuadros-imagen-wrapper img,
+#cuadros-wrapper img {
+    display: block !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* Asegurar que el enlace de la imagen no interfiera */
+.woocommerce-product-gallery__image > a {
     display: block;
 }
 
-/* Contenedor del shortcode */
-#cuadros-visualizador-container {
-    position: relative !important;
-    display: block;
-    min-height: 300px;
-    overflow: hidden;
-}
-
-#cuadros-visualizador-container img {
-    display: block;
-    max-width: 100%;
-    height: auto;
-}
-
-/* Mensajes de depuración */
+/* Mensajes de aviso */
 .cuadros-notice {
     padding: 15px;
     background-color: #f8d7da;
@@ -81,15 +71,78 @@
     margin: 15px 0;
 }
 
-/* Ajustes para el wrapper de la galería */
-.woocommerce-product-gallery__wrapper {
-    position: relative;
-    z-index: 1;
+/* Contenedor del shortcode */
+#cuadros-visualizador-container {
+    position: relative !important;
+    display: block;
 }
 
-/* Asegurar que las capas no se desborden */
-.woocommerce-product-gallery__image,
-.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image,
-#cuadros-visualizador-container {
-    overflow: visible !important;
+/* ===========================================
+   Lightbox personalizado
+   =========================================== */
+
+#cuadros-lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 9999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#cuadros-lightbox-container {
+    position: relative;
+    display: inline-block;
+}
+
+.cuadros-lb-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.cuadros-lb-marco {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.cuadros-lb-paspartu {
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.cuadros-lb-img-wrapper {
+    position: relative;
+    z-index: 3;
+    line-height: 0;
+}
+
+.cuadros-lb-img-wrapper img {
+    display: block;
+    max-width: 80vw;
+    max-height: 80vh;
+}
+
+.cuadros-lb-close,
+.cuadros-lb-prev,
+.cuadros-lb-next {
+    user-select: none;
+    transition: opacity 0.2s ease;
+}
+
+.cuadros-lb-close:hover,
+.cuadros-lb-prev:hover,
+.cuadros-lb-next:hover {
+    opacity: 0.7;
 }
