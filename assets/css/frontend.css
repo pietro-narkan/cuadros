@@ -6,11 +6,18 @@
     position: relative !important;
 }
 
+/* Contenedor de la imagen debe tener posición relativa para las capas absolutas */
+.woocommerce-product-gallery__image > a,
+.elementor-widget-woocommerce-product-images .woocommerce-product-gallery__image > a {
+    position: relative !important;
+    display: block !important;
+}
+
 .custom-overlay-layer {
     position: absolute !important;
     background-repeat: no-repeat;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, width 0.3s ease, height 0.3s ease, left 0.3s ease, top 0.3s ease;
     opacity: 0;
     box-sizing: border-box;
     background-size: contain !important;
@@ -38,8 +45,8 @@
     position: relative !important;
     z-index: 10 !important;
     display: block;
-    width: 100%;
-    height: auto;
+    transition: width 0.3s ease, height 0.3s ease, left 0.3s ease, top 0.3s ease;
+    object-fit: cover;
 }
 
 /* El enlace de la imagen también debe estar encima */

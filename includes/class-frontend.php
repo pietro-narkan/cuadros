@@ -229,7 +229,7 @@ class Cuadros_Frontend {
                 'pointer-events': 'none',
                 'z-index': '1',
                 'opacity': '0',
-                'transition': 'opacity 0.3s'
+                'transition': 'opacity 0.3s, width 0.3s, height 0.3s, left 0.3s, top 0.3s'
             });
             
             $divMarco.css({
@@ -237,18 +237,45 @@ class Cuadros_Frontend {
                 'pointer-events': 'none',
                 'z-index': '2',
                 'opacity': '0',
-                'transition': 'opacity 0.3s',
+                'transition': 'opacity 0.3s, width 0.3s, height 0.3s, left 0.3s, top 0.3s',
                 'background-size': '100% 100%',
                 'background-repeat': 'no-repeat'
             });
             
-            // La imagen debe estar ENCIMA
+            // La imagen debe estar ENCIMA y se redimensionará para caber dentro del paspartú
             $productImage.css({
-                'position': 'relative',
-                'z-index': '10'
+                'position': 'absolute',
+                'z-index': '10',
+                'transition': 'width 0.3s, height 0.3s, left 0.3s, top 0.3s'
             });
             
+            // Guardar dimensiones originales de la imagen
+            var originalImgWidth = $productImage.width();
+            var originalImgHeight = $productImage.height();
+            
             console.log('[cuadros] Capas creadas y configuradas');
+            
+            // Asegurar que el contenedor tenga altura fija basada en la imagen original
+            function actualizarAlturaContenedor() {
+                if (originalImgHeight > 0) {
+                    $container.css({
+                        'min-height': originalImgHeight + 'px'
+                    });
+                }
+            }
+            
+            // Esperar a que la imagen cargue para obtener dimensiones originales
+            if ($productImage[0].complete) {
+                originalImgWidth = $productImage.width();
+                originalImgHeight = $productImage.height();
+                actualizarAlturaContenedor();
+            } else {
+                $productImage.on('load', function() {
+                    originalImgWidth = $productImage.width();
+                    originalImgHeight = $productImage.height();
+                    actualizarAlturaContenedor();
+                });
+            }
             
             // 3. FUNCIONES AUXILIARES
             function encontrarTextoTamano() {
@@ -288,9 +315,9 @@ class Cuadros_Frontend {
                 var tamanoTexto = encontrarTextoTamano();
                 var orientacion = obtenerOrientacion(tamanoTexto);
                 
-                // Obtener dimensiones actuales de la imagen
-                var imgWidth = $productImage.width();
-                var imgHeight = $productImage.height();
+                // Usar dimensiones originales del contenedor
+                var imgWidth = originalImgWidth || $container.width();
+                var imgHeight = originalImgHeight || $container.height();
                 
                 // Si no se detectó orientación del texto, detectar por dimensiones de imagen
                 if (!orientacion && imgWidth > 0 && imgHeight > 0) {
@@ -309,10 +336,29 @@ class Cuadros_Frontend {
                 
                 console.log('[cuadros] actualizarCapas:', {marco: marcoVal, paspartu: paspartuVal, orientation: estilo, tamanoTexto: tamanoTexto});
                 
-                console.log('[cuadros] Dimensiones imagen:', imgWidth, 'x', imgHeight);
+                console.log('[cuadros] Dimensiones contenedor:', imgWidth, 'x', imgHeight);
                 
                 if (imgWidth <= 0 || imgHeight <= 0) {
-                    console.log('[cuadros] Imagen sin dimensiones válidas');
+                    console.log('[cuadros] Contenedor sin dimensiones válidas');
+                    return;
+                }
+                
+                // Verificar si hay marco o paspartú seleccionado
+                var hayMarco = marcoVal && marcoVal !== '';
+                var hayPaspartu = paspartuVal && paspartuVal !== '';
+                
+                // Si no hay marco ni paspartú, restaurar imagen a tamaño original
+                if (!hayMarco && !hayPaspartu) {
+                    $productImage.css({
+                        'position': 'relative',
+                        'width': '100%',
+                        'height': 'auto',
+                        'left': '0',
+                        'top': '0'
+                    });
+                    $divMarco.css('opacity', '0');
+                    $divPaspartu.css('opacity', '0');
+                    console.log('[cuadros] Sin marco/paspartú - imagen restaurada');
                     return;
                 }
                 
@@ -336,8 +382,13 @@ class Cuadros_Frontend {
                 var paspartuWidthPercent = marcoWidthPercent - 2.5;
                 var paspartuHeightPercent = marcoHeightPercent - 2.5;
                 
+                // La imagen del producto debe caber DENTRO del paspartú
+                // Dejamos un margen para que se vea el paspartú alrededor
+                var imagenWidthPercent = paspartuWidthPercent - 8; // 8% menos que el paspartú
+                var imagenHeightPercent = paspartuHeightPercent - 8;
+                
                 // Calcular dimensiones en píxeles
-                var marcoWidth, marcoHeight, paspartuWidth, paspartuHeight;
+                var marcoWidth, marcoHeight, paspartuWidth, paspartuHeight, imagenWidth, imagenHeight;
                 
                 if (estilo === '1:1') {
                     // Para formato cuadrado, usar el lado menor como base para mantener proporción 1:1
@@ -346,27 +397,35 @@ class Cuadros_Frontend {
                     marcoHeight = marcoWidth; // Forzar cuadrado
                     paspartuWidth = (minSide * paspartuWidthPercent) / 100;
                     paspartuHeight = paspartuWidth; // Forzar cuadrado
+                    imagenWidth = (minSide * imagenWidthPercent) / 100;
+                    imagenHeight = imagenWidth; // Forzar cuadrado
                 } else {
                     marcoWidth = (imgWidth * marcoWidthPercent) / 100;
                     marcoHeight = (imgHeight * marcoHeightPercent) / 100;
                     paspartuWidth = (imgWidth * paspartuWidthPercent) / 100;
                     paspartuHeight = (imgHeight * paspartuHeightPercent) / 100;
+                    imagenWidth = (imgWidth * imagenWidthPercent) / 100;
+                    imagenHeight = (imgHeight * imagenHeightPercent) / 100;
                 }
                 
-                // Calcular posiciones centradas (relativas al contenedor, que es el mismo que la imagen)
+                // Calcular posiciones centradas (relativas al contenedor)
                 var marcoLeft = (imgWidth - marcoWidth) / 2;
                 var marcoTop = (imgHeight - marcoHeight) / 2;
                 var paspartuLeft = (imgWidth - paspartuWidth) / 2;
                 var paspartuTop = (imgHeight - paspartuHeight) / 2;
+                var imagenLeft = (imgWidth - imagenWidth) / 2;
+                var imagenTop = (imgHeight - imagenHeight) / 2;
                 
                 console.log('[cuadros] Posiciones:', {
                     marcoLeft: marcoLeft,
                     marcoTop: marcoTop,
                     marcoWidth: marcoWidth,
-                    marcoHeight: marcoHeight
+                    marcoHeight: marcoHeight,
+                    imagenWidth: imagenWidth,
+                    imagenHeight: imagenHeight
                 });
                 
-                // Aplicar posiciones
+                // Aplicar posiciones al marco
                 $divMarco.css({
                     'width': marcoWidth + 'px',
                     'height': marcoHeight + 'px',
@@ -374,11 +433,22 @@ class Cuadros_Frontend {
                     'top': marcoTop + 'px'
                 });
                 
+                // Aplicar posiciones al paspartú
                 $divPaspartu.css({
                     'width': paspartuWidth + 'px',
                     'height': paspartuHeight + 'px',
                     'left': paspartuLeft + 'px',
                     'top': paspartuTop + 'px'
+                });
+                
+                // Redimensionar y posicionar la imagen del producto DENTRO del paspartú
+                $productImage.css({
+                    'position': 'absolute',
+                    'width': imagenWidth + 'px',
+                    'height': imagenHeight + 'px',
+                    'left': imagenLeft + 'px',
+                    'top': imagenTop + 'px',
+                    'object-fit': 'cover' // Mantener proporción y cubrir el área
                 });
                 
                 // Buscar y mostrar marco
@@ -447,6 +517,14 @@ class Cuadros_Frontend {
             $('.reset_variations').on('click', function() {
                 $divMarco.css('opacity', '0');
                 $divPaspartu.css('opacity', '0');
+                // Restaurar imagen a tamaño original
+                $productImage.css({
+                    'position': 'relative',
+                    'width': '100%',
+                    'height': 'auto',
+                    'left': '0',
+                    'top': '0'
+                });
             });
             
             // Recalcular al cambiar tamaño de ventana
@@ -674,24 +752,52 @@ class Cuadros_Frontend {
                             var paspartuWidthPercent = marcoWidthPercent - 2.5;
                             var paspartuHeightPercent = marcoHeightPercent - 2.5;
                             
-                            var marcoW, marcoH, paspartuW, paspartuH;
+                            // La imagen debe caber DENTRO del paspartú
+                            var imagenWidthPercent = paspartuWidthPercent - 8;
+                            var imagenHeightPercent = paspartuHeightPercent - 8;
+                            
+                            var marcoW, marcoH, paspartuW, paspartuH, imagenW, imagenH;
                             if (currentEstilo === '1:1') {
                                 var minSide = Math.min(imgW, imgH);
                                 marcoW = (minSide * marcoWidthPercent) / 100;
                                 marcoH = marcoW;
                                 paspartuW = (minSide * paspartuWidthPercent) / 100;
                                 paspartuH = paspartuW;
+                                imagenW = (minSide * imagenWidthPercent) / 100;
+                                imagenH = imagenW;
                             } else {
                                 marcoW = (imgW * marcoWidthPercent) / 100;
                                 marcoH = (imgH * marcoHeightPercent) / 100;
                                 paspartuW = (imgW * paspartuWidthPercent) / 100;
                                 paspartuH = (imgH * paspartuHeightPercent) / 100;
+                                imagenW = (imgW * imagenWidthPercent) / 100;
+                                imagenH = (imgH * imagenHeightPercent) / 100;
                             }
                             
                             var marcoL = (imgW - marcoW) / 2;
                             var marcoT = (imgH - marcoH) / 2;
                             var paspartuL = (imgW - paspartuW) / 2;
                             var paspartuT = (imgH - paspartuH) / 2;
+                            var imagenL = (imgW - imagenW) / 2;
+                            var imagenT = (imgH - imagenH) / 2;
+                            
+                            // Redimensionar la imagen para que quepa dentro del paspartú
+                            $img.css({
+                                'position': 'absolute',
+                                'width': imagenW + 'px',
+                                'height': imagenH + 'px',
+                                'left': imagenL + 'px',
+                                'top': imagenT + 'px',
+                                'maxWidth': 'none',
+                                'maxHeight': 'none',
+                                'objectFit': 'cover'
+                            });
+                            
+                            // Ajustar el contenedor para mantener las dimensiones originales
+                            $imgContainer.css({
+                                'width': imgW + 'px',
+                                'height': imgH + 'px'
+                            });
                             
                             // Agregar paspartú
                             if (currentPaspartuColor) {
