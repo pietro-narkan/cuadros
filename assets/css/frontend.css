@@ -1,148 +1,57 @@
-/* ===========================================
-   Plugin Cuadros - Estilos Frontend
-   NUEVO ENFOQUE: Marco y paspartú ALREDEDOR de la imagen
-   =========================================== */
+/* Plugin Cuadros - Estructura de 3 capas */
 
-/* Contenedor principal de la galería */
-.woocommerce-product-gallery,
-.woocommerce-product-gallery__wrapper,
-.woocommerce-product-gallery__image {
-    position: relative !important;
-}
-
-/* Wrapper principal que contiene todo */
 #cuadros-wrapper {
     position: relative !important;
     display: inline-block !important;
-    max-width: 100% !important;
-    transition: all 0.3s ease;
+    transition: width 0.3s, height 0.3s;
 }
 
-/* Capa del paspartú - DETRÁS del marco, entre marco e imagen */
+/* Capa 1: Paspartú (fondo) */
 #layer-paspartu {
     position: absolute !important;
-    pointer-events: none;
+    top: 0; left: 0; right: 0; bottom: 0;
     z-index: 1 !important;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s, background-color 0.3s;
 }
 
-/* Capa del marco - ENCIMA del paspartú */
+/* Capa 2: Imagen (medio) */
+#layer-imagen {
+    position: absolute !important;
+    z-index: 2 !important;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+#layer-imagen img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Capa 3: Marco (frente) */
 #layer-marco {
     position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 3 !important;
     pointer-events: none;
     background-size: 100% 100% !important;
     background-repeat: no-repeat !important;
-    z-index: 2 !important;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s;
 }
 
-/* Wrapper de la imagen - contiene la imagen con padding */
-#cuadros-imagen-wrapper {
-    position: relative !important;
-    z-index: 3 !important;
-    line-height: 0 !important;
-    transition: padding 0.3s ease;
-}
-
-/* La imagen del producto */
-#cuadros-imagen-wrapper img,
-#cuadros-wrapper img {
-    display: block !important;
-    max-width: 100% !important;
-    height: auto !important;
-}
-
-/* Asegurar que el enlace de la imagen no interfiera */
-.woocommerce-product-gallery__image > a {
-    display: block;
-}
-
-/* Mensajes de aviso */
-.cuadros-notice {
-    padding: 15px;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    margin: 15px 0;
-}
-
-/* Contenedor del shortcode */
-#cuadros-visualizador-container {
-    position: relative !important;
-    display: block;
-}
-
-/* ===========================================
-   Lightbox personalizado
-   =========================================== */
-
-#cuadros-lightbox-overlay {
+/* Lightbox */
+#cuadros-lightbox {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
-    z-index: 9999999;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 999999;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-#cuadros-lightbox-container {
-    position: relative;
-    display: inline-block;
-}
-
-.cuadros-lb-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-.cuadros-lb-marco {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.cuadros-lb-paspartu {
-    position: absolute;
-    z-index: 2;
-    pointer-events: none;
-}
-
-.cuadros-lb-img-wrapper {
-    position: relative;
-    z-index: 3;
-    line-height: 0;
-}
-
-.cuadros-lb-img-wrapper img {
-    display: block;
-    max-width: 80vw;
-    max-height: 80vh;
-}
-
-.cuadros-lb-close,
-.cuadros-lb-prev,
-.cuadros-lb-next {
-    user-select: none;
-    transition: opacity 0.2s ease;
-}
-
-.cuadros-lb-close:hover,
-.cuadros-lb-prev:hover,
-.cuadros-lb-next:hover {
-    opacity: 0.7;
+/* Galería WooCommerce */
+.woocommerce-product-gallery__image {
+    position: relative !important;
 }
