@@ -171,10 +171,17 @@ class Cuadros_Frontend {
                         return false;
                     }
                     // Detectar por dimensiones NxM
+                    // En tu sistema: 40x30 = vertical (primer número mayor), 30x40 = horizontal
                     var m = todo.match(/(\d+)\s*[xX]\s*(\d+)/);
                     if (m) {
-                        var w = parseInt(m[1]), h = parseInt(m[2]);
-                        orientacion = (Math.abs(w-h) <= 5) ? '1:1' : (w > h ? 'horizontal' : 'vertical');
+                        var primero = parseInt(m[1]), segundo = parseInt(m[2]);
+                        if (Math.abs(primero - segundo) <= 5) {
+                            orientacion = '1:1';
+                        } else if (primero > segundo) {
+                            orientacion = 'vertical';   // 40x30, 60x50, 90x70
+                        } else {
+                            orientacion = 'horizontal'; // 30x40, 50x60, 70x90
+                        }
                         return false;
                     }
                 });
