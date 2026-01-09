@@ -263,15 +263,76 @@ class Cuadros_Frontend {
                     hayPaspartu: hayPaspartu
                 });
                 
+                // Si no hay marco ni paspartú, restaurar estado original
+                if (!hayMarco && !hayPaspartu) {
+                    $wrapper.css({
+                        'width': '',
+                        'height': ''
+                    });
+                    $imagenWrapper.css({
+                        'padding': '0',
+                        'width': '',
+                        'height': ''
+                    });
+                    $productImage.css({
+                        'width': '',
+                        'height': '',
+                        'object-fit': ''
+                    });
+                    $marcoLayer.css('opacity', '0');
+                    $paspartuLayer.css('opacity', '0');
+                    return;
+                }
+                
                 // Calcular padding según lo que esté activo
                 var paddingMarco = hayMarco ? GROSOR_MARCO : 0;
                 var paddingPaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
                 var paddingTotal = paddingMarco + paddingPaspartu;
                 
-                // Aplicar padding al wrapper de la imagen (esto crea el espacio para marco y paspartú)
-                $imagenWrapper.css({
-                    'padding': paddingTotal + 'px'
-                });
+                // Obtener dimensiones de la imagen
+                var imgNaturalWidth = $productImage[0].naturalWidth || $productImage.width();
+                var imgNaturalHeight = $productImage[0].naturalHeight || $productImage.height();
+                var imgCurrentWidth = $productImage.width();
+                var imgCurrentHeight = $productImage.height();
+                
+                // Para 1:1, forzar formato cuadrado
+                if (orientacion === '1:1') {
+                    // Usar el lado mayor para hacer un cuadrado
+                    var sideSize = Math.max(imgCurrentWidth, imgCurrentHeight);
+                    // Limitar al ancho del contenedor padre
+                    var maxWidth = $container.parent().width() || $container.width();
+                    if (sideSize + (paddingTotal * 2) > maxWidth) {
+                        sideSize = maxWidth - (paddingTotal * 2);
+                    }
+                    
+                    // Aplicar tamaño cuadrado a la imagen
+                    $productImage.css({
+                        'width': sideSize + 'px',
+                        'height': sideSize + 'px',
+                        'object-fit': 'cover'
+                    });
+                    
+                    $imagenWrapper.css({
+                        'padding': paddingTotal + 'px',
+                        'width': '',
+                        'height': ''
+                    });
+                    
+                    console.log('[cuadros] Formato 1:1 - Cuadrado:', sideSize + 'px');
+                } else {
+                    // Para vertical/horizontal, mantener proporción original
+                    $productImage.css({
+                        'width': '',
+                        'height': '',
+                        'object-fit': ''
+                    });
+                    
+                    $imagenWrapper.css({
+                        'padding': paddingTotal + 'px',
+                        'width': '',
+                        'height': ''
+                    });
+                }
                 
                 // Configurar capa del marco (cubre todo el wrapper)
                 if (hayMarco) {
@@ -286,7 +347,7 @@ class Cuadros_Frontend {
                     });
                 }
                 
-                // Configurar capa del paspartú (entre el marco y la imagen)
+                // Configurar capa del paspartú - debe cubrir desde el borde interno del marco hasta el borde de la imagen
                 if (hayPaspartu) {
                     $paspartuLayer.css({
                         'top': paddingMarco + 'px',
@@ -313,7 +374,16 @@ class Cuadros_Frontend {
             });
             
             $('.reset_variations').on('click', function() {
-                $imagenWrapper.css('padding', '0');
+                $imagenWrapper.css({
+                    'padding': '0',
+                    'width': '',
+                    'height': ''
+                });
+                $productImage.css({
+                    'width': '',
+                    'height': '',
+                    'object-fit': ''
+                });
                 $marcoLayer.css('opacity', '0');
                 $paspartuLayer.css('opacity', '0');
             });
@@ -440,6 +510,7 @@ class Cuadros_Frontend {
                     // Crear estructura: marco > paspartú > imagen
                     var hayMarco = index === 0 && currentMarcoUrl;
                     var hayPaspartu = index === 0 && currentPaspartuColor;
+                    var orientacion = detectarOrientacion();
                     
                     var paddingMarco = hayMarco ? GROSOR_MARCO : 0;
                     var paddingPaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
@@ -478,11 +549,24 @@ class Cuadros_Frontend {
                         lineHeight: 0
                     });
                     
-                    var $img = $('<img>').attr('src', imgData.large).attr('alt', imgData.alt).css({
-                        maxWidth: '80vw',
-                        maxHeight: '80vh',
-                        display: 'block'
-                    });
+                    var $img = $('<img>').attr('src', imgData.large).attr('alt', imgData.alt);
+                    
+                    // Para 1:1, forzar cuadrado
+                    if (orientacion === '1:1' && (hayMarco || hayPaspartu)) {
+                        var maxSize = Math.min(window.innerWidth * 0.7, window.innerHeight * 0.7);
+                        $img.css({
+                            'width': maxSize + 'px',
+                            'height': maxSize + 'px',
+                            'object-fit': 'cover',
+                            'display': 'block'
+                        });
+                    } else {
+                        $img.css({
+                            'maxWidth': '80vw',
+                            'maxHeight': '80vh',
+                            'display': 'block'
+                        });
+                    }
                     
                     $lbImgWrapper.append($img);
                     $lbWrapper.append($lbMarco).append($lbPaspartu).append($lbImgWrapper);
