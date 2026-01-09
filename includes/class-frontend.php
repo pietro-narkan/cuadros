@@ -147,47 +147,24 @@ class Cuadros_Frontend {
             
             // Funciones auxiliares
             function detectarOrientacion() {
-                var orientacion = null;
+                // La orientación se determina SOLO por las dimensiones de la imagen
+                var imgW = $productImage[0].naturalWidth || $productImage.width();
+                var imgH = $productImage[0].naturalHeight || $productImage.height();
                 
-                $('form.variations_form select').each(function() {
-                    var id = ($(this).attr('id') || '').toLowerCase();
-                    var val = ($(this).val() || '').toLowerCase();
-                    var txt = ($(this).find('option:selected').text() || '').toLowerCase();
-                    var todo = id + ' ' + val + ' ' + txt;
-                    
-                    // Detectar 1:1
-                    if (todo.match(/1\s*[:\-x]\s*1/) || todo.includes('cuadrado')) {
-                        orientacion = '1:1';
-                        return false;
-                    }
-                    // Detectar horizontal
-                    if (todo.includes('horizontal')) {
-                        orientacion = 'horizontal';
-                        return false;
-                    }
-                    // Detectar vertical
-                    if (todo.includes('vertical')) {
-                        orientacion = 'vertical';
-                        return false;
-                    }
-                    // Detectar por dimensiones NxM
-                    // En tu sistema: 40x30 = vertical (primer número mayor), 30x40 = horizontal
-                    var m = todo.match(/(\d+)\s*[xX]\s*(\d+)/);
-                    if (m) {
-                        var primero = parseInt(m[1]), segundo = parseInt(m[2]);
-                        if (Math.abs(primero - segundo) <= 5) {
-                            orientacion = '1:1';
-                        } else if (primero > segundo) {
-                            orientacion = 'vertical';   // 40x30, 60x50, 90x70
-                        } else {
-                            orientacion = 'horizontal'; // 30x40, 50x60, 70x90
-                        }
-                        return false;
-                    }
-                });
+                if (imgW <= 0 || imgH <= 0) return 'vertical';
                 
-                console.log('[cuadros] Orientación detectada:', orientacion || 'default vertical');
-                return orientacion || 'vertical';
+                var ratio = imgW / imgH;
+                
+                if (ratio > 0.95 && ratio < 1.05) {
+                    console.log('[cuadros] Orientación por imagen: 1:1 (cuadrada)');
+                    return '1:1';
+                } else if (ratio < 1) {
+                    console.log('[cuadros] Orientación por imagen: vertical');
+                    return 'vertical';
+                } else {
+                    console.log('[cuadros] Orientación por imagen: horizontal');
+                    return 'horizontal';
+                }
             }
             
             function buscarMarco(val, orient) {
