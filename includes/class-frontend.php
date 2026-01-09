@@ -317,6 +317,22 @@ class Cuadros_Frontend {
             var currentMarcoUrl = null;
             var currentPaspartuColor = null;
             var currentOrientacion = 'vertical';
+            var galleryImages = [];
+            var currentSlideIndex = 0;
+            
+            function obtenerImagenesGaleria() {
+                galleryImages = [];
+                $('.woocommerce-product-gallery__image').each(function(index) {
+                    var $img = $(this).find('img');
+                    var $link = $(this).find('a');
+                    galleryImages.push({
+                        index: index,
+                        src: $link.attr('href') || $img.attr('data-large_image') || $img.attr('src'),
+                        alt: $img.attr('alt') || ''
+                    });
+                });
+                console.log('[cuadros] Galería:', galleryImages.length, 'imágenes');
+            }
             
             function actualizarLightboxState() {
                 var marcoVal = $('#pa_marco').val();
@@ -324,10 +340,11 @@ class Cuadros_Frontend {
                 currentOrientacion = detectarOrientacion();
                 currentMarcoUrl = buscarMarco(marcoVal, currentOrientacion);
                 currentPaspartuColor = buscarPaspartu(paspartuVal);
+                obtenerImagenesGaleria();
             }
             
-            function mostrarLightbox() {
-                var imgSrc = $productImage.attr('data-large_image') || $productImage.attr('src');
+            function mostrarLightbox(startIndex) {
+                currentSlideIndex = startIndex || 0;
                 
                 var $overlay = $('<div id="cuadros-lightbox"></div>').css({
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -335,72 +352,150 @@ class Cuadros_Frontend {
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                 });
                 
-                var maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
-                var lbW, lbH;
-                
-                if (currentOrientacion === '1:1') {
-                    lbW = lbH = maxSize;
-                } else if (currentOrientacion === 'horizontal') {
-                    lbW = maxSize;
-                    lbH = maxSize * 0.75;
-                } else {
-                    lbH = maxSize;
-                    lbW = maxSize * 0.75;
-                }
-                
-                var $container = $('<div></div>').css({
-                    position: 'relative', width: lbW + 'px', height: lbH + 'px'
+                var $container = $('<div id="cuadros-lb-container"></div>').css({
+                    position: 'relative'
                 });
                 
-                // Fondo: paspartú o blanco por defecto
-                var fondoColor = currentPaspartuColor || '#ffffff';
-                $('<div></div>').css({
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    background: fondoColor, zIndex: 1
-                }).appendTo($container);
-                
-                // Imagen - usar contain para que se vea completa sin recortar
-                var imgSize = currentPaspartuColor ? IMAGEN_PORCENTAJE : (IMAGEN_PORCENTAJE + 5);
-                var imgW = lbW * (imgSize / 100);
-                var imgH = lbH * (imgSize / 100);
-                
-                $('<div></div>').css({
-                    position: 'absolute',
-                    top: (lbH - imgH) / 2 + 'px',
-                    left: (lbW - imgW) / 2 + 'px',
-                    width: imgW + 'px', height: imgH + 'px',
-                    zIndex: 2, overflow: 'hidden',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }).append(
-                    $('<img>').attr('src', imgSrc).css({
-                        maxWidth: '100%', maxHeight: '100%', 
-                        width: 'auto', height: 'auto',
-                        objectFit: 'contain'
-                    })
-                ).appendTo($container);
-                
-                // Marco
-                if (currentMarcoUrl) {
-                    $('<div></div>').css({
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        backgroundImage: 'url(' + currentMarcoUrl + ')',
-                        backgroundSize: '100% 100%',
-                        zIndex: 3, pointerEvents: 'none'
-                    }).appendTo($container);
-                }
-                
                 // Botón cerrar
-                $('<div>&times;</div>').css({
+                var $closeBtn = $('<div class="cuadros-lb-close">&times;</div>').css({
                     position: 'absolute', top: '20px', right: '30px',
                     color: '#fff', fontSize: '40px', cursor: 'pointer', zIndex: 10
-                }).on('click', function() { $overlay.remove(); }).appendTo($overlay);
+                });
                 
-                $overlay.append($container);
-                $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+                // Flechas de navegación
+                var $prevBtn = $('<div class="cuadros-lb-prev">&#10094;</div>').css({
+                    position: 'absolute', left: '20px', top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#fff', fontSize: '50px', cursor: 'pointer', zIndex: 10,
+                    padding: '10px', userSelect: 'none',
+                    display: galleryImages.length > 1 ? 'block' : 'none'
+                });
+                
+                var $nextBtn = $('<div class="cuadros-lb-next">&#10095;</div>').css({
+                    position: 'absolute', right: '20px', top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#fff', fontSize: '50px', cursor: 'pointer', zIndex: 10,
+                    padding: '10px', userSelect: 'none',
+                    display: galleryImages.length > 1 ? 'block' : 'none'
+                });
+                
+                // Contador
+                var $counter = $('<div class="cuadros-lb-counter"></div>').css({
+                    position: 'absolute', top: '20px', left: '30px',
+                    color: '#fff', fontSize: '16px', zIndex: 10
+                });
+                
+                $overlay.append($container).append($closeBtn).append($prevBtn).append($nextBtn).append($counter);
                 $('body').append($overlay);
                 
+                function mostrarImagen(index) {
+                    if (index < 0) index = galleryImages.length - 1;
+                    if (index >= galleryImages.length) index = 0;
+                    currentSlideIndex = index;
+                    
+                    $container.empty();
+                    $counter.text((index + 1) + ' / ' + galleryImages.length);
+                    
+                    var imgSrc = galleryImages[index].src;
+                    var esPrimeraImagen = (index === 0);
+                    
+                    var maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
+                    var lbW, lbH;
+                    
+                    // Solo aplicar marco/paspartú en la primera imagen
+                    if (esPrimeraImagen && (currentMarcoUrl || currentPaspartuColor)) {
+                        if (currentOrientacion === '1:1') {
+                            lbW = lbH = maxSize;
+                        } else if (currentOrientacion === 'horizontal') {
+                            lbW = maxSize;
+                            lbH = maxSize * 0.75;
+                        } else {
+                            lbH = maxSize;
+                            lbW = maxSize * 0.75;
+                        }
+                        
+                        $container.css({ width: lbW + 'px', height: lbH + 'px' });
+                        
+                        // Fondo: paspartú o blanco
+                        var fondoColor = currentPaspartuColor || '#ffffff';
+                        $('<div></div>').css({
+                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                            background: fondoColor, zIndex: 1
+                        }).appendTo($container);
+                        
+                        // Imagen centrada
+                        var imgSize = currentPaspartuColor ? IMAGEN_PORCENTAJE : (IMAGEN_PORCENTAJE + 5);
+                        var imgW = lbW * (imgSize / 100);
+                        var imgH = lbH * (imgSize / 100);
+                        
+                        $('<div></div>').css({
+                            position: 'absolute',
+                            top: (lbH - imgH) / 2 + 'px',
+                            left: (lbW - imgW) / 2 + 'px',
+                            width: imgW + 'px', height: imgH + 'px',
+                            zIndex: 2, overflow: 'hidden',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }).append(
+                            $('<img>').attr('src', imgSrc).css({
+                                maxWidth: '100%', maxHeight: '100%',
+                                width: 'auto', height: 'auto',
+                                objectFit: 'contain'
+                            })
+                        ).appendTo($container);
+                        
+                        // Marco
+                        if (currentMarcoUrl) {
+                            $('<div></div>').css({
+                                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                backgroundImage: 'url(' + currentMarcoUrl + ')',
+                                backgroundSize: '100% 100%',
+                                zIndex: 3, pointerEvents: 'none'
+                            }).appendTo($container);
+                        }
+                    } else {
+                        // Otras imágenes: mostrar sin marco/paspartú
+                        $container.css({ width: 'auto', height: 'auto' });
+                        $('<img>').attr('src', imgSrc).css({
+                            maxWidth: '80vw', maxHeight: '80vh',
+                            display: 'block'
+                        }).appendTo($container);
+                    }
+                }
+                
+                mostrarImagen(currentSlideIndex);
+                
+                // Eventos
+                $closeBtn.on('click', function() { 
+                    $overlay.remove(); 
+                    $(document).off('keydown.cuadrosLb');
+                });
+                
+                $prevBtn.on('click', function(e) {
+                    e.stopPropagation();
+                    mostrarImagen(currentSlideIndex - 1);
+                });
+                
+                $nextBtn.on('click', function(e) {
+                    e.stopPropagation();
+                    mostrarImagen(currentSlideIndex + 1);
+                });
+                
+                $overlay.on('click', function(e) {
+                    if (e.target === $overlay[0]) {
+                        $overlay.remove();
+                        $(document).off('keydown.cuadrosLb');
+                    }
+                });
+                
                 $(document).on('keydown.cuadrosLb', function(e) {
-                    if (e.keyCode === 27) { $overlay.remove(); $(document).off('keydown.cuadrosLb'); }
+                    if (e.keyCode === 27) { // ESC
+                        $overlay.remove();
+                        $(document).off('keydown.cuadrosLb');
+                    } else if (e.keyCode === 37) { // Flecha izquierda
+                        mostrarImagen(currentSlideIndex - 1);
+                    } else if (e.keyCode === 39) { // Flecha derecha
+                        mostrarImagen(currentSlideIndex + 1);
+                    }
                 });
             }
             
@@ -409,7 +504,7 @@ class Cuadros_Frontend {
                 if (currentMarcoUrl || currentPaspartuColor) {
                     e.preventDefault();
                     e.stopPropagation();
-                    mostrarLightbox();
+                    mostrarLightbox(0);
                 }
             });
             
