@@ -212,20 +212,20 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                // Calcular dimensiones según orientación
-                var wrapperW, wrapperH;
+                // Calcular dimensiones del wrapper según orientación
+                // Usamos el ancho original como base y calculamos el alto según la proporción
+                var wrapperW = originalWidth;
+                var wrapperH;
                 
                 if (orientacion === '1:1') {
-                    // Cuadrado: usar el menor lado
-                    var side = Math.min(originalWidth, originalHeight);
-                    wrapperW = wrapperH = side;
+                    // Cuadrado: usar el ancho como base
+                    wrapperH = wrapperW;
                 } else if (orientacion === 'horizontal') {
-                    wrapperW = originalWidth;
-                    wrapperH = originalWidth * 0.75; // Ratio 4:3
+                    // Horizontal: ratio 4:3 (ancho > alto)
+                    wrapperH = wrapperW * 0.75;
                 } else {
-                    // Vertical: mantener proporciones originales
-                    wrapperW = originalWidth;
-                    wrapperH = originalHeight;
+                    // Vertical: ratio 3:4 (alto > ancho)
+                    wrapperH = wrapperW * 1.33;
                 }
                 
                 $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
