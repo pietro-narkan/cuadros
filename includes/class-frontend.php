@@ -218,52 +218,52 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                // Calcular dimensiones del wrapper según orientación
-                var wrapperW, wrapperH;
+                // Margen fijo en píxeles (igual en todos los lados)
+                var MARGEN_CON_PASPARTU = 40;  // píxeles cuando hay paspartú
+                var MARGEN_SIN_PASPARTU = 25;  // píxeles cuando solo hay marco
+                var margen = hayPaspartu ? MARGEN_CON_PASPARTU : MARGEN_SIN_PASPARTU;
                 
-                if (orientacion === '1:1') {
-                    var side = Math.min(originalWidth, originalHeight);
-                    wrapperW = wrapperH = side;
-                } else if (orientacion === 'horizontal') {
-                    wrapperW = originalWidth;
-                    wrapperH = originalWidth * 0.75;
-                    if (wrapperH > originalHeight) {
-                        wrapperH = originalHeight;
-                        wrapperW = originalHeight / 0.75;
-                    }
+                // Obtener proporciones de la imagen original
+                var imgNaturalW = $productImage[0].naturalWidth || originalWidth;
+                var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
+                var imgRatio = imgNaturalW / imgNaturalH;
+                
+                // Calcular el tamaño del área de imagen (wrapper menos márgenes)
+                var areaDisponibleW = originalWidth - (margen * 2);
+                var areaDisponibleH = originalHeight - (margen * 2);
+                
+                // Calcular tamaño de imagen manteniendo proporción
+                var imgW, imgH;
+                if (imgRatio > (areaDisponibleW / areaDisponibleH)) {
+                    // Imagen más ancha: limitar por ancho
+                    imgW = areaDisponibleW;
+                    imgH = imgW / imgRatio;
                 } else {
-                    wrapperW = originalWidth;
-                    wrapperH = originalWidth * 1.33;
-                    if (wrapperH > originalHeight) {
-                        wrapperH = originalHeight;
-                        wrapperW = originalHeight / 1.33;
-                    }
+                    // Imagen más alta: limitar por alto
+                    imgH = areaDisponibleH;
+                    imgW = imgH * imgRatio;
                 }
+                
+                // El wrapper tiene el tamaño de la imagen + márgenes iguales
+                var wrapperW = imgW + (margen * 2);
+                var wrapperH = imgH + (margen * 2);
                 
                 $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
                 
-                // Calcular el margen del paspartú (igual en todos los lados)
-                // Usamos un porcentaje fijo del lado menor para que sea uniforme
-                var menorLado = Math.min(wrapperW, wrapperH);
-                var margenPaspartu = hayPaspartu ? (menorLado * 0.12) : (menorLado * 0.08); // 12% con paspartú, 8% sin
-                
-                // Calcular tamaño de la imagen restando el margen de cada lado
-                var imgW = wrapperW - (margenPaspartu * 2);
-                var imgH = wrapperH - (margenPaspartu * 2);
-                
-                // Centrar imagen (el margen es igual en todos los lados)
-                var imgLeft = margenPaspartu;
-                var imgTop = margenPaspartu;
-                
+                // La imagen se posiciona con margen igual en todos los lados
                 $imagenLayer.css({
-                    'top': imgTop + 'px',
-                    'left': imgLeft + 'px',
+                    'top': margen + 'px',
+                    'left': margen + 'px',
                     'width': imgW + 'px',
                     'height': imgH + 'px'
                 });
                 
-                // Imagen completa sin recortar
-                $productImage.css({ 'object-fit': 'contain' });
+                // La imagen llena todo el contenedor
+                $productImage.css({ 
+                    'object-fit': 'cover',
+                    'width': '100%',
+                    'height': '100%'
+                });
                 
                 // Marco
                 if (hayMarco) {
@@ -285,7 +285,7 @@ class Cuadros_Frontend {
                     $paspartuLayer.css('opacity', '0');
                 }
                 
-                console.log('[cuadros] Dimensiones - Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Margen paspartú:', margenPaspartu.toFixed(0), 'px');
+                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0), '- Margen:', margen, 'px');
             }
             
             // Event listeners
@@ -413,55 +413,68 @@ class Cuadros_Frontend {
                     
                     // Solo aplicar marco/paspartú en la primera imagen
                     if (esPrimeraImagen && (currentMarcoUrl || currentPaspartuColor)) {
-                        if (currentOrientacion === '1:1') {
-                            lbW = lbH = maxSize;
-                        } else if (currentOrientacion === 'horizontal') {
-                            lbW = maxSize;
-                            lbH = maxSize * 0.75;
-                        } else {
-                            lbH = maxSize;
-                            lbW = maxSize * 0.75;
-                        }
+                        // Margen fijo igual en todos los lados
+                        var MARGEN_LB = currentPaspartuColor ? 50 : 30;
                         
-                        $container.css({ width: lbW + 'px', height: lbH + 'px' });
-                        
-                        // Fondo: paspartú o blanco
-                        var fondoColor = currentPaspartuColor || '#ffffff';
-                        $('<div></div>').css({
-                            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                            background: fondoColor, zIndex: 1
-                        }).appendTo($container);
-                        
-                        // Imagen centrada con margen uniforme
-                        var menorLado = Math.min(lbW, lbH);
-                        var margenPaspartu = currentPaspartuColor ? (menorLado * 0.12) : (menorLado * 0.08);
-                        var imgW = lbW - (margenPaspartu * 2);
-                        var imgH = lbH - (margenPaspartu * 2);
-                        
-                        $('<div></div>').css({
-                            position: 'absolute',
-                            top: margenPaspartu + 'px',
-                            left: margenPaspartu + 'px',
-                            width: imgW + 'px', height: imgH + 'px',
-                            zIndex: 2, overflow: 'hidden',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }).append(
-                            $('<img>').attr('src', imgSrc).css({
-                                maxWidth: '100%', maxHeight: '100%',
-                                width: 'auto', height: 'auto',
-                                objectFit: 'contain'
-                            })
-                        ).appendTo($container);
-                        
-                        // Marco
-                        if (currentMarcoUrl) {
+                        // Cargar imagen para obtener proporciones
+                        var tempImg = new Image();
+                        tempImg.onload = function() {
+                            var imgRatio = tempImg.width / tempImg.height;
+                            
+                            // Área disponible para la imagen
+                            var areaW = maxSize - (MARGEN_LB * 2);
+                            var areaH = maxSize - (MARGEN_LB * 2);
+                            
+                            // Calcular tamaño manteniendo proporción
+                            var imgW, imgH;
+                            if (imgRatio > 1) {
+                                imgW = areaW;
+                                imgH = imgW / imgRatio;
+                            } else {
+                                imgH = areaH;
+                                imgW = imgH * imgRatio;
+                            }
+                            
+                            var lbW = imgW + (MARGEN_LB * 2);
+                            var lbH = imgH + (MARGEN_LB * 2);
+                            
+                            $container.css({ width: lbW + 'px', height: lbH + 'px' });
+                            
+                            // Fondo: paspartú o blanco
+                            var fondoColor = currentPaspartuColor || '#ffffff';
                             $('<div></div>').css({
                                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                backgroundImage: 'url(' + currentMarcoUrl + ')',
-                                backgroundSize: '100% 100%',
-                                zIndex: 3, pointerEvents: 'none'
+                                background: fondoColor, zIndex: 1
                             }).appendTo($container);
-                        }
+                            
+                            // Imagen
+                            $('<div></div>').css({
+                                position: 'absolute',
+                                top: MARGEN_LB + 'px',
+                                left: MARGEN_LB + 'px',
+                                width: imgW + 'px', 
+                                height: imgH + 'px',
+                                zIndex: 2, 
+                                overflow: 'hidden'
+                            }).append(
+                                $('<img>').attr('src', imgSrc).css({
+                                    width: '100%', 
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                })
+                            ).appendTo($container);
+                            
+                            // Marco
+                            if (currentMarcoUrl) {
+                                $('<div></div>').css({
+                                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                                    backgroundImage: 'url(' + currentMarcoUrl + ')',
+                                    backgroundSize: '100% 100%',
+                                    zIndex: 3, pointerEvents: 'none'
+                                }).appendTo($container);
+                            }
+                        };
+                        tempImg.src = imgSrc;
                     } else {
                         // Otras imágenes: mostrar sin marco/paspartú
                         $container.css({ width: 'auto', height: 'auto' });
