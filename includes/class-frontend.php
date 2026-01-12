@@ -223,32 +223,43 @@ class Cuadros_Frontend {
                 var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
                 var imgRatio = imgNaturalW / imgNaturalH;
                 
-                // Margen fijo en píxeles (IGUAL en todos los lados)
-                var MARGEN = hayPaspartu ? 35 : 20;
+                // Margen como PORCENTAJE del lado menor de la imagen
+                // Esto asegura que visualmente se vea igual en todos los lados
+                var MARGEN_PORCENTAJE = hayPaspartu ? 0.10 : 0.06; // 10% con paspartú, 6% sin
                 
-                // Calcular el tamaño máximo de imagen que cabe en el área disponible
-                var maxImgW = originalWidth - (MARGEN * 2);
-                var maxImgH = originalHeight - (MARGEN * 2);
+                // Calcular tamaño de imagen que cabe en el área disponible
+                var maxImgW = originalWidth;
+                var maxImgH = originalHeight;
                 
-                // Calcular tamaño de imagen manteniendo proporción
                 var imgW, imgH;
                 if (imgRatio > (maxImgW / maxImgH)) {
-                    // Imagen más ancha proporcionalmente
                     imgW = maxImgW;
                     imgH = imgW / imgRatio;
                 } else {
-                    // Imagen más alta proporcionalmente
                     imgH = maxImgH;
                     imgW = imgH * imgRatio;
                 }
                 
-                // El wrapper se ajusta exactamente a imagen + margen uniforme
+                // Calcular margen basado en el lado MENOR de la imagen
+                var menorLado = Math.min(imgW, imgH);
+                var MARGEN = menorLado * MARGEN_PORCENTAJE;
+                
+                // Reducir imagen para dejar espacio al margen
+                var factorReduccion = 1 - (MARGEN_PORCENTAJE * 2);
+                imgW = imgW * factorReduccion;
+                imgH = imgH * factorReduccion;
+                
+                // Recalcular margen con el nuevo tamaño
+                menorLado = Math.min(imgW, imgH);
+                MARGEN = menorLado * (MARGEN_PORCENTAJE / factorReduccion);
+                
+                // El wrapper es imagen + margen uniforme
                 var wrapperW = imgW + (MARGEN * 2);
                 var wrapperH = imgH + (MARGEN * 2);
                 
                 $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
                 
-                // La imagen se posiciona con EXACTAMENTE el mismo margen en todos los lados
+                // La imagen se posiciona con el mismo margen en todos los lados
                 $imagenLayer.css({
                     'top': MARGEN + 'px',
                     'left': MARGEN + 'px',
@@ -256,14 +267,13 @@ class Cuadros_Frontend {
                     'height': imgH + 'px'
                 });
                 
-                // La imagen llena completamente su contenedor
                 $productImage.css({ 
                     'object-fit': 'fill',
                     'width': '100%',
                     'height': '100%'
                 });
                 
-                // Marco (cubre todo el wrapper)
+                // Marco
                 if (hayMarco) {
                     $marcoLayer.css({
                         'background-image': 'url(' + marcoUrl + ')',
@@ -273,7 +283,7 @@ class Cuadros_Frontend {
                     $marcoLayer.css('opacity', '0');
                 }
                 
-                // Paspartú (fondo, se ve entre el marco y la imagen)
+                // Paspartú
                 if (hayPaspartu) {
                     $paspartuLayer.css({
                         'background-color': paspartuColor,
@@ -283,7 +293,7 @@ class Cuadros_Frontend {
                     $paspartuLayer.css('opacity', '0');
                 }
                 
-                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0), '- Margen uniforme:', MARGEN, 'px');
+                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0), '- Margen:', MARGEN.toFixed(0), 'px');
             }
             
             // Event listeners
