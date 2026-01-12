@@ -219,28 +219,21 @@ class Cuadros_Frontend {
                 }
                 
                 // Calcular dimensiones del wrapper según orientación
-                // IMPORTANTE: El wrapper debe caber en el espacio original
                 var wrapperW, wrapperH;
                 
                 if (orientacion === '1:1') {
-                    // Cuadrado: usar el menor lado para que quepa
                     var side = Math.min(originalWidth, originalHeight);
                     wrapperW = wrapperH = side;
                 } else if (orientacion === 'horizontal') {
-                    // Horizontal: el ancho es mayor, usar el ancho original
-                    // y calcular alto proporcional que quepa
                     wrapperW = originalWidth;
-                    wrapperH = originalWidth * 0.75; // ratio 4:3
-                    // Si el alto calculado es mayor que el original, ajustar
+                    wrapperH = originalWidth * 0.75;
                     if (wrapperH > originalHeight) {
                         wrapperH = originalHeight;
                         wrapperW = originalHeight / 0.75;
                     }
                 } else {
-                    // Vertical: el alto es mayor
                     wrapperW = originalWidth;
-                    wrapperH = originalWidth * 1.33; // ratio 3:4
-                    // Si el alto calculado es mayor que el disponible, ajustar
+                    wrapperH = originalWidth * 1.33;
                     if (wrapperH > originalHeight) {
                         wrapperH = originalHeight;
                         wrapperW = originalHeight / 1.33;
@@ -249,20 +242,18 @@ class Cuadros_Frontend {
                 
                 $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
                 
-                // Calcular posición y tamaño de la imagen (centro del marco)
-                var imgW, imgH, imgTop, imgLeft;
+                // Calcular el margen del paspartú (igual en todos los lados)
+                // Usamos un porcentaje fijo del lado menor para que sea uniforme
+                var menorLado = Math.min(wrapperW, wrapperH);
+                var margenPaspartu = hayPaspartu ? (menorLado * 0.12) : (menorLado * 0.08); // 12% con paspartú, 8% sin
                 
-                if (hayPaspartu) {
-                    imgW = wrapperW * (IMAGEN_PORCENTAJE / 100);
-                    imgH = wrapperH * (IMAGEN_PORCENTAJE / 100);
-                } else {
-                    imgW = wrapperW * ((IMAGEN_PORCENTAJE + 5) / 100);
-                    imgH = wrapperH * ((IMAGEN_PORCENTAJE + 5) / 100);
-                }
+                // Calcular tamaño de la imagen restando el margen de cada lado
+                var imgW = wrapperW - (margenPaspartu * 2);
+                var imgH = wrapperH - (margenPaspartu * 2);
                 
-                // Centrar imagen
-                imgLeft = (wrapperW - imgW) / 2;
-                imgTop = (wrapperH - imgH) / 2;
+                // Centrar imagen (el margen es igual en todos los lados)
+                var imgLeft = margenPaspartu;
+                var imgTop = margenPaspartu;
                 
                 $imagenLayer.css({
                     'top': imgTop + 'px',
@@ -271,7 +262,8 @@ class Cuadros_Frontend {
                     'height': imgH + 'px'
                 });
                 
-                $productImage.css({ 'object-fit': 'cover' });
+                // Imagen completa sin recortar
+                $productImage.css({ 'object-fit': 'contain' });
                 
                 // Marco
                 if (hayMarco) {
@@ -293,7 +285,7 @@ class Cuadros_Frontend {
                     $paspartuLayer.css('opacity', '0');
                 }
                 
-                console.log('[cuadros] Dimensiones - Wrapper:', wrapperW, 'x', wrapperH, '- Imagen:', imgW, 'x', imgH);
+                console.log('[cuadros] Dimensiones - Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Margen paspartú:', margenPaspartu.toFixed(0), 'px');
             }
             
             // Event listeners
@@ -440,15 +432,16 @@ class Cuadros_Frontend {
                             background: fondoColor, zIndex: 1
                         }).appendTo($container);
                         
-                        // Imagen centrada
-                        var imgSize = currentPaspartuColor ? IMAGEN_PORCENTAJE : (IMAGEN_PORCENTAJE + 5);
-                        var imgW = lbW * (imgSize / 100);
-                        var imgH = lbH * (imgSize / 100);
+                        // Imagen centrada con margen uniforme
+                        var menorLado = Math.min(lbW, lbH);
+                        var margenPaspartu = currentPaspartuColor ? (menorLado * 0.12) : (menorLado * 0.08);
+                        var imgW = lbW - (margenPaspartu * 2);
+                        var imgH = lbH - (margenPaspartu * 2);
                         
                         $('<div></div>').css({
                             position: 'absolute',
-                            top: (lbH - imgH) / 2 + 'px',
-                            left: (lbW - imgW) / 2 + 'px',
+                            top: margenPaspartu + 'px',
+                            left: margenPaspartu + 'px',
                             width: imgW + 'px', height: imgH + 'px',
                             zIndex: 2, overflow: 'hidden',
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
