@@ -219,19 +219,32 @@ class Cuadros_Frontend {
                 }
                 
                 // Calcular dimensiones del wrapper según orientación
-                // Usamos el ancho original como base y calculamos el alto según la proporción
-                var wrapperW = originalWidth;
-                var wrapperH;
+                // IMPORTANTE: El wrapper debe caber en el espacio original
+                var wrapperW, wrapperH;
                 
                 if (orientacion === '1:1') {
-                    // Cuadrado: usar el ancho como base
-                    wrapperH = wrapperW;
+                    // Cuadrado: usar el menor lado para que quepa
+                    var side = Math.min(originalWidth, originalHeight);
+                    wrapperW = wrapperH = side;
                 } else if (orientacion === 'horizontal') {
-                    // Horizontal: ratio 4:3 (ancho > alto)
-                    wrapperH = wrapperW * 0.75;
+                    // Horizontal: el ancho es mayor, usar el ancho original
+                    // y calcular alto proporcional que quepa
+                    wrapperW = originalWidth;
+                    wrapperH = originalWidth * 0.75; // ratio 4:3
+                    // Si el alto calculado es mayor que el original, ajustar
+                    if (wrapperH > originalHeight) {
+                        wrapperH = originalHeight;
+                        wrapperW = originalHeight / 0.75;
+                    }
                 } else {
-                    // Vertical: ratio 3:4 (alto > ancho)
-                    wrapperH = wrapperW * 1.33;
+                    // Vertical: el alto es mayor
+                    wrapperW = originalWidth;
+                    wrapperH = originalWidth * 1.33; // ratio 3:4
+                    // Si el alto calculado es mayor que el disponible, ajustar
+                    if (wrapperH > originalHeight) {
+                        wrapperH = originalHeight;
+                        wrapperW = originalHeight / 1.33;
+                    }
                 }
                 
                 $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
@@ -240,11 +253,9 @@ class Cuadros_Frontend {
                 var imgW, imgH, imgTop, imgLeft;
                 
                 if (hayPaspartu) {
-                    // Con paspartú: imagen más pequeña
                     imgW = wrapperW * (IMAGEN_PORCENTAJE / 100);
                     imgH = wrapperH * (IMAGEN_PORCENTAJE / 100);
                 } else {
-                    // Sin paspartú: imagen un poco más grande
                     imgW = wrapperW * ((IMAGEN_PORCENTAJE + 5) / 100);
                     imgH = wrapperH * ((IMAGEN_PORCENTAJE + 5) / 100);
                 }
@@ -272,7 +283,7 @@ class Cuadros_Frontend {
                     $marcoLayer.css('opacity', '0');
                 }
                 
-                // Paspartú (fondo visible a través del marco transparente)
+                // Paspartú
                 if (hayPaspartu) {
                     $paspartuLayer.css({
                         'background-color': paspartuColor,
