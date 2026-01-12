@@ -99,6 +99,17 @@ class Cuadros_Frontend {
             $wrapper.append($marcoLayer);
             $imagenLayer.append($productImage);
             
+            // Asegurar que los contenedores padres permitan overflow
+            $wrapper.parents().each(function() {
+                var $parent = $(this);
+                if ($parent.css('overflow') === 'hidden') {
+                    $parent.css('overflow', 'visible');
+                }
+            });
+            
+            // También el contenedor de la galería
+            $('.woocommerce-product-gallery, .woocommerce-product-gallery__wrapper, .woocommerce-product-gallery__image').css('overflow', 'visible');
+            
             // Estilos del wrapper
             $wrapper.css({
                 'position': 'relative',

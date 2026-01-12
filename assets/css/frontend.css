@@ -1,9 +1,20 @@
 /* Plugin Cuadros - Estructura de 3 capas */
 
+/* Forzar overflow visible en contenedores de galería */
+.woocommerce-product-gallery,
+.woocommerce-product-gallery__wrapper,
+.woocommerce-product-gallery__image,
+.woocommerce-product-gallery__image > a,
+.flex-viewport,
+.woocommerce-product-gallery .flex-viewport {
+    overflow: visible !important;
+}
+
 #cuadros-wrapper {
     position: relative !important;
     display: inline-block !important;
     transition: width 0.3s, height 0.3s;
+    overflow: visible !important;
 }
 
 /* Capa 1: Paspartú (fondo) */
