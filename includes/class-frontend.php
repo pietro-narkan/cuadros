@@ -218,54 +218,52 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                // Margen fijo en píxeles (igual en todos los lados)
-                var MARGEN_CON_PASPARTU = 40;  // píxeles cuando hay paspartú
-                var MARGEN_SIN_PASPARTU = 25;  // píxeles cuando solo hay marco
-                var margen = hayPaspartu ? MARGEN_CON_PASPARTU : MARGEN_SIN_PASPARTU;
-                
                 // Obtener proporciones de la imagen original
                 var imgNaturalW = $productImage[0].naturalWidth || originalWidth;
                 var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
                 var imgRatio = imgNaturalW / imgNaturalH;
                 
-                // Calcular el tamaño del área de imagen (wrapper menos márgenes)
-                var areaDisponibleW = originalWidth - (margen * 2);
-                var areaDisponibleH = originalHeight - (margen * 2);
+                // Margen fijo en píxeles (IGUAL en todos los lados)
+                var MARGEN = hayPaspartu ? 35 : 20;
+                
+                // Calcular el tamaño máximo de imagen que cabe en el área disponible
+                var maxImgW = originalWidth - (MARGEN * 2);
+                var maxImgH = originalHeight - (MARGEN * 2);
                 
                 // Calcular tamaño de imagen manteniendo proporción
                 var imgW, imgH;
-                if (imgRatio > (areaDisponibleW / areaDisponibleH)) {
-                    // Imagen más ancha: limitar por ancho
-                    imgW = areaDisponibleW;
+                if (imgRatio > (maxImgW / maxImgH)) {
+                    // Imagen más ancha proporcionalmente
+                    imgW = maxImgW;
                     imgH = imgW / imgRatio;
                 } else {
-                    // Imagen más alta: limitar por alto
-                    imgH = areaDisponibleH;
+                    // Imagen más alta proporcionalmente
+                    imgH = maxImgH;
                     imgW = imgH * imgRatio;
                 }
                 
-                // El wrapper tiene el tamaño de la imagen + márgenes iguales
-                var wrapperW = imgW + (margen * 2);
-                var wrapperH = imgH + (margen * 2);
+                // El wrapper se ajusta exactamente a imagen + margen uniforme
+                var wrapperW = imgW + (MARGEN * 2);
+                var wrapperH = imgH + (MARGEN * 2);
                 
                 $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
                 
-                // La imagen se posiciona con margen igual en todos los lados
+                // La imagen se posiciona con EXACTAMENTE el mismo margen en todos los lados
                 $imagenLayer.css({
-                    'top': margen + 'px',
-                    'left': margen + 'px',
+                    'top': MARGEN + 'px',
+                    'left': MARGEN + 'px',
                     'width': imgW + 'px',
                     'height': imgH + 'px'
                 });
                 
-                // La imagen llena todo el contenedor
+                // La imagen llena completamente su contenedor
                 $productImage.css({ 
-                    'object-fit': 'cover',
+                    'object-fit': 'fill',
                     'width': '100%',
                     'height': '100%'
                 });
                 
-                // Marco
+                // Marco (cubre todo el wrapper)
                 if (hayMarco) {
                     $marcoLayer.css({
                         'background-image': 'url(' + marcoUrl + ')',
@@ -275,7 +273,7 @@ class Cuadros_Frontend {
                     $marcoLayer.css('opacity', '0');
                 }
                 
-                // Paspartú
+                // Paspartú (fondo, se ve entre el marco y la imagen)
                 if (hayPaspartu) {
                     $paspartuLayer.css({
                         'background-color': paspartuColor,
@@ -285,7 +283,7 @@ class Cuadros_Frontend {
                     $paspartuLayer.css('opacity', '0');
                 }
                 
-                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0), '- Margen:', margen, 'px');
+                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0), '- Margen uniforme:', MARGEN, 'px');
             }
             
             // Event listeners
