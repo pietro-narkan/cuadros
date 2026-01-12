@@ -1,12 +1,8 @@
 /* Plugin Cuadros - Estructura de 3 capas */
 
-/* Forzar overflow visible en contenedores de galería */
-.woocommerce-product-gallery,
-.woocommerce-product-gallery__wrapper,
-.woocommerce-product-gallery__image,
-.woocommerce-product-gallery__image > a,
-.flex-viewport,
-.woocommerce-product-gallery .flex-viewport {
+/* Solo overflow visible en el contenedor de la imagen principal */
+.woocommerce-product-gallery__image:first-child,
+.woocommerce-product-gallery__image:first-child > a {
     overflow: visible !important;
 }
 
