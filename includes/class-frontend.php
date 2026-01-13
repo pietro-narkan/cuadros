@@ -90,19 +90,18 @@ class Cuadros_Frontend {
             $wrapper.append($imagenLayer);
             $imagenLayer.append($productImage);
             
-            // Fondo gris - ocupa todo el espacio original
+            // Fondo gris - ocupa todo el espacio original y se centra
             $fondoWrapper.css({
                 'background-color': '#f0f0f0',
                 'width': originalWidth + 'px',
                 'height': originalHeight + 'px',
-                'display': 'flex',
-                'align-items': 'center',
-                'justify-content': 'center',
+                'display': 'block',
                 'box-sizing': 'border-box',
-                'position': 'relative'
+                'position': 'relative',
+                'margin': '0 auto'
             });
             
-            // Wrapper del cuadro - se centra dentro del fondo via CSS
+            // Wrapper del cuadro - centrado via CSS (position absolute + transform)
             $wrapper.css({
                 'box-sizing': 'border-box'
             });
