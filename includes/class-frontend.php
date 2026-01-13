@@ -144,6 +144,13 @@ class Cuadros_Frontend {
             
             function buscarColorPaspartu(val) {
                 if (!val) return null;
+                
+                // Detectar "sin paspartú" o variantes
+                var valLower = val.toLowerCase();
+                if (valLower.includes('sin ') || valLower === 'ninguno' || valLower === 'none' || valLower === 'no') {
+                    return null; // Sin paspartú
+                }
+                
                 var v = val.toLowerCase().replace(/[\s-]/g, '_');
                 for (var k in coloresPaspartu) {
                     var kn = k.toLowerCase().replace(/[\s-]/g, '_');
