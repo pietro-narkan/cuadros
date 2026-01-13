@@ -1,42 +1,29 @@
-/* Plugin Cuadros - Estructura de 3 capas */
+/* Plugin Cuadros */
 
-/* Solo overflow visible en el contenedor de la imagen principal */
 .woocommerce-product-gallery__image:first-child,
 .woocommerce-product-gallery__image:first-child > a {
     overflow: visible !important;
 }
 
-/* Fondo gris detrás del cuadro */
 #cuadros-fondo {
     background-color: #f0f0f0;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box;
-    position: relative;
 }
 
 #cuadros-wrapper {
-    position: relative !important;
-    box-sizing: border-box;
+    position: relative;
     transition: width 0.3s, height 0.3s;
-    overflow: hidden;
 }
 
-/* Capa 1: Paspartú (fondo completo) */
 #layer-paspartu {
-    position: absolute !important;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1 !important;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 1;
     transition: opacity 0.3s, background-color 0.3s;
 }
 
-/* Capa 2: Imagen (medio) */
 #layer-imagen {
-    position: absolute !important;
-    z-index: 2 !important;
-    overflow: hidden;
+    position: relative;
+    z-index: 2;
     transition: all 0.3s;
 }
 
@@ -47,18 +34,15 @@
     object-fit: fill;
 }
 
-/* Capa 3: Marco (frente - solo borde) */
 #layer-marco {
-    position: absolute !important;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 3 !important;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 3;
     pointer-events: none;
     box-sizing: border-box;
     transition: opacity 0.3s;
 }
 
-/* Lightbox */
 #cuadros-lightbox {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -69,7 +53,6 @@
     justify-content: center;
 }
 
-/* Galería WooCommerce */
 .woocommerce-product-gallery__image {
     position: relative !important;
 }
