@@ -9,23 +9,25 @@
 /* Fondo gris detrás del cuadro */
 #cuadros-fondo {
     background-color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     box-sizing: border-box;
+    position: relative;
 }
 
 #cuadros-wrapper {
     position: relative !important;
-    display: inline-block !important;
+    box-sizing: border-box;
     transition: width 0.3s, height 0.3s;
-    overflow: visible !important;
+    overflow: hidden;
 }
 
-/* Capa 1: Paspartú (fondo) */
+/* Capa 1: Paspartú (fondo completo) */
 #layer-paspartu {
     position: absolute !important;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     z-index: 1 !important;
     transition: opacity 0.3s, background-color 0.3s;
 }
@@ -42,17 +44,17 @@
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: fill;
 }
 
-/* Capa 3: Marco (frente) */
+/* Capa 3: Marco (frente - solo borde) */
 #layer-marco {
     position: absolute !important;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     z-index: 3 !important;
     pointer-events: none;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
+    box-sizing: border-box;
     transition: opacity 0.3s;
 }
 

@@ -90,39 +90,40 @@ class Cuadros_Frontend {
             $wrapper.append($imagenLayer);
             $imagenLayer.append($productImage);
             
-            // Fondo gris detrás del cuadro
+            // Fondo gris - ocupa todo el espacio original
             $fondoWrapper.css({
                 'background-color': '#f0f0f0',
+                'width': originalWidth + 'px',
+                'height': originalHeight + 'px',
                 'display': 'flex',
                 'align-items': 'center',
                 'justify-content': 'center',
-                'width': originalWidth + 'px',
-                'height': originalHeight + 'px',
-                'box-sizing': 'border-box'
+                'box-sizing': 'border-box',
+                'position': 'relative'
             });
             
-            // Estilos base
+            // Wrapper del cuadro - se centra dentro del fondo
             $wrapper.css({
                 'position': 'relative',
-                'display': 'inline-block',
-                'width': originalWidth + 'px',
-                'height': originalHeight + 'px',
                 'box-sizing': 'border-box'
             });
             
             // Marco: borde exterior
             $marcoLayer.css({
                 'position': 'absolute',
-                'top': '0', 'left': '0', 'right': '0', 'bottom': '0',
+                'top': '0', 'left': '0',
+                'width': '100%', 'height': '100%',
                 'box-sizing': 'border-box',
                 'pointer-events': 'none',
                 'opacity': '0',
                 'transition': 'opacity 0.3s, border-color 0.3s'
             });
             
-            // Paspartú: fondo de color
+            // Paspartú: fondo de color completo
             $paspartuLayer.css({
                 'position': 'absolute',
+                'top': '0', 'left': '0',
+                'width': '100%', 'height': '100%',
                 'box-sizing': 'border-box',
                 'pointer-events': 'none',
                 'opacity': '0',
@@ -187,7 +188,7 @@ class Cuadros_Frontend {
                 
                 console.log('[cuadros] Actualizar:', {marco: marcoVal, paspartu: paspartuVal, hayMarco, hayPaspartu});
                 
-                // Si no hay nada, restaurar
+                // Si no hay nada, restaurar imagen a tamaño completo
                 if (!hayMarco && !hayPaspartu) {
                     $wrapper.css({ 'width': originalWidth + 'px', 'height': originalHeight + 'px' });
                     $imagenLayer.css({ 'top': '0', 'left': '0', 'width': '100%', 'height': '100%' });
@@ -196,20 +197,21 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                // Calcular grosores totales
+                // Calcular grosores
                 var bordeMarco = hayMarco ? GROSOR_MARCO : 0;
                 var bordePaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
                 var bordeTotal = bordeMarco + bordePaspartu;
                 
-                // Proporciones de la imagen
+                // Proporciones de la imagen natural
                 var imgNaturalW = $productImage[0].naturalWidth || originalWidth;
                 var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
                 var imgRatio = imgNaturalW / imgNaturalH;
                 
-                // Calcular tamaño de imagen que cabe en el espacio disponible
+                // Espacio disponible para la imagen (dentro del fondo, menos bordes)
                 var espacioW = originalWidth - (bordeTotal * 2);
                 var espacioH = originalHeight - (bordeTotal * 2);
                 
+                // Calcular tamaño de imagen manteniendo proporción
                 var imgW, imgH;
                 if (imgRatio >= (espacioW / espacioH)) {
                     imgW = espacioW;
@@ -219,7 +221,7 @@ class Cuadros_Frontend {
                     imgW = imgH * imgRatio;
                 }
                 
-                // El wrapper se ajusta a imagen + bordes
+                // El wrapper (cuadro completo) = imagen + bordes
                 var wrapperW = imgW + (bordeTotal * 2);
                 var wrapperH = imgH + (bordeTotal * 2);
                 
@@ -228,23 +230,22 @@ class Cuadros_Frontend {
                     'height': wrapperH + 'px' 
                 });
                 
-                // Marco: borde exterior
+                // Marco: borde exterior del wrapper
                 if (hayMarco) {
                     $marcoLayer.css({
                         'border': bordeMarco + 'px solid ' + marcoColor,
                         'opacity': '1'
                     });
                 } else {
-                    $marcoLayer.css('opacity', '0');
+                    $marcoLayer.css({
+                        'border': 'none',
+                        'opacity': '0'
+                    });
                 }
                 
-                // Paspartú: fondo entre marco e imagen
+                // Paspartú: fondo completo del wrapper (debajo del marco)
                 if (hayPaspartu) {
                     $paspartuLayer.css({
-                        'top': bordeMarco + 'px',
-                        'left': bordeMarco + 'px',
-                        'right': bordeMarco + 'px',
-                        'bottom': bordeMarco + 'px',
                         'background-color': paspartuColor,
                         'opacity': '1'
                     });
@@ -252,7 +253,7 @@ class Cuadros_Frontend {
                     $paspartuLayer.css('opacity', '0');
                 }
                 
-                // Imagen: posicionada dentro del paspartú
+                // Imagen: centrada dentro del wrapper, con offset de bordes
                 $imagenLayer.css({
                     'top': bordeTotal + 'px',
                     'left': bordeTotal + 'px',
@@ -260,7 +261,7 @@ class Cuadros_Frontend {
                     'height': imgH + 'px'
                 });
                 
-                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Borde total:', bordeTotal, 'px');
+                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0));
             }
             
             // Event listeners
