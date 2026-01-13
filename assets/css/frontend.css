@@ -1,27 +1,13 @@
-/* Plugin Cuadros */
+/* Plugin Cuadros v3 */
 
-.woocommerce-product-gallery__image:first-child,
-.woocommerce-product-gallery__image:first-child > a {
-    overflow: visible !important;
-    display: block !important;
-    width: 100% !important;
-}
-
-.woocommerce-product-gallery__image:first-child > a {
-    text-align: center;
-}
-
-#cuadros-fondo {
-    background-color: #f0f0f0;
-    width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box;
+.flex-viewport,
+.woocommerce-product-gallery__wrapper {
+    background-color: #f0f0f0 !important;
 }
 
 #cuadros-wrapper {
     position: relative;
+    margin: 0 auto;
     transition: width 0.3s, height 0.3s;
 }
 
@@ -30,19 +16,6 @@
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: 1;
     transition: opacity 0.3s, background-color 0.3s;
-}
-
-#layer-imagen {
-    position: relative;
-    z-index: 2;
-    transition: all 0.3s;
-}
-
-#layer-imagen img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
 }
 
 #layer-marco {
@@ -54,16 +27,14 @@
     transition: opacity 0.3s;
 }
 
-#cuadros-lightbox {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.95);
-    z-index: 999999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#cuadros-wrapper img {
+    position: relative;
+    z-index: 2;
+    display: block;
+    object-fit: fill;
+    transition: all 0.3s;
 }
 
-.woocommerce-product-gallery__image {
-    position: relative !important;
+#cuadros-wrapper a {
+    display: block;
 }
