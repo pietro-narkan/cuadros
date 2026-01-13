@@ -8,6 +8,9 @@
 #cuadros-fondo {
     position: relative;
     overflow: visible;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 #cuadros-wrapper {
@@ -15,6 +18,7 @@
     margin: 0 auto;
     transition: width 0.3s, height 0.3s;
     overflow: visible;
+    flex-shrink: 0;
 }
 
 #layer-paspartu {

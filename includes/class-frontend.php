@@ -105,7 +105,8 @@ class Cuadros_Frontend {
             // Wrapper del cuadro - se centra dentro del fondo
             $wrapper.css({
                 'position': 'relative',
-                'box-sizing': 'border-box'
+                'box-sizing': 'border-box',
+                'flex-shrink': '0'
             });
             
             // Marco: borde exterior
@@ -319,12 +320,15 @@ class Cuadros_Frontend {
                 // Actualizar el fondo con las dimensiones correctas
                 $fondoWrapper.css({
                     'width': originalWidth + 'px',
-                    'height': originalHeight + 'px'
+                    'height': originalHeight + 'px',
+                    'display': 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'center'
                 });
                 
                 $wrapper.css({ 
                     'width': originalWidth + 'px', 
-                    'height': originalHeight + 'px' 
+                    'height': originalHeight + 'px'
                 });
             }
             
