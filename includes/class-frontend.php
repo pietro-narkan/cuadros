@@ -102,11 +102,9 @@ class Cuadros_Frontend {
                 'position': 'relative'
             });
             
-            // Wrapper del cuadro - se centra dentro del fondo
+            // Wrapper del cuadro - se centra dentro del fondo via CSS
             $wrapper.css({
-                'position': 'relative',
-                'box-sizing': 'border-box',
-                'flex-shrink': '0'
+                'box-sizing': 'border-box'
             });
             
             // Marco: borde exterior
