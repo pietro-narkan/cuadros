@@ -77,16 +77,29 @@ class Cuadros_Frontend {
             var originalHeight = $productImage.height();
             
             // Crear estructura
+            var $fondoWrapper = $('<div id="cuadros-fondo"></div>');
             var $wrapper = $('<div id="cuadros-wrapper"></div>');
             var $marcoLayer = $('<div id="layer-marco"></div>');
             var $paspartuLayer = $('<div id="layer-paspartu"></div>');
             var $imagenLayer = $('<div id="layer-imagen"></div>');
             
-            $productImage.before($wrapper);
+            $productImage.before($fondoWrapper);
+            $fondoWrapper.append($wrapper);
             $wrapper.append($marcoLayer);
             $wrapper.append($paspartuLayer);
             $wrapper.append($imagenLayer);
             $imagenLayer.append($productImage);
+            
+            // Fondo gris detrás del cuadro
+            $fondoWrapper.css({
+                'background-color': '#f0f0f0',
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center',
+                'width': originalWidth + 'px',
+                'height': originalHeight + 'px',
+                'box-sizing': 'border-box'
+            });
             
             // Estilos base
             $wrapper.css({
@@ -453,7 +466,7 @@ class Cuadros_Frontend {
                 });
             }
             
-            $wrapper.on('click', function(e) {
+            $fondoWrapper.on('click', function(e) {
                 if (currentMarcoColor || currentPaspartuColor) {
                     e.preventDefault();
                     e.stopPropagation();
