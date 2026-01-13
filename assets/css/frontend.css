@@ -3,10 +3,21 @@
 .woocommerce-product-gallery__image:first-child,
 .woocommerce-product-gallery__image:first-child > a {
     overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.woocommerce-product-gallery__image:first-child > a {
+    text-align: center;
 }
 
 #cuadros-fondo {
     background-color: #f0f0f0;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box;
 }
 
 #cuadros-wrapper {
