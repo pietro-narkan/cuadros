@@ -18,7 +18,7 @@ Plugin para visualizar dinámicamente marcos y paspartús sobre imágenes de pro
 Cuadros es un plugin de WordPress que permite a los clientes visualizar cómo quedarían diferentes marcos y paspartús sobre las imágenes de productos en tu tienda WooCommerce.
 
 **Características principales:**
-
+cz
 *   **Visualización en tiempo real**: Los clientes pueden ver los marcos y paspartús aplicados a la imagen del producto inmediatamente.
 *   **Detección automática de orientación**: El plugin detecta automáticamente si el cuadro es vertical u horizontal basándose en las dimensiones seleccionadas.
 *   **Gestión de imágenes de marcos**: Sube imágenes PNG transparentes para diferentes colores de marco (oro, negro, blanco) y orientaciones.
