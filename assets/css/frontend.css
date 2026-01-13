@@ -5,32 +5,52 @@
     background-color: #f0f0f0 !important;
 }
 
+#cuadros-fondo {
+    position: relative;
+    overflow: visible;
+}
+
 #cuadros-wrapper {
     position: relative;
     margin: 0 auto;
     transition: width 0.3s, height 0.3s;
+    overflow: visible;
 }
 
 #layer-paspartu {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 1;
     transition: opacity 0.3s, background-color 0.3s;
+    pointer-events: none;
 }
 
 #layer-marco {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 3;
     pointer-events: none;
     box-sizing: border-box;
     transition: opacity 0.3s;
 }
 
-#cuadros-wrapper img {
-    position: relative;
+#layer-imagen {
+    position: absolute;
     z-index: 2;
+    overflow: hidden;
+}
+
+#layer-imagen img,
+#cuadros-wrapper img {
     display: block;
+    width: 100%;
+    height: 100%;
     object-fit: fill;
     transition: all 0.3s;
 }

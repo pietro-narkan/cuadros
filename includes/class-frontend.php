@@ -187,6 +187,7 @@ class Cuadros_Frontend {
                 var hayPaspartu = !!paspartuColor;
                 
                 console.log('[cuadros] Actualizar:', {marco: marcoVal, paspartu: paspartuVal, hayMarco, hayPaspartu});
+                console.log('[cuadros] Dimensiones originales:', originalWidth, 'x', originalHeight);
                 
                 // Si no hay nada, restaurar imagen a tamaño completo
                 if (!hayMarco && !hayPaspartu) {
@@ -207,23 +208,42 @@ class Cuadros_Frontend {
                 var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
                 var imgRatio = imgNaturalW / imgNaturalH;
                 
+                console.log('[cuadros] Imagen natural:', imgNaturalW, 'x', imgNaturalH, '- Ratio:', imgRatio.toFixed(3));
+                
                 // Espacio disponible para la imagen (dentro del fondo, menos bordes)
                 var espacioW = originalWidth - (bordeTotal * 2);
                 var espacioH = originalHeight - (bordeTotal * 2);
                 
+                // Protección: asegurar que el espacio sea positivo
+                var minEspacio = 50; // mínimo 50px para la imagen
+                if (espacioW < minEspacio) espacioW = minEspacio;
+                if (espacioH < minEspacio) espacioH = minEspacio;
+                
+                console.log('[cuadros] Espacio disponible:', espacioW, 'x', espacioH);
+                
                 // Calcular tamaño de imagen manteniendo proporción
                 var imgW, imgH;
-                if (imgRatio >= (espacioW / espacioH)) {
+                var espacioRatio = espacioW / espacioH;
+                
+                if (imgRatio >= espacioRatio) {
+                    // Imagen más ancha que el espacio (o igual) - ajustar por ancho
                     imgW = espacioW;
                     imgH = imgW / imgRatio;
                 } else {
+                    // Imagen más alta que el espacio - ajustar por alto
                     imgH = espacioH;
                     imgW = imgH * imgRatio;
                 }
                 
+                // Asegurar valores mínimos
+                if (imgW < 10) imgW = 10;
+                if (imgH < 10) imgH = 10;
+                
                 // El wrapper (cuadro completo) = imagen + bordes
                 var wrapperW = imgW + (bordeTotal * 2);
                 var wrapperH = imgH + (bordeTotal * 2);
+                
+                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0));
                 
                 $wrapper.css({ 
                     'width': wrapperW + 'px', 
@@ -260,8 +280,6 @@ class Cuadros_Frontend {
                     'width': imgW + 'px',
                     'height': imgH + 'px'
                 });
-                
-                console.log('[cuadros] Wrapper:', wrapperW.toFixed(0), 'x', wrapperH.toFixed(0), '- Imagen:', imgW.toFixed(0), 'x', imgH.toFixed(0));
             }
             
             // Event listeners
@@ -283,17 +301,48 @@ class Cuadros_Frontend {
             $(window).on('resize', function() { setTimeout(actualizar, 100); });
             
             // Inicializar
-            if ($productImage[0].complete) {
-                originalWidth = $productImage.width();
-                originalHeight = $productImage.height();
+            function initDimensions() {
+                var w = $productImage.width();
+                var h = $productImage.height();
+                
+                // Si las dimensiones son 0 o muy pequeñas, intentar con naturalWidth/Height
+                if (w < 10 || h < 10) {
+                    w = $productImage[0].naturalWidth || 300;
+                    h = $productImage[0].naturalHeight || 300;
+                }
+                
+                originalWidth = w;
+                originalHeight = h;
+                
+                console.log('[cuadros] Dimensiones inicializadas:', originalWidth, 'x', originalHeight);
+                
+                // Actualizar el fondo con las dimensiones correctas
+                $fondoWrapper.css({
+                    'width': originalWidth + 'px',
+                    'height': originalHeight + 'px'
+                });
+                
+                $wrapper.css({ 
+                    'width': originalWidth + 'px', 
+                    'height': originalHeight + 'px' 
+                });
+            }
+            
+            if ($productImage[0].complete && $productImage[0].naturalWidth > 0) {
+                initDimensions();
                 setTimeout(actualizar, 300);
             } else {
                 $productImage.on('load', function() {
-                    originalWidth = $productImage.width();
-                    originalHeight = $productImage.height();
-                    $wrapper.css({ 'width': originalWidth + 'px', 'height': originalHeight + 'px' });
+                    initDimensions();
                     setTimeout(actualizar, 100);
                 });
+                // Fallback si la imagen ya estaba cargada pero el evento no se disparó
+                setTimeout(function() {
+                    if (originalWidth < 10 || originalHeight < 10) {
+                        initDimensions();
+                        actualizar();
+                    }
+                }, 500);
             }
             
             setTimeout(actualizar, 500);
