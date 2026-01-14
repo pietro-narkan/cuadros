@@ -5,6 +5,27 @@
     background-color: #f0f0f0 !important;
 }
 
+/* Ocultar imagen original hasta que el plugin la procese */
+.woocommerce-product-gallery__image img {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Mostrar imagen cuando está dentro del wrapper del plugin */
+#cuadros-wrapper img,
+#layer-imagen img {
+    opacity: 1 !important;
+}
+
+/* Forzar centrado de la galería */
+.woocommerce-product-gallery__image.flex-active-slide {
+    float: none !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
 #cuadros-fondo {
     position: relative;
     overflow: visible;
@@ -16,7 +37,7 @@
 #cuadros-wrapper {
     position: relative;
     margin: 0 auto;
-    transition: width 0.3s, height 0.3s, box-shadow 0.3s;
+    transition: width 0.3s, height 0.3s, box-shadow 0.3s, opacity 0.3s;
     overflow: visible;
     flex-shrink: 0;
     box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.25);
