@@ -72,6 +72,9 @@ class Cuadros_Frontend {
                 return;
             }
             
+            // Ocultar imagen inmediatamente para evitar flash de imagen grande
+            $productImage.css('opacity', '0');
+            
             // Guardar dimensiones originales
             var originalWidth = $productImage.width();
             var originalHeight = $productImage.height();
@@ -275,8 +278,9 @@ class Cuadros_Frontend {
                     'height': imgH + 'px'
                 });
                 
-                // Mostrar el wrapper (estaba oculto inicialmente)
+                // Mostrar el wrapper y la imagen (estaban ocultos inicialmente)
                 $wrapper.css('opacity', '1');
+                $productImage.css('opacity', '1');
             }
             
             // Event listeners
