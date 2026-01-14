@@ -187,14 +187,8 @@ class Cuadros_Frontend {
                 console.log('[cuadros] Actualizar:', {marco: marcoVal, paspartu: paspartuVal, hayMarco, hayPaspartu});
                 console.log('[cuadros] Dimensiones originales:', originalWidth, 'x', originalHeight);
                 
-                // Si no hay nada, restaurar imagen a tamaño completo
-                if (!hayMarco && !hayPaspartu) {
-                    $wrapper.css({ 'width': originalWidth + 'px', 'height': originalHeight + 'px' });
-                    $imagenLayer.css({ 'top': '0', 'left': '0', 'width': '100%', 'height': '100%' });
-                    $marcoLayer.css('opacity', '0');
-                    $paspartuLayer.css('opacity', '0');
-                    return;
-                }
+                // Factor de escala: la imagen siempre ocupará el 85% del espacio
+                var factorEscala = 0.85;
                 
                 // Calcular grosores
                 var bordeMarco = hayMarco ? GROSOR_MARCO : 0;
@@ -209,7 +203,6 @@ class Cuadros_Frontend {
                 console.log('[cuadros] Imagen natural:', imgNaturalW, 'x', imgNaturalH, '- Ratio:', imgRatio.toFixed(3));
                 
                 // Espacio disponible: usar 85% del espacio para dejar margen de fondo visible
-                var factorEscala = 0.85; // 85% del espacio disponible
                 var espacioW = (originalWidth * factorEscala) - (bordeTotal * 2);
                 var espacioH = (originalHeight * factorEscala) - (bordeTotal * 2);
                 
@@ -291,10 +284,7 @@ class Cuadros_Frontend {
             });
             
             $('.reset_variations').on('click', function() {
-                $wrapper.css({ 'width': originalWidth + 'px', 'height': originalHeight + 'px' });
-                $imagenLayer.css({ 'top': '0', 'left': '0', 'width': '100%', 'height': '100%' });
-                $marcoLayer.css('opacity', '0');
-                $paspartuLayer.css('opacity', '0');
+                setTimeout(actualizar, 100);
             });
             
             $(window).on('resize', function() { setTimeout(actualizar, 100); });
