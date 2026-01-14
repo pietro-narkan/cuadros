@@ -244,12 +244,23 @@ class Cuadros_Frontend {
                         $counter.text((i + 1) + ' / ' + galleryImages.length);
                         
                         var src = galleryImages[i] ? galleryImages[i].src : '';
+                        
+                        // Solo mostrar marco/paspartú en la PRIMERA imagen
                         var hayM = (i === 0) && currentMarcoColor;
                         var hayP = (i === 0) && currentPaspartuColor;
                         
-                        // Tamaño máximo - más grande en mobile
-                        var maxW = window.innerWidth * 0.9;
-                        var maxH = window.innerHeight * 0.85;
+                        // Tamaño máximo - 80% para mobile
+                        var maxW = window.innerWidth * 0.8;
+                        var maxH = window.innerHeight * 0.75;
+                        
+                        // Limpiar estilos del container para imágenes sin marco
+                        $container.css({
+                            width: 'auto',
+                            height: 'auto',
+                            background: 'none',
+                            border: 'none',
+                            boxShadow: 'none'
+                        });
                         
                         if (hayM || hayP) {
                             var bM = hayM ? GROSOR_MARCO : 0;
@@ -291,6 +302,7 @@ class Cuadros_Frontend {
                             };
                             tmp.src = src;
                         } else {
+                            // Sin marco ni paspartú - imagen limpia
                             $('<img>').attr('src', src).css({ 
                                 maxWidth: maxW + 'px', 
                                 maxHeight: maxH + 'px', 
@@ -300,10 +312,10 @@ class Cuadros_Frontend {
                     }
                     
                     mostrar(0);
-                    $closeBtn.on('click', function() { $overlay.remove(); });
+                    $closeBtn.on('click', function() { $overlay.remove(); $(document).off('keydown.cuadrosLb'); });
                     $prevBtn.on('click', function(e) { e.stopPropagation(); mostrar(idx - 1); });
                     $nextBtn.on('click', function(e) { e.stopPropagation(); mostrar(idx + 1); });
-                    $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+                    $overlay.on('click', function(e) { if (e.target === $overlay[0]) { $overlay.remove(); $(document).off('keydown.cuadrosLb'); } });
                     
                     // Soporte para teclado
                     $(document).on('keydown.cuadrosLb', function(e) {
@@ -311,9 +323,6 @@ class Cuadros_Frontend {
                         else if (e.keyCode === 37) mostrar(idx - 1);
                         else if (e.keyCode === 39) mostrar(idx + 1);
                     });
-                    
-                    // Limpiar evento de teclado al cerrar
-                    $overlay.on('remove', function() { $(document).off('keydown.cuadrosLb'); });
                 }
                 
                 $fondoWrapper.on('click', function(e) {
