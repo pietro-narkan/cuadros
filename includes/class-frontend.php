@@ -33,8 +33,7 @@ class Cuadros_Frontend {
         if (!is_product()) return;
         global $product;
         if (!$product || !$product->is_type('variable')) return;
-        $attributes = $product->get_attributes();
-        if (!isset($attributes['pa_marco']) && !isset($attributes['pa_paspartu'])) return;
+        // Ejecutar siempre para productos variables
         $this->output_frontend_script();
     }
     
@@ -72,8 +71,7 @@ class Cuadros_Frontend {
                 return;
             }
             
-            // Ocultar imagen inmediatamente para evitar flash de imagen grande
-            $productImage.css('opacity', '0');
+            console.log('[cuadros] Imagen encontrada:', $productImage.attr('src'));
             
             // Guardar dimensiones originales
             var originalWidth = $productImage.width();
@@ -278,9 +276,8 @@ class Cuadros_Frontend {
                     'height': imgH + 'px'
                 });
                 
-                // Mostrar el wrapper y la imagen (estaban ocultos inicialmente)
+                // Mostrar el wrapper (estaba oculto inicialmente)
                 $wrapper.css('opacity', '1');
-                $productImage.css('opacity', '1');
             }
             
             // Event listeners
