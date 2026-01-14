@@ -53,14 +53,23 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                var originalWidth = $productImage.width();
-                var originalHeight = $productImage.height();
+                // Obtener el tamaño del CONTENEDOR de la galería, no de la imagen
+                var $galleryContainer = $('.flex-viewport').first();
+                if ($galleryContainer.length === 0) {
+                    $galleryContainer = $('.woocommerce-product-gallery__wrapper').first();
+                }
+                if ($galleryContainer.length === 0) {
+                    $galleryContainer = $galleryImage;
+                }
                 
-                // Si no hay dimensiones, usar las naturales
-                if (originalWidth < 50) originalWidth = $productImage[0].naturalWidth || 400;
-                if (originalHeight < 50) originalHeight = $productImage[0].naturalHeight || 400;
+                var originalWidth = $galleryContainer.width();
+                var originalHeight = $galleryContainer.height();
                 
-                console.log('[cuadros] Dimensiones:', originalWidth, 'x', originalHeight);
+                // Fallback a la imagen si el contenedor no tiene dimensiones
+                if (originalWidth < 50) originalWidth = $productImage.width() || $productImage[0].naturalWidth || 400;
+                if (originalHeight < 50) originalHeight = $productImage.height() || $productImage[0].naturalHeight || 400;
+                
+                console.log('[cuadros] Dimensiones del contenedor:', originalWidth, 'x', originalHeight);
                 
                 // Crear los elementos
                 var $fondoWrapper = $('<div id="cuadros-fondo"></div>');
