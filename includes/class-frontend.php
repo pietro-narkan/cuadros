@@ -251,24 +251,35 @@ class Cuadros_Frontend {
                         imgH = imgH * scale;
                     }
                     
-                    // Redondear todos los valores para evitar líneas finas por decimales
-                    wrapperW = Math.round(wrapperW);
-                    wrapperH = Math.round(wrapperH);
-                    imgW = Math.round(imgW);
-                    imgH = Math.round(imgH);
+                    // Redondear usando floor para el wrapper y ceil para la imagen (evita gaps)
+                    wrapperW = Math.floor(wrapperW);
+                    wrapperH = Math.floor(wrapperH);
+                    imgW = Math.ceil(imgW);
+                    imgH = Math.ceil(imgH);
                     
-                    // Recalcular bordeTotal basado en el espacio real disponible para evitar gaps
-                    var realBordeW = Math.round((wrapperW - imgW) / 2);
-                    var realBordeH = Math.round((wrapperH - imgH) / 2);
+                    // Calcular posición centrada
+                    var posX = Math.floor((wrapperW - imgW) / 2);
+                    var posY = Math.floor((wrapperH - imgH) / 2);
                     
-                    $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
+                    // Determinar el color de fondo del wrapper (para evitar líneas blancas)
+                    var wrapperBg = 'transparent';
+                    if (hayPaspartu) {
+                        wrapperBg = paspartuColor;
+                    } else if (hayMarco) {
+                        wrapperBg = marcoColor;
+                    }
+                    
+                    $wrapper.css({ 
+                        'width': wrapperW + 'px', 
+                        'height': wrapperH + 'px',
+                        'background-color': wrapperBg
+                    });
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
                     
-                    // Usar los bordes reales calculados para posicionar la imagen
                     $imagenLayer.css({ 
-                        'top': realBordeH + 'px', 
-                        'left': realBordeW + 'px', 
+                        'top': posY + 'px', 
+                        'left': posX + 'px', 
                         'width': imgW + 'px', 
                         'height': imgH + 'px' 
                     });
