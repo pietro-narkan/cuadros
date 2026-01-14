@@ -251,10 +251,27 @@ class Cuadros_Frontend {
                         imgH = imgH * scale;
                     }
                     
+                    // Redondear todos los valores para evitar líneas finas por decimales
+                    wrapperW = Math.round(wrapperW);
+                    wrapperH = Math.round(wrapperH);
+                    imgW = Math.round(imgW);
+                    imgH = Math.round(imgH);
+                    
+                    // Recalcular bordeTotal basado en el espacio real disponible para evitar gaps
+                    var realBordeW = Math.round((wrapperW - imgW) / 2);
+                    var realBordeH = Math.round((wrapperH - imgH) / 2);
+                    
                     $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
-                    $imagenLayer.css({ 'top': bordeTotal + 'px', 'left': bordeTotal + 'px', 'width': imgW + 'px', 'height': imgH + 'px' });
+                    
+                    // Usar los bordes reales calculados para posicionar la imagen
+                    $imagenLayer.css({ 
+                        'top': realBordeH + 'px', 
+                        'left': realBordeW + 'px', 
+                        'width': imgW + 'px', 
+                        'height': imgH + 'px' 
+                    });
                 }
                 
                 // Eventos
