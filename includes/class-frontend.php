@@ -101,9 +101,11 @@ class Cuadros_Frontend {
                 'margin': '0 auto'
             });
             
-            // Wrapper del cuadro - centrado via CSS (position absolute + transform)
+            // Wrapper del cuadro - centrado via CSS, inicialmente oculto
             $wrapper.css({
-                'box-sizing': 'border-box'
+                'box-sizing': 'border-box',
+                'opacity': '0',
+                'transition': 'opacity 0.3s'
             });
             
             // Marco: borde exterior
@@ -272,6 +274,9 @@ class Cuadros_Frontend {
                     'width': imgW + 'px',
                     'height': imgH + 'px'
                 });
+                
+                // Mostrar el wrapper (estaba oculto inicialmente)
+                $wrapper.css('opacity', '1');
             }
             
             // Event listeners
@@ -314,30 +319,28 @@ class Cuadros_Frontend {
                     'justify-content': 'center'
                 });
                 
-                $wrapper.css({ 
-                    'width': originalWidth + 'px', 
-                    'height': originalHeight + 'px'
-                });
+                // NO establecer tamaño del wrapper aquí, dejar que actualizar() lo haga
             }
             
             if ($productImage[0].complete && $productImage[0].naturalWidth > 0) {
                 initDimensions();
-                setTimeout(actualizar, 300);
+                actualizar(); // Llamar inmediatamente
             } else {
                 $productImage.on('load', function() {
                     initDimensions();
-                    setTimeout(actualizar, 100);
+                    actualizar(); // Llamar inmediatamente
                 });
-                // Fallback si la imagen ya estaba cargada pero el evento no se disparó
-                setTimeout(function() {
-                    if (originalWidth < 10 || originalHeight < 10) {
-                        initDimensions();
-                        actualizar();
-                    }
-                }, 500);
             }
             
-            setTimeout(actualizar, 500);
+            // Fallback adicional para asegurar que se ejecute
+            setTimeout(function() {
+                if (originalWidth < 10 || originalHeight < 10) {
+                    initDimensions();
+                }
+                actualizar();
+            }, 300);
+            
+            setTimeout(actualizar, 600);
             
             // ========== LIGHTBOX ==========
             var currentMarcoColor = null;
