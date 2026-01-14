@@ -99,20 +99,42 @@ class Cuadros_Admin_Settings {
             $sanitized['grosor_marco'] = isset($new_value['grosor_marco']) ? absint($new_value['grosor_marco']) : 8;
             $sanitized['grosor_paspartu'] = isset($new_value['grosor_paspartu']) ? absint($new_value['grosor_paspartu']) : 25;
             
-            // Sanitizar colores de marco
+            // Sanitizar colores de marco - preservar colores existentes si no se envían nuevos
+            $old_marco_colors = isset($old_value['marco_colors']) ? $old_value['marco_colors'] : array();
             if (isset($new_value['marco_colors']) && is_array($new_value['marco_colors'])) {
                 $sanitized['marco_colors'] = array();
                 foreach ($new_value['marco_colors'] as $key => $color) {
-                    $sanitized['marco_colors'][$key] = sanitize_hex_color($color);
+                    // Sanitizar la key para caracteres especiales
+                    $clean_key = sanitize_title($key);
+                    $sanitized_color = sanitize_hex_color($color);
+                    // Si el color es válido, guardarlo; si no, mantener el anterior o usar negro por defecto
+                    if ($sanitized_color) {
+                        $sanitized['marco_colors'][$clean_key] = $sanitized_color;
+                    } elseif (isset($old_marco_colors[$clean_key])) {
+                        $sanitized['marco_colors'][$clean_key] = $old_marco_colors[$clean_key];
+                    }
                 }
+            } else {
+                $sanitized['marco_colors'] = $old_marco_colors;
             }
             
-            // Sanitizar colores de paspartú
+            // Sanitizar colores de paspartú - preservar colores existentes si no se envían nuevos
+            $old_paspartu_colors = isset($old_value['paspartu_colors']) ? $old_value['paspartu_colors'] : array();
             if (isset($new_value['paspartu_colors']) && is_array($new_value['paspartu_colors'])) {
                 $sanitized['paspartu_colors'] = array();
                 foreach ($new_value['paspartu_colors'] as $key => $color) {
-                    $sanitized['paspartu_colors'][$key] = sanitize_hex_color($color);
+                    // Sanitizar la key para caracteres especiales
+                    $clean_key = sanitize_title($key);
+                    $sanitized_color = sanitize_hex_color($color);
+                    // Si el color es válido, guardarlo; si no, mantener el anterior o usar blanco por defecto
+                    if ($sanitized_color) {
+                        $sanitized['paspartu_colors'][$clean_key] = $sanitized_color;
+                    } elseif (isset($old_paspartu_colors[$clean_key])) {
+                        $sanitized['paspartu_colors'][$clean_key] = $old_paspartu_colors[$clean_key];
+                    }
                 }
+            } else {
+                $sanitized['paspartu_colors'] = $old_paspartu_colors;
             }
             
             return $sanitized;

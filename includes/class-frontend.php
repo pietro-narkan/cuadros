@@ -102,9 +102,19 @@ class Cuadros_Frontend {
                 
                 function buscarColorMarco(val) {
                     if (!val) return null;
-                    var v = val.toLowerCase().replace(/[\s-]/g, '_');
+                    // Normalizar: minúsculas, reemplazar espacios y caracteres especiales
+                    var v = val.toLowerCase()
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+                        .replace(/[^a-z0-9]/g, '_') // Reemplazar caracteres especiales por _
+                        .replace(/_+/g, '_') // Múltiples _ por uno solo
+                        .replace(/^_|_$/g, ''); // Quitar _ al inicio y final
+                    
                     for (var k in coloresMarco) {
-                        var kn = k.toLowerCase().replace(/[\s-]/g, '_');
+                        var kn = k.toLowerCase()
+                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^a-z0-9]/g, '_')
+                            .replace(/_+/g, '_')
+                            .replace(/^_|_$/g, '');
                         if (kn === v || kn.includes(v) || v.includes(kn)) return coloresMarco[k];
                     }
                     return null;
@@ -114,9 +124,20 @@ class Cuadros_Frontend {
                     if (!val) return null;
                     var valLower = val.toLowerCase();
                     if (valLower.includes('sin ') || valLower === 'ninguno' || valLower === 'none' || valLower === 'no') return null;
-                    var v = val.toLowerCase().replace(/[\s-]/g, '_');
+                    
+                    // Normalizar: minúsculas, reemplazar espacios y caracteres especiales
+                    var v = val.toLowerCase()
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+                        .replace(/[^a-z0-9]/g, '_') // Reemplazar caracteres especiales por _
+                        .replace(/_+/g, '_') // Múltiples _ por uno solo
+                        .replace(/^_|_$/g, ''); // Quitar _ al inicio y final
+                    
                     for (var k in coloresPaspartu) {
-                        var kn = k.toLowerCase().replace(/[\s-]/g, '_');
+                        var kn = k.toLowerCase()
+                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^a-z0-9]/g, '_')
+                            .replace(/_+/g, '_')
+                            .replace(/^_|_$/g, '');
                         if (kn === v || kn.includes(v) || v.includes(kn)) return coloresPaspartu[k];
                     }
                     return null;
