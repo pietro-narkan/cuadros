@@ -214,39 +214,106 @@ class Cuadros_Frontend {
                     });
                     var $container = $('<div></div>').css({ position: 'relative' });
                     var $closeBtn = $('<div>&times;</div>').css({ position: 'absolute', top: 20, right: 30, color: '#fff', fontSize: 40, cursor: 'pointer', zIndex: 10 });
+                    var $prevBtn = $('<div>&#10094;</div>').css({ 
+                        position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)',
+                        color: '#fff', fontSize: 50, cursor: 'pointer', zIndex: 10,
+                        display: galleryImages.length > 1 ? 'block' : 'none',
+                        padding: '10px',
+                        userSelect: 'none'
+                    });
+                    var $nextBtn = $('<div>&#10095;</div>').css({ 
+                        position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)',
+                        color: '#fff', fontSize: 50, cursor: 'pointer', zIndex: 10,
+                        display: galleryImages.length > 1 ? 'block' : 'none',
+                        padding: '10px',
+                        userSelect: 'none'
+                    });
+                    var $counter = $('<div></div>').css({
+                        position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+                        color: '#fff', fontSize: 16, zIndex: 10
+                    });
                     
-                    $overlay.append($container, $closeBtn);
+                    $overlay.append($container, $closeBtn, $prevBtn, $nextBtn, $counter);
                     $('body').append($overlay);
                     
                     function mostrar(i) {
+                        if (i < 0) i = galleryImages.length - 1;
+                        if (i >= galleryImages.length) i = 0;
                         idx = i;
                         $container.empty();
+                        $counter.text((i + 1) + ' / ' + galleryImages.length);
+                        
                         var src = galleryImages[i] ? galleryImages[i].src : '';
                         var hayM = (i === 0) && currentMarcoColor;
                         var hayP = (i === 0) && currentPaspartuColor;
+                        
+                        // Tamaño máximo - más grande en mobile
+                        var maxW = window.innerWidth * 0.9;
+                        var maxH = window.innerHeight * 0.85;
                         
                         if (hayM || hayP) {
                             var bM = hayM ? GROSOR_MARCO : 0;
                             var bP = hayP ? GROSOR_PASPARTU : 0;
                             var bT = bM + bP;
-                            var max = Math.min(window.innerWidth * 0.75, window.innerHeight * 0.75);
+                            
                             var tmp = new Image();
                             tmp.onload = function() {
                                 var r = tmp.width / tmp.height;
-                                var w = r >= 1 ? max - bT*2 : (max - bT*2) * r;
-                                var h = r >= 1 ? w / r : max - bT*2;
-                                $container.css({ width: w + bT*2, height: h + bT*2, background: hayP ? currentPaspartuColor : '#fff', border: hayM ? bM + 'px solid ' + currentMarcoColor : 'none', boxSizing: 'border-box' });
-                                $('<div></div>').css({ position: 'absolute', top: bP, left: bP, width: w, height: h, overflow: 'hidden' }).append($('<img>').attr('src', src).css({ width: '100%', height: '100%', objectFit: 'fill' })).appendTo($container);
+                                var imgW, imgH;
+                                
+                                // Calcular tamaño respetando proporción y máximos
+                                if (r >= (maxW / maxH)) {
+                                    imgW = maxW - (bT * 2);
+                                    imgH = imgW / r;
+                                } else {
+                                    imgH = maxH - (bT * 2);
+                                    imgW = imgH * r;
+                                }
+                                
+                                $container.css({ 
+                                    width: imgW + bT*2, 
+                                    height: imgH + bT*2, 
+                                    background: hayP ? currentPaspartuColor : '#fff', 
+                                    border: hayM ? bM + 'px solid ' + currentMarcoColor : 'none', 
+                                    boxSizing: 'border-box',
+                                    boxShadow: '-4px 4px 12px rgba(0,0,0,0.5)'
+                                });
+                                $('<div></div>').css({ 
+                                    position: 'absolute', 
+                                    top: bP, 
+                                    left: bP, 
+                                    width: imgW, 
+                                    height: imgH, 
+                                    overflow: 'hidden' 
+                                }).append(
+                                    $('<img>').attr('src', src).css({ width: '100%', height: '100%', objectFit: 'fill' })
+                                ).appendTo($container);
                             };
                             tmp.src = src;
                         } else {
-                            $('<img>').attr('src', src).css({ maxWidth: '80vw', maxHeight: '80vh' }).appendTo($container);
+                            $('<img>').attr('src', src).css({ 
+                                maxWidth: maxW + 'px', 
+                                maxHeight: maxH + 'px', 
+                                display: 'block' 
+                            }).appendTo($container);
                         }
                     }
                     
                     mostrar(0);
                     $closeBtn.on('click', function() { $overlay.remove(); });
+                    $prevBtn.on('click', function(e) { e.stopPropagation(); mostrar(idx - 1); });
+                    $nextBtn.on('click', function(e) { e.stopPropagation(); mostrar(idx + 1); });
                     $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
+                    
+                    // Soporte para teclado
+                    $(document).on('keydown.cuadrosLb', function(e) {
+                        if (e.keyCode === 27) { $overlay.remove(); $(document).off('keydown.cuadrosLb'); }
+                        else if (e.keyCode === 37) mostrar(idx - 1);
+                        else if (e.keyCode === 39) mostrar(idx + 1);
+                    });
+                    
+                    // Limpiar evento de teclado al cerrar
+                    $overlay.on('remove', function() { $(document).off('keydown.cuadrosLb'); });
                 }
                 
                 $fondoWrapper.on('click', function(e) {
