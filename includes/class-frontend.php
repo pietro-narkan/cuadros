@@ -208,16 +208,17 @@ class Cuadros_Frontend {
                 
                 console.log('[cuadros] Imagen natural:', imgNaturalW, 'x', imgNaturalH, '- Ratio:', imgRatio.toFixed(3));
                 
-                // Espacio disponible para la imagen (dentro del fondo, menos bordes)
-                var espacioW = originalWidth - (bordeTotal * 2);
-                var espacioH = originalHeight - (bordeTotal * 2);
+                // Espacio disponible: usar 85% del espacio para dejar margen de fondo visible
+                var factorEscala = 0.85; // 85% del espacio disponible
+                var espacioW = (originalWidth * factorEscala) - (bordeTotal * 2);
+                var espacioH = (originalHeight * factorEscala) - (bordeTotal * 2);
                 
                 // Protección: asegurar que el espacio sea positivo
                 var minEspacio = 50; // mínimo 50px para la imagen
                 if (espacioW < minEspacio) espacioW = minEspacio;
                 if (espacioH < minEspacio) espacioH = minEspacio;
                 
-                console.log('[cuadros] Espacio disponible:', espacioW, 'x', espacioH);
+                console.log('[cuadros] Espacio disponible (85%):', espacioW, 'x', espacioH);
                 
                 // Calcular tamaño de imagen manteniendo proporción
                 var imgW, imgH;
