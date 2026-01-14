@@ -16,9 +16,10 @@
 #cuadros-wrapper {
     position: relative;
     margin: 0 auto;
-    transition: width 0.3s, height 0.3s;
+    transition: width 0.3s, height 0.3s, box-shadow 0.3s;
     overflow: visible;
     flex-shrink: 0;
+    box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 #layer-paspartu {
