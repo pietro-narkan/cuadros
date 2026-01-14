@@ -81,10 +81,14 @@ class Cuadros_Frontend {
                 // Mover la imagen dentro de imagenLayer
                 $imagenLayer.append($productImage);
                 
-                // Estilos del fondo
+                // Estilos del fondo - tamaño fijo
                 $fondoWrapper.css({
                     'width': originalWidth + 'px',
-                    'height': originalHeight + 'px'
+                    'height': originalHeight + 'px',
+                    'min-width': originalWidth + 'px',
+                    'min-height': originalHeight + 'px',
+                    'max-width': originalWidth + 'px',
+                    'max-height': originalHeight + 'px'
                 });
                 
                 function buscarColorMarco(val) {

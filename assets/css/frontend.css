@@ -8,6 +8,8 @@
     margin: 0 auto;
     position: relative;
     z-index: 5;
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 #cuadros-wrapper {
