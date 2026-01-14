@@ -1,11 +1,10 @@
-/* Plugin Cuadros v3 - CSS Limpio */
+/* Plugin Cuadros - CSS Simple */
 
 #cuadros-fondo {
     background-color: #f0f0f0;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
     margin: 0 auto;
 }
 

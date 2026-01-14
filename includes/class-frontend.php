@@ -11,7 +11,7 @@ class Cuadros_Frontend {
     
     public function enqueue_frontend_scripts() {
         if (!is_product()) return;
-        wp_enqueue_style('cuadros-frontend-style', CUADROS_ASSETS_URL . 'css/frontend.css', array(), CUADROS_VERSION . '.' . time());
+        wp_enqueue_style('cuadros-frontend-style', CUADROS_ASSETS_URL . 'css/frontend.css', array(), CUADROS_VERSION);
         wp_enqueue_script('jquery');
     }
     
@@ -33,14 +33,18 @@ class Cuadros_Frontend {
         define('CUADROS_SCRIPT_LOADED', true);
         ?>
         <script type="text/javascript">
-        (function($) {
-            $(window).on('load', function() {
-                var coloresMarco = <?php echo json_encode($marco_colors); ?>;
-                var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
-                var GROSOR_MARCO = <?php echo $grosor_marco; ?>;
-                var GROSOR_PASPARTU = <?php echo $grosor_paspartu; ?>;
-                var FACTOR_ESCALA = 0.85;
-                
+        jQuery(document).ready(function($) {
+            
+            var coloresMarco = <?php echo json_encode($marco_colors); ?>;
+            var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
+            var GROSOR_MARCO = <?php echo $grosor_marco; ?>;
+            var GROSOR_PASPARTU = <?php echo $grosor_paspartu; ?>;
+            var FACTOR_ESCALA = 0.85;
+            
+            // Esperar un momento para que WooCommerce inicialice la galería
+            setTimeout(inicializarCuadros, 500);
+            
+            function inicializarCuadros() {
                 var $galleryImage = $('.woocommerce-product-gallery__image').first();
                 var $productImage = $galleryImage.find('img').first();
                 
@@ -49,34 +53,35 @@ class Cuadros_Frontend {
                     return;
                 }
                 
-                // Esperar a que la imagen tenga dimensiones
                 var originalWidth = $productImage.width();
                 var originalHeight = $productImage.height();
                 
-                if (originalWidth < 50 || originalHeight < 50) {
-                    originalWidth = $productImage[0].naturalWidth || 400;
-                    originalHeight = $productImage[0].naturalHeight || 400;
-                }
+                // Si no hay dimensiones, usar las naturales
+                if (originalWidth < 50) originalWidth = $productImage[0].naturalWidth || 400;
+                if (originalHeight < 50) originalHeight = $productImage[0].naturalHeight || 400;
                 
-                console.log('[cuadros] Iniciando con dimensiones:', originalWidth, 'x', originalHeight);
+                console.log('[cuadros] Dimensiones:', originalWidth, 'x', originalHeight);
                 
-                // Crear estructura envolviendo la imagen
+                // Crear los elementos
                 var $fondoWrapper = $('<div id="cuadros-fondo"></div>');
                 var $wrapper = $('<div id="cuadros-wrapper"></div>');
                 var $marcoLayer = $('<div id="layer-marco"></div>');
                 var $paspartuLayer = $('<div id="layer-paspartu"></div>');
                 var $imagenLayer = $('<div id="layer-imagen"></div>');
                 
-                // Insertar estructura
-                $productImage.wrap($imagenLayer);
-                $imagenLayer = $productImage.parent();
-                $imagenLayer.wrap($wrapper);
-                $wrapper = $imagenLayer.parent();
-                $wrapper.prepend($paspartuLayer).prepend($marcoLayer);
-                $wrapper.wrap($fondoWrapper);
-                $fondoWrapper = $wrapper.parent();
+                // Insertar antes de la imagen
+                $productImage.before($fondoWrapper);
                 
-                // Aplicar estilos al fondo
+                // Construir estructura
+                $fondoWrapper.append($wrapper);
+                $wrapper.append($marcoLayer);
+                $wrapper.append($paspartuLayer);
+                $wrapper.append($imagenLayer);
+                
+                // Mover la imagen dentro de imagenLayer
+                $imagenLayer.append($productImage);
+                
+                // Estilos del fondo
                 $fondoWrapper.css({
                     'width': originalWidth + 'px',
                     'height': originalHeight + 'px'
@@ -118,12 +123,10 @@ class Cuadros_Frontend {
                     var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
                     var imgRatio = imgNaturalW / imgNaturalH;
                     
-                    // Calcular espacio disponible (85% del contenedor menos bordes)
                     var espacioW = Math.max(50, (originalWidth * FACTOR_ESCALA) - (bordeTotal * 2));
                     var espacioH = Math.max(50, (originalHeight * FACTOR_ESCALA) - (bordeTotal * 2));
                     var espacioRatio = espacioW / espacioH;
                     
-                    // Calcular tamaño de imagen manteniendo proporción
                     var imgW, imgH;
                     if (imgRatio >= espacioRatio) {
                         imgW = espacioW;
@@ -136,46 +139,21 @@ class Cuadros_Frontend {
                     var wrapperW = imgW + (bordeTotal * 2);
                     var wrapperH = imgH + (bordeTotal * 2);
                     
-                    // Aplicar estilos
                     $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
-                    
-                    if (hayMarco) {
-                        $marcoLayer.css({ 'border': bordeMarco + 'px solid ' + marcoColor });
-                    } else {
-                        $marcoLayer.css({ 'border': 'none' });
-                    }
-                    
-                    if (hayPaspartu) {
-                        $paspartuLayer.css({ 'background-color': paspartuColor });
-                    } else {
-                        $paspartuLayer.css({ 'background-color': 'transparent' });
-                    }
-                    
-                    $imagenLayer.css({
-                        'top': bordeTotal + 'px',
-                        'left': bordeTotal + 'px',
-                        'width': imgW + 'px',
-                        'height': imgH + 'px'
-                    });
+                    $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
+                    $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
+                    $imagenLayer.css({ 'top': bordeTotal + 'px', 'left': bordeTotal + 'px', 'width': imgW + 'px', 'height': imgH + 'px' });
                 }
                 
-                // Event listeners
-                $('form.variations_form').on('change', 'select', function() {
-                    setTimeout(actualizar, 100);
-                });
+                // Eventos
+                $('form.variations_form').on('change', 'select', function() { setTimeout(actualizar, 100); });
+                $(document).on('woocommerce_variation_has_changed', function() { setTimeout(actualizar, 100); });
+                $('.reset_variations').on('click', function() { setTimeout(actualizar, 100); });
                 
-                $(document).on('woocommerce_variation_has_changed', function() {
-                    setTimeout(actualizar, 100);
-                });
-                
-                $('.reset_variations').on('click', function() {
-                    setTimeout(actualizar, 100);
-                });
-                
-                // Ejecutar al inicio
+                // Ejecutar
                 actualizar();
                 
-                // ========== LIGHTBOX ==========
+                // ===== LIGHTBOX =====
                 var currentMarcoColor = null;
                 var currentPaspartuColor = null;
                 var galleryImages = [];
@@ -187,99 +165,51 @@ class Cuadros_Frontend {
                     $('.woocommerce-product-gallery__image').each(function() {
                         var $img = $(this).find('img');
                         var $link = $(this).find('a');
-                        galleryImages.push({
-                            src: $link.attr('href') || $img.attr('data-large_image') || $img.attr('src')
-                        });
+                        galleryImages.push({ src: $link.attr('href') || $img.attr('data-large_image') || $img.attr('src') });
                     });
                 }
                 
-                function mostrarLightbox(startIndex) {
-                    var currentSlideIndex = startIndex || 0;
-                    
+                function mostrarLightbox() {
+                    var idx = 0;
                     var $overlay = $('<div id="cuadros-lightbox"></div>').css({
                         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                         background: 'rgba(0,0,0,0.9)', zIndex: 999999,
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                     });
-                    
                     var $container = $('<div></div>').css({ position: 'relative' });
-                    var $closeBtn = $('<div>&times;</div>').css({
-                        position: 'absolute', top: '20px', right: '30px',
-                        color: '#fff', fontSize: '40px', cursor: 'pointer', zIndex: 10
-                    });
-                    var $prevBtn = $('<div>&#10094;</div>').css({
-                        position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)',
-                        color: '#fff', fontSize: '50px', cursor: 'pointer', zIndex: 10,
-                        display: galleryImages.length > 1 ? 'block' : 'none'
-                    });
-                    var $nextBtn = $('<div>&#10095;</div>').css({
-                        position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)',
-                        color: '#fff', fontSize: '50px', cursor: 'pointer', zIndex: 10,
-                        display: galleryImages.length > 1 ? 'block' : 'none'
-                    });
+                    var $closeBtn = $('<div>&times;</div>').css({ position: 'absolute', top: 20, right: 30, color: '#fff', fontSize: 40, cursor: 'pointer', zIndex: 10 });
                     
-                    $overlay.append($container, $closeBtn, $prevBtn, $nextBtn);
+                    $overlay.append($container, $closeBtn);
                     $('body').append($overlay);
                     
-                    function mostrarImagen(index) {
-                        if (index < 0) index = galleryImages.length - 1;
-                        if (index >= galleryImages.length) index = 0;
-                        currentSlideIndex = index;
+                    function mostrar(i) {
+                        idx = i;
                         $container.empty();
+                        var src = galleryImages[i] ? galleryImages[i].src : '';
+                        var hayM = (i === 0) && currentMarcoColor;
+                        var hayP = (i === 0) && currentPaspartuColor;
                         
-                        var imgSrc = galleryImages[index].src;
-                        var hayMarco = (index === 0) && currentMarcoColor;
-                        var hayPaspartu = (index === 0) && currentPaspartuColor;
-                        
-                        if (hayMarco || hayPaspartu) {
-                            var bordeMarco = hayMarco ? GROSOR_MARCO : 0;
-                            var bordePaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
-                            var bordeTotal = bordeMarco + bordePaspartu;
-                            var maxSize = Math.min(window.innerWidth * 0.75, window.innerHeight * 0.75);
-                            
-                            var tempImg = new Image();
-                            tempImg.onload = function() {
-                                var ratio = tempImg.width / tempImg.height;
-                                var imgW, imgH;
-                                if (ratio >= 1) {
-                                    imgW = maxSize - (bordeTotal * 2);
-                                    imgH = imgW / ratio;
-                                } else {
-                                    imgH = maxSize - (bordeTotal * 2);
-                                    imgW = imgH * ratio;
-                                }
-                                
-                                $container.css({
-                                    width: (imgW + bordeTotal * 2) + 'px',
-                                    height: (imgH + bordeTotal * 2) + 'px',
-                                    background: hayPaspartu ? currentPaspartuColor : '#fff',
-                                    border: hayMarco ? bordeMarco + 'px solid ' + currentMarcoColor : 'none',
-                                    boxSizing: 'border-box'
-                                });
-                                
-                                $('<div></div>').css({
-                                    position: 'absolute',
-                                    top: bordePaspartu + 'px',
-                                    left: bordePaspartu + 'px',
-                                    width: imgW + 'px',
-                                    height: imgH + 'px',
-                                    overflow: 'hidden'
-                                }).append(
-                                    $('<img>').attr('src', imgSrc).css({ width: '100%', height: '100%', objectFit: 'fill' })
-                                ).appendTo($container);
+                        if (hayM || hayP) {
+                            var bM = hayM ? GROSOR_MARCO : 0;
+                            var bP = hayP ? GROSOR_PASPARTU : 0;
+                            var bT = bM + bP;
+                            var max = Math.min(window.innerWidth * 0.75, window.innerHeight * 0.75);
+                            var tmp = new Image();
+                            tmp.onload = function() {
+                                var r = tmp.width / tmp.height;
+                                var w = r >= 1 ? max - bT*2 : (max - bT*2) * r;
+                                var h = r >= 1 ? w / r : max - bT*2;
+                                $container.css({ width: w + bT*2, height: h + bT*2, background: hayP ? currentPaspartuColor : '#fff', border: hayM ? bM + 'px solid ' + currentMarcoColor : 'none', boxSizing: 'border-box' });
+                                $('<div></div>').css({ position: 'absolute', top: bP, left: bP, width: w, height: h, overflow: 'hidden' }).append($('<img>').attr('src', src).css({ width: '100%', height: '100%', objectFit: 'fill' })).appendTo($container);
                             };
-                            tempImg.src = imgSrc;
+                            tmp.src = src;
                         } else {
-                            $container.css({ width: 'auto', height: 'auto', background: 'none', border: 'none' });
-                            $('<img>').attr('src', imgSrc).css({ maxWidth: '80vw', maxHeight: '80vh', display: 'block' }).appendTo($container);
+                            $('<img>').attr('src', src).css({ maxWidth: '80vw', maxHeight: '80vh' }).appendTo($container);
                         }
                     }
                     
-                    mostrarImagen(currentSlideIndex);
-                    
+                    mostrar(0);
                     $closeBtn.on('click', function() { $overlay.remove(); });
-                    $prevBtn.on('click', function(e) { e.stopPropagation(); mostrarImagen(currentSlideIndex - 1); });
-                    $nextBtn.on('click', function(e) { e.stopPropagation(); mostrarImagen(currentSlideIndex + 1); });
                     $overlay.on('click', function(e) { if (e.target === $overlay[0]) $overlay.remove(); });
                 }
                 
@@ -287,17 +217,14 @@ class Cuadros_Frontend {
                     if (currentMarcoColor || currentPaspartuColor) {
                         e.preventDefault();
                         e.stopPropagation();
-                        mostrarLightbox(0);
+                        mostrarLightbox();
                     }
                 });
                 
-                $('form.variations_form').on('change', 'select', function() {
-                    setTimeout(actualizarLightboxState, 150);
-                });
-                
+                $('form.variations_form').on('change', 'select', function() { setTimeout(actualizarLightboxState, 150); });
                 actualizarLightboxState();
-            });
-        })(jQuery);
+            }
+        });
         </script>
         <?php
     }
