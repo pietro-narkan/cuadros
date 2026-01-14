@@ -102,44 +102,99 @@ class Cuadros_Frontend {
                 
                 function buscarColorMarco(val) {
                     if (!val) return null;
-                    // Normalizar: minúsculas, reemplazar espacios y caracteres especiales
-                    var v = val.toLowerCase()
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
-                        .replace(/[^a-z0-9]/g, '_') // Reemplazar caracteres especiales por _
-                        .replace(/_+/g, '_') // Múltiples _ por uno solo
-                        .replace(/^_|_$/g, ''); // Quitar _ al inicio y final
                     
+                    // Normalizar el valor buscado
+                    var v = val.toLowerCase()
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9]/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/^-|-$/g, '');
+                    
+                    console.log('[cuadros] Buscando marco:', val, '-> normalizado:', v);
+                    console.log('[cuadros] Colores disponibles:', coloresMarco);
+                    
+                    // Buscar coincidencia exacta primero
                     for (var k in coloresMarco) {
                         var kn = k.toLowerCase()
                             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]/g, '_')
-                            .replace(/_+/g, '_')
-                            .replace(/^_|_$/g, '');
-                        if (kn === v || kn.includes(v) || v.includes(kn)) return coloresMarco[k];
+                            .replace(/[^a-z0-9]/g, '-')
+                            .replace(/-+/g, '-')
+                            .replace(/^-|-$/g, '');
+                        
+                        if (kn === v) {
+                            console.log('[cuadros] Match exacto:', k, '->', coloresMarco[k]);
+                            return coloresMarco[k];
+                        }
                     }
+                    
+                    // Buscar coincidencia parcial
+                    for (var k in coloresMarco) {
+                        var kn = k.toLowerCase()
+                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^a-z0-9]/g, '-')
+                            .replace(/-+/g, '-')
+                            .replace(/^-|-$/g, '');
+                        
+                        if (kn.includes(v) || v.includes(kn)) {
+                            console.log('[cuadros] Match parcial:', k, '->', coloresMarco[k]);
+                            return coloresMarco[k];
+                        }
+                    }
+                    
+                    console.log('[cuadros] No se encontró color para:', val);
                     return null;
                 }
                 
                 function buscarColorPaspartu(val) {
                     if (!val) return null;
+                    
+                    // Detectar "sin paspartú" o variantes - ANTES de normalizar
                     var valLower = val.toLowerCase();
-                    if (valLower.includes('sin ') || valLower === 'ninguno' || valLower === 'none' || valLower === 'no') return null;
+                    if (valLower.includes('sin') || 
+                        valLower === 'ninguno' || 
+                        valLower === 'none' || 
+                        valLower === 'no' ||
+                        valLower.includes('sin_paspartu') ||
+                        valLower.includes('sin-paspartu')) {
+                        console.log('[cuadros] Sin paspartú detectado:', val);
+                        return null;
+                    }
                     
-                    // Normalizar: minúsculas, reemplazar espacios y caracteres especiales
+                    // Normalizar el valor buscado
                     var v = val.toLowerCase()
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Quitar acentos
-                        .replace(/[^a-z0-9]/g, '_') // Reemplazar caracteres especiales por _
-                        .replace(/_+/g, '_') // Múltiples _ por uno solo
-                        .replace(/^_|_$/g, ''); // Quitar _ al inicio y final
+                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9]/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/^-|-$/g, '');
                     
+                    console.log('[cuadros] Buscando paspartú:', val, '-> normalizado:', v);
+                    
+                    // Buscar coincidencia exacta primero
                     for (var k in coloresPaspartu) {
                         var kn = k.toLowerCase()
                             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]/g, '_')
-                            .replace(/_+/g, '_')
-                            .replace(/^_|_$/g, '');
-                        if (kn === v || kn.includes(v) || v.includes(kn)) return coloresPaspartu[k];
+                            .replace(/[^a-z0-9]/g, '-')
+                            .replace(/-+/g, '-')
+                            .replace(/^-|-$/g, '');
+                        
+                        if (kn === v) {
+                            return coloresPaspartu[k];
+                        }
                     }
+                    
+                    // Buscar coincidencia parcial
+                    for (var k in coloresPaspartu) {
+                        var kn = k.toLowerCase()
+                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^a-z0-9]/g, '-')
+                            .replace(/-+/g, '-')
+                            .replace(/^-|-$/g, '');
+                        
+                        if (kn.includes(v) || v.includes(kn)) {
+                            return coloresPaspartu[k];
+                        }
+                    }
+                    
                     return null;
                 }
                 
