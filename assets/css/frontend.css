@@ -1,26 +1,18 @@
 /* Plugin Cuadros - CSS Simple */
 
-/* Asegurar que la galería no corte el contenido */
-.woocommerce-product-gallery,
-.woocommerce-product-gallery__wrapper,
-.woocommerce-product-gallery__image,
-.flex-viewport {
-    overflow: visible !important;
-}
-
 #cuadros-fondo {
     background-color: #f0f0f0;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto;
-    overflow: visible;
+    position: relative;
+    z-index: 5;
 }
 
 #cuadros-wrapper {
     position: relative;
     box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.25);
-    overflow: visible;
 }
 
 #layer-marco {

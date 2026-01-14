@@ -123,10 +123,16 @@ class Cuadros_Frontend {
                     var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
                     var imgRatio = imgNaturalW / imgNaturalH;
                     
-                    var espacioW = Math.max(50, (originalWidth * FACTOR_ESCALA) - (bordeTotal * 2));
-                    var espacioH = Math.max(50, (originalHeight * FACTOR_ESCALA) - (bordeTotal * 2));
+                    // El wrapper máximo es el 85% del fondo
+                    var maxWrapperW = originalWidth * FACTOR_ESCALA;
+                    var maxWrapperH = originalHeight * FACTOR_ESCALA;
+                    
+                    // Espacio para la imagen = wrapper máximo menos bordes
+                    var espacioW = Math.max(50, maxWrapperW - (bordeTotal * 2));
+                    var espacioH = Math.max(50, maxWrapperH - (bordeTotal * 2));
                     var espacioRatio = espacioW / espacioH;
                     
+                    // Calcular tamaño de imagen manteniendo proporción
                     var imgW, imgH;
                     if (imgRatio >= espacioRatio) {
                         imgW = espacioW;
@@ -136,8 +142,25 @@ class Cuadros_Frontend {
                         imgW = imgH * imgRatio;
                     }
                     
+                    // El wrapper es la imagen + bordes
                     var wrapperW = imgW + (bordeTotal * 2);
                     var wrapperH = imgH + (bordeTotal * 2);
+                    
+                    // Asegurar que el wrapper no exceda el fondo
+                    if (wrapperW > originalWidth) {
+                        var scale = originalWidth / wrapperW;
+                        wrapperW = originalWidth;
+                        wrapperH = wrapperH * scale;
+                        imgW = imgW * scale;
+                        imgH = imgH * scale;
+                    }
+                    if (wrapperH > originalHeight) {
+                        var scale = originalHeight / wrapperH;
+                        wrapperH = originalHeight;
+                        wrapperW = wrapperW * scale;
+                        imgW = imgW * scale;
+                        imgH = imgH * scale;
+                    }
                     
                     $wrapper.css({ 'width': wrapperW + 'px', 'height': wrapperH + 'px' });
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
