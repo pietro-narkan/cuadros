@@ -28,6 +28,7 @@ class Cuadros_Frontend {
         $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
         $doble_marco_enabled = isset($settings['doble_marco_enabled']) ? $settings['doble_marco_enabled'] : array();
         $doble_marco_colors = isset($settings['doble_marco_colors']) ? $settings['doble_marco_colors'] : array();
+        $doble_marco_grosores = isset($settings['doble_marco_grosores']) ? $settings['doble_marco_grosores'] : array();
         
         // Grosores por orientación
         $grosor_marco_vertical = isset($settings['grosor_marco_vertical']) ? intval($settings['grosor_marco_vertical']) : 8;
@@ -52,6 +53,7 @@ class Cuadros_Frontend {
             var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
             var dobleMarcoEnabled = <?php echo json_encode($doble_marco_enabled); ?>;
             var dobleMarcoColors = <?php echo json_encode($doble_marco_colors); ?>;
+            var dobleMarcoGrosores = <?php echo json_encode($doble_marco_grosores); ?>;
             
             // Grosores por orientación
             var GROSORES_MARCO = {
@@ -157,17 +159,19 @@ class Cuadros_Frontend {
                 }
                 
                 function buscarDobleMarco(val) {
-                    if (!val) return { enabled: false, color: null };
+                    if (!val) return { enabled: false, color: null, grosor: null };
                     
                     var slug = val.toLowerCase();
                     
                     // Buscar si está habilitado el doble marco para este slug
                     var enabled = false;
                     var color = null;
+                    var grosor = null;
                     
                     if (dobleMarcoEnabled[slug]) {
                         enabled = true;
                         color = dobleMarcoColors[slug] || '#8B4513';
+                        grosor = dobleMarcoGrosores[slug] || null; // null significa usar grosor por orientación
                     }
                     
                     // Buscar coincidencia parcial si no se encontró directa
@@ -176,12 +180,13 @@ class Cuadros_Frontend {
                             if ((k.includes(slug) || slug.includes(k)) && dobleMarcoEnabled[k]) {
                                 enabled = true;
                                 color = dobleMarcoColors[k] || '#8B4513';
+                                grosor = dobleMarcoGrosores[k] || null;
                                 break;
                             }
                         }
                     }
                     
-                    return { enabled: enabled, color: color };
+                    return { enabled: enabled, color: color, grosor: grosor };
                 }
                 
                 function buscarColorPaspartu(val) {
@@ -237,10 +242,16 @@ class Cuadros_Frontend {
                     // Obtener grosores según orientación
                     var bordeMarco = hayMarco ? GROSORES_MARCO[orientacion] : 0;
                     var bordePaspartu = hayPaspartu ? GROSORES_PASPARTU[orientacion] : 0;
-                    var bordeDobleMarco = hayDobleMarco ? GROSORES_DOBLE_MARCO[orientacion] : 0;
+                    
+                    // Usar grosor personalizado si está configurado, sino usar por orientación
+                    var bordeDobleMarco = 0;
+                    if (hayDobleMarco) {
+                        bordeDobleMarco = dobleMarcoInfo.grosor || GROSORES_DOBLE_MARCO[orientacion];
+                    }
+                    
                     var bordeTotal = bordeMarco + bordePaspartu;
                     
-                    console.log('[cuadros] Orientación detectada:', orientacion, 'Marco:', bordeMarco + 'px', 'Paspartú:', bordeDobleMarco + 'px', 'Doble marco:', bordeDobleMarco + 'px', 'habilitado:', hayDobleMarco);
+                    console.log('[cuadros] Orientación:', orientacion, 'Marco:', bordeMarco + 'px', 'Paspartú:', bordePaspartu + 'px', 'Doble marco:', bordeDobleMarco + 'px', 'personalizado:', !!dobleMarcoInfo.grosor);
                     
                     var imgRatio = imgNaturalW / imgNaturalH;
                     
@@ -310,41 +321,36 @@ class Cuadros_Frontend {
                     // Aplicar marco principal
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     
-                    // Aplicar paspartú y doble marco con nueva lógica
+                    // Aplicar paspartú y doble marco con lógica corregida
                     if (hayPaspartu) {
+                        // Aplicar paspartú completo como fondo
+                        $paspartuLayer.css({
+                            'position': 'absolute',
+                            'top': bordeMarco + 'px',
+                            'left': bordeMarco + 'px',
+                            'right': bordeMarco + 'px',
+                            'bottom': bordeMarco + 'px',
+                            'background-color': paspartuColor,
+                            'z-index': 1
+                        });
+                        
                         if (hayDobleMarco) {
-                            // Si hay doble marco, el paspartú se divide en dos partes
-                            var paspartuEfectivo = bordePaspartu - bordeDobleMarco;
-                            
-                            // Aplicar paspartú reducido
-                            $paspartuLayer.css({
-                                'position': 'absolute',
-                                'top': bordeMarco + 'px',
-                                'left': bordeMarco + 'px',
-                                'right': bordeMarco + 'px',
-                                'bottom': bordeMarco + 'px',
-                                'background-color': paspartuColor,
-                                'z-index': 1
-                            });
-                            
-                            // Aplicar doble marco que ocupa el espacio restante del paspartú
-                            var dobleMarcoInicio = bordeMarco + paspartuEfectivo;
+                            // El doble marco va en el borde interior del paspartú
+                            var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
                             $dobleMarcoLayer.css({
                                 'position': 'absolute',
-                                'top': dobleMarcoInicio + 'px',
-                                'left': dobleMarcoInicio + 'px',
-                                'right': dobleMarcoInicio + 'px',
-                                'bottom': dobleMarcoInicio + 'px',
+                                'top': dobleMarcoPos + 'px',
+                                'left': dobleMarcoPos + 'px',
+                                'right': dobleMarcoPos + 'px',
+                                'bottom': dobleMarcoPos + 'px',
                                 'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
                                 'box-sizing': 'border-box',
                                 'pointer-events': 'none',
                                 'z-index': 3
                             });
                             
-                            console.log('[cuadros] Doble marco aplicado - Paspartú efectivo:', paspartuEfectivo + 'px', 'Doble marco inicio:', dobleMarcoInicio + 'px', 'Grosor:', bordeDobleMarco + 'px');
+                            console.log('[cuadros] Doble marco aplicado - Posición:', dobleMarcoPos + 'px', 'Grosor:', bordeDobleMarco + 'px', 'Color:', dobleMarcoInfo.color);
                         } else {
-                            // Sin doble marco, paspartú normal
-                            $paspartuLayer.css({ 'background-color': paspartuColor });
                             $dobleMarcoLayer.css({ 'border': 'none' });
                         }
                     } else {
@@ -476,51 +482,36 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Aplicar paspartú y doble marco en lightbox
+                                // Aplicar paspartú y doble marco en lightbox (lógica corregida)
                                 if (hayP) {
+                                    // Paspartú completo como fondo
+                                    $container.css({ 
+                                        background: currentPaspartuColor
+                                    });
+                                    
                                     if (hayDM) {
-                                        // Con doble marco: paspartú reducido + doble marco
-                                        var paspartuEfectivoLb = bP - bDM;
-                                        
-                                        // Crear div para paspartú reducido
+                                        // Doble marco en el borde interior del paspartú
+                                        var dobleMarcoPos = bM + bP - bDM;
                                         $('<div></div>').css({
                                             position: 'absolute',
-                                            top: bM + 'px',
-                                            left: bM + 'px',
-                                            right: bM + 'px',
-                                            bottom: bM + 'px',
-                                            backgroundColor: currentPaspartuColor,
-                                            zIndex: 1
-                                        }).appendTo($container);
-                                        
-                                        // Crear doble marco
-                                        var dobleMarcoInicioLb = bM + paspartuEfectivoLb;
-                                        $('<div></div>').css({
-                                            position: 'absolute',
-                                            top: dobleMarcoInicioLb + 'px',
-                                            left: dobleMarcoInicioLb + 'px',
-                                            right: dobleMarcoInicioLb + 'px',
-                                            bottom: dobleMarcoInicioLb + 'px',
+                                            top: dobleMarcoPos + 'px',
+                                            left: dobleMarcoPos + 'px',
+                                            right: dobleMarcoPos + 'px',
+                                            bottom: dobleMarcoPos + 'px',
                                             border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
                                             boxSizing: 'border-box',
                                             pointerEvents: 'none',
                                             zIndex: 3
                                         }).appendTo($container);
-                                        
-                                        // Posición de imagen ajustada
-                                        var imgPosLb = bM + bP;
-                                    } else {
-                                        // Sin doble marco: paspartú normal
-                                        var imgPosLb = bP;
                                     }
                                 } else {
-                                    var imgPosLb = bM;
+                                    $container.css({ background: '#fff' });
                                 }
                                 
                                 $('<div></div>').css({ 
                                     position: 'absolute', 
-                                    top: imgPosLb, 
-                                    left: imgPosLb, 
+                                    top: bP, 
+                                    left: bP, 
                                     width: imgW, 
                                     height: imgH, 
                                     overflow: 'hidden' 

@@ -104,6 +104,7 @@ function cuadros_activate() {
         'marco_colors' => array(),
         'doble_marco_enabled' => array(),
         'doble_marco_colors' => array(),
+        'doble_marco_grosores' => array(),
         'marco_images' => array(),
         'dimensions' => array(
             'vertical' => array('width' => 70, 'height' => 90),
