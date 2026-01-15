@@ -68,13 +68,18 @@ class Cuadros_Assets_Manager {
             if (!is_wp_error($terms) && is_array($terms)) {
                 foreach ($terms as $term) {
                     if ($term->name) {
-                        $colors[] = $term->name;
+                        $colors[] = array(
+                            'name' => $term->name,
+                            'slug' => $term->slug
+                        );
                     }
                 }
             }
             
-            // Ordenar alfabéticamente
-            sort($colors);
+            // Ordenar alfabéticamente por nombre
+            usort($colors, function($a, $b) {
+                return strcmp($a['name'], $b['name']);
+            });
             
             error_log('[cuadros] get_paspartu_colors: found ' . count($colors) . ' colors');
             wp_send_json_success(array('colors' => $colors));
@@ -111,13 +116,18 @@ class Cuadros_Assets_Manager {
             if (!is_wp_error($terms) && is_array($terms)) {
                 foreach ($terms as $term) {
                     if ($term->name) {
-                        $models[] = $term->name;
+                        $models[] = array(
+                            'name' => $term->name,
+                            'slug' => $term->slug
+                        );
                     }
                 }
             }
             
-            // Ordenar alfabéticamente
-            sort($models);
+            // Ordenar alfabéticamente por nombre
+            usort($models, function($a, $b) {
+                return strcmp($a['name'], $b['name']);
+            });
             
             error_log('[cuadros] get_woocommerce_models: found ' . count($models) . ' models');
             wp_send_json_success(array('models' => $models));

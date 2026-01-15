@@ -202,13 +202,14 @@ class Cuadros_Admin_Settings {
                             var html = '<table style="width: 100%; border-collapse: collapse;">';
                             
                             models.forEach(function(model) {
-                                var colorKey = model.toLowerCase().replace(/\s+/g, '_');
-                                var savedValue = savedColors[colorKey] || '#000000';
+                                var slug = model.slug || model.name.toLowerCase().replace(/\s+/g, '_');
+                                var name = model.name || model;
+                                var savedValue = savedColors[slug] || '#000000';
                                 
                                 html += '<tr style="border-bottom: 1px solid #ddd;">';
-                                html += '<td style="padding: 10px; width: 30%;"><strong>' + model + '</strong></td>';
+                                html += '<td style="padding: 10px; width: 30%;"><strong>' + name + '</strong><br><small style="color:#888;">slug: ' + slug + '</small></td>';
                                 html += '<td style="padding: 10px; width: 70%;">';
-                                html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[marco_colors][' + colorKey + ']" value="' + savedValue + '">';
+                                html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[marco_colors][' + slug + ']" value="' + savedValue + '">';
                                 html += '</td>';
                                 html += '</tr>';
                             });
@@ -256,13 +257,14 @@ class Cuadros_Admin_Settings {
                             var html = '<table style="width: 100%; border-collapse: collapse;">';
                             
                             colors.forEach(function(color) {
-                                var colorKey = color.toLowerCase().replace(/\s+/g, '_');
-                                var savedValue = savedColors[colorKey] || '#ffffff';
+                                var slug = color.slug || color.name.toLowerCase().replace(/\s+/g, '_');
+                                var name = color.name || color;
+                                var savedValue = savedColors[slug] || '#ffffff';
                                 
                                 html += '<tr style="border-bottom: 1px solid #ddd;">';
-                                html += '<td style="padding: 10px; width: 30%;"><strong>' + color + '</strong></td>';
+                                html += '<td style="padding: 10px; width: 30%;"><strong>' + name + '</strong><br><small style="color:#888;">slug: ' + slug + '</small></td>';
                                 html += '<td style="padding: 10px; width: 70%;">';
-                                html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[paspartu_colors][' + colorKey + ']" value="' + savedValue + '">';
+                                html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[paspartu_colors][' + slug + ']" value="' + savedValue + '">';
                                 html += '</td>';
                                 html += '</tr>';
                             });

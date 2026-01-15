@@ -103,94 +103,41 @@ class Cuadros_Frontend {
                 function buscarColorMarco(val) {
                     if (!val) return null;
                     
-                    // Normalizar el valor buscado
-                    var v = val.toLowerCase()
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^a-z0-9]/g, '-')
-                        .replace(/-+/g, '-')
-                        .replace(/^-|-$/g, '');
+                    // El valor del select ya es el slug
+                    var slug = val.toLowerCase();
                     
-                    console.log('[cuadros] Buscando marco:', val, '-> normalizado:', v);
-                    console.log('[cuadros] Colores disponibles:', coloresMarco);
-                    
-                    // Buscar coincidencia exacta primero
-                    for (var k in coloresMarco) {
-                        var kn = k.toLowerCase()
-                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]/g, '-')
-                            .replace(/-+/g, '-')
-                            .replace(/^-|-$/g, '');
-                        
-                        if (kn === v) {
-                            console.log('[cuadros] Match exacto:', k, '->', coloresMarco[k]);
-                            return coloresMarco[k];
-                        }
+                    // Buscar coincidencia directa por slug
+                    if (coloresMarco[slug]) {
+                        return coloresMarco[slug];
                     }
                     
                     // Buscar coincidencia parcial
                     for (var k in coloresMarco) {
-                        var kn = k.toLowerCase()
-                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]/g, '-')
-                            .replace(/-+/g, '-')
-                            .replace(/^-|-$/g, '');
-                        
-                        if (kn.includes(v) || v.includes(kn)) {
-                            console.log('[cuadros] Match parcial:', k, '->', coloresMarco[k]);
+                        if (k.includes(slug) || slug.includes(k)) {
                             return coloresMarco[k];
                         }
                     }
                     
-                    console.log('[cuadros] No se encontró color para:', val);
                     return null;
                 }
                 
                 function buscarColorPaspartu(val) {
                     if (!val) return null;
                     
-                    // Detectar "sin paspartú" o variantes - ANTES de normalizar
-                    var valLower = val.toLowerCase();
-                    if (valLower.includes('sin') || 
-                        valLower === 'ninguno' || 
-                        valLower === 'none' || 
-                        valLower === 'no' ||
-                        valLower.includes('sin_paspartu') ||
-                        valLower.includes('sin-paspartu')) {
-                        console.log('[cuadros] Sin paspartú detectado:', val);
+                    // Detectar "sin paspartú" o variantes
+                    var slug = val.toLowerCase();
+                    if (slug.includes('sin') || slug === 'ninguno' || slug === 'none' || slug === 'no') {
                         return null;
                     }
                     
-                    // Normalizar el valor buscado
-                    var v = val.toLowerCase()
-                        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^a-z0-9]/g, '-')
-                        .replace(/-+/g, '-')
-                        .replace(/^-|-$/g, '');
-                    
-                    console.log('[cuadros] Buscando paspartú:', val, '-> normalizado:', v);
-                    
-                    // Buscar coincidencia exacta primero
-                    for (var k in coloresPaspartu) {
-                        var kn = k.toLowerCase()
-                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]/g, '-')
-                            .replace(/-+/g, '-')
-                            .replace(/^-|-$/g, '');
-                        
-                        if (kn === v) {
-                            return coloresPaspartu[k];
-                        }
+                    // Buscar coincidencia directa por slug
+                    if (coloresPaspartu[slug]) {
+                        return coloresPaspartu[slug];
                     }
                     
                     // Buscar coincidencia parcial
                     for (var k in coloresPaspartu) {
-                        var kn = k.toLowerCase()
-                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]/g, '-')
-                            .replace(/-+/g, '-')
-                            .replace(/^-|-$/g, '');
-                        
-                        if (kn.includes(v) || v.includes(kn)) {
+                        if (k.includes(slug) || slug.includes(k)) {
                             return coloresPaspartu[k];
                         }
                     }
