@@ -468,7 +468,13 @@ class Cuadros_Frontend {
                                 var orientacionLb = detectarOrientacion(tmp.width, tmp.height);
                                 var bM = hayM ? GROSORES_MARCO[orientacionLb] : 0;
                                 var bP = hayP ? GROSORES_PASPARTU[orientacionLb] : 0;
-                                var bDM = hayDM ? GROSORES_DOBLE_MARCO[orientacionLb] : 0;
+                                
+                                // Usar grosor personalizado si está configurado
+                                var bDM = 0;
+                                if (hayDM) {
+                                    bDM = currentDobleMarcoInfo.grosor || GROSORES_DOBLE_MARCO[orientacionLb];
+                                }
+                                
                                 var bT = bM + bP;
                                 
                                 var r = tmp.width / tmp.height;
