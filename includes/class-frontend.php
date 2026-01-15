@@ -492,12 +492,25 @@ class Cuadros_Frontend {
                                 $container.css({ 
                                     width: imgW + bT*2, 
                                     height: imgH + bT*2, 
-                                    background: hayP ? currentPaspartuColor : '#fff', 
+                                    background: 'transparent',
                                     border: hayM ? bM + 'px solid ' + currentMarcoColor : 'none', 
                                     boxSizing: 'border-box',
                                     boxShadow: '-4px 4px 12px rgba(0,0,0,0.5)',
                                     position: 'relative'
                                 });
+                                
+                                // Aplicar paspartú como capa de fondo en lightbox
+                                if (hayP) {
+                                    $('<div></div>').css({
+                                        position: 'absolute',
+                                        top: '0',
+                                        left: '0',
+                                        right: '0',
+                                        bottom: '0',
+                                        backgroundColor: currentPaspartuColor,
+                                        zIndex: 1
+                                    }).appendTo($container);
+                                }
                                 
                                 // Aplicar doble marco en lightbox (ENTRE paspartú y marco)
                                 if (hayDM) {
@@ -521,7 +534,8 @@ class Cuadros_Frontend {
                                     left: bP, 
                                     width: imgW, 
                                     height: imgH, 
-                                    overflow: 'hidden' 
+                                    overflow: 'hidden',
+                                    zIndex: 2
                                 }).append(
                                     $('<img>').attr('src', src).css({ width: '100%', height: '100%', objectFit: 'fill' })
                                 ).appendTo($container);
