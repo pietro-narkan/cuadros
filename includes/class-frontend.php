@@ -322,8 +322,20 @@ class Cuadros_Frontend {
                     // Aplicar marco principal
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     
-                    // Aplicar paspartú
-                    $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
+                    // Aplicar paspartú (debe tener posicionamiento explícito)
+                    if (hayPaspartu) {
+                        $paspartuLayer.css({
+                            'position': 'absolute',
+                            'top': '0',
+                            'left': '0',
+                            'right': '0',
+                            'bottom': '0',
+                            'background-color': paspartuColor,
+                            'z-index': 1
+                        });
+                    } else {
+                        $paspartuLayer.css({ 'background-color': 'transparent' });
+                    }
                     
                     // Aplicar doble marco (entre paspartú e imagen)
                     if (hayDobleMarco) {
