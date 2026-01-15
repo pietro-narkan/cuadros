@@ -508,15 +508,29 @@ class Cuadros_Frontend {
                                 var posX = Math.floor((containerW - imgW) / 2);
                                 var posY = Math.floor((containerH - imgH) / 2);
                                 
+                                // Contenedor sin border (el marco será una capa separada)
                                 $container.css({ 
                                     width: containerW + 'px', 
                                     height: containerH + 'px', 
                                     background: 'transparent',
-                                    border: hayM ? bM + 'px solid ' + currentMarcoColor : 'none', 
-                                    boxSizing: 'border-box',
                                     boxShadow: '-4px 4px 12px rgba(0,0,0,0.5)',
                                     position: 'relative'
                                 });
+                                
+                                // Aplicar marco principal como capa separada (igual que producto)
+                                if (hayM) {
+                                    $('<div></div>').css({
+                                        position: 'absolute',
+                                        top: '0',
+                                        left: '0',
+                                        right: '0',
+                                        bottom: '0',
+                                        border: bM + 'px solid ' + currentMarcoColor,
+                                        boxSizing: 'border-box',
+                                        pointerEvents: 'none',
+                                        zIndex: 3
+                                    }).appendTo($container);
+                                }
                                 
                                 // Aplicar paspartú como capa de fondo en lightbox
                                 if (hayP) {
