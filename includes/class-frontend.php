@@ -325,25 +325,8 @@ class Cuadros_Frontend {
                     // Aplicar paspartú
                     $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
                     
-                    // Aplicar doble marco
-                    if (hayDobleMarco) {
-                        var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
-                        $dobleMarcoLayer.css({
-                            'position': 'absolute',
-                            'top': dobleMarcoPos + 'px',
-                            'left': dobleMarcoPos + 'px',
-                            'right': dobleMarcoPos + 'px',
-                            'bottom': dobleMarcoPos + 'px',
-                            'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
-                            'box-sizing': 'border-box',
-                            'pointer-events': 'none',
-                            'z-index': 4
-                        });
-                        
-                        console.log('[cuadros] Doble marco aplicado - Posición:', dobleMarcoPos + 'px', 'Grosor:', bordeDobleMarco + 'px', 'Color:', dobleMarcoInfo.color);
-                    } else {
-                        $dobleMarcoLayer.css({ 'border': 'none' });
-                    }
+                    // Deshabilitar doble marco temporalmente
+                    $dobleMarcoLayer.css({ 'border': 'none' });
                     
                     $imagenLayer.css({ 
                         'top': posY + 'px', 
@@ -469,21 +452,7 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Agregar doble marco si está habilitado
-                                if (hayDM) {
-                                    var dobleMarcoPos = bM + bP - bDM;
-                                    $('<div></div>').css({
-                                        position: 'absolute',
-                                        top: dobleMarcoPos + 'px',
-                                        left: dobleMarcoPos + 'px',
-                                        right: dobleMarcoPos + 'px',
-                                        bottom: dobleMarcoPos + 'px',
-                                        border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
-                                        boxSizing: 'border-box',
-                                        pointerEvents: 'none',
-                                        zIndex: 3
-                                    }).appendTo($container);
-                                }
+                                // Doble marco deshabilitado temporalmente
                                 
                                 $('<div></div>').css({ 
                                     position: 'absolute', 
