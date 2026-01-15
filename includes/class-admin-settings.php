@@ -34,20 +34,52 @@ class Cuadros_Admin_Settings {
             'cuadros-settings'
         );
         
-        // Campo grosor del marco
+        // Campos grosor del marco por orientación
         add_settings_field(
-            'grosor_marco',
-            __('Grosor del Marco (px)', 'cuadros'),
-            array($this, 'render_grosor_marco_field'),
+            'grosor_marco_vertical',
+            __('Grosor del Marco - Vertical (px)', 'cuadros'),
+            array($this, 'render_grosor_marco_vertical_field'),
             'cuadros-settings',
             'cuadros_dimensions_section'
         );
         
-        // Campo grosor del paspartú
         add_settings_field(
-            'grosor_paspartu',
-            __('Grosor del Paspartú (px)', 'cuadros'),
-            array($this, 'render_grosor_paspartu_field'),
+            'grosor_marco_cuadrado',
+            __('Grosor del Marco - Cuadrado 1:1 (px)', 'cuadros'),
+            array($this, 'render_grosor_marco_cuadrado_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
+        add_settings_field(
+            'grosor_marco_horizontal',
+            __('Grosor del Marco - Horizontal (px)', 'cuadros'),
+            array($this, 'render_grosor_marco_horizontal_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
+        // Campos grosor del paspartú por orientación
+        add_settings_field(
+            'grosor_paspartu_vertical',
+            __('Grosor del Paspartú - Vertical (px)', 'cuadros'),
+            array($this, 'render_grosor_paspartu_vertical_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
+        add_settings_field(
+            'grosor_paspartu_cuadrado',
+            __('Grosor del Paspartú - Cuadrado 1:1 (px)', 'cuadros'),
+            array($this, 'render_grosor_paspartu_cuadrado_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
+        add_settings_field(
+            'grosor_paspartu_horizontal',
+            __('Grosor del Paspartú - Horizontal (px)', 'cuadros'),
+            array($this, 'render_grosor_paspartu_horizontal_field'),
             'cuadros-settings',
             'cuadros_dimensions_section'
         );
@@ -95,9 +127,14 @@ class Cuadros_Admin_Settings {
         if (is_array($new_value)) {
             $sanitized = array();
             
-            // Sanitizar grosores
-            $sanitized['grosor_marco'] = isset($new_value['grosor_marco']) ? absint($new_value['grosor_marco']) : 8;
-            $sanitized['grosor_paspartu'] = isset($new_value['grosor_paspartu']) ? absint($new_value['grosor_paspartu']) : 25;
+            // Sanitizar grosores por orientación
+            $sanitized['grosor_marco_vertical'] = isset($new_value['grosor_marco_vertical']) ? absint($new_value['grosor_marco_vertical']) : 8;
+            $sanitized['grosor_marco_cuadrado'] = isset($new_value['grosor_marco_cuadrado']) ? absint($new_value['grosor_marco_cuadrado']) : 10;
+            $sanitized['grosor_marco_horizontal'] = isset($new_value['grosor_marco_horizontal']) ? absint($new_value['grosor_marco_horizontal']) : 6;
+            
+            $sanitized['grosor_paspartu_vertical'] = isset($new_value['grosor_paspartu_vertical']) ? absint($new_value['grosor_paspartu_vertical']) : 30;
+            $sanitized['grosor_paspartu_cuadrado'] = isset($new_value['grosor_paspartu_cuadrado']) ? absint($new_value['grosor_paspartu_cuadrado']) : 25;
+            $sanitized['grosor_paspartu_horizontal'] = isset($new_value['grosor_paspartu_horizontal']) ? absint($new_value['grosor_paspartu_horizontal']) : 20;
             
             // Sanitizar colores de marco - preservar colores existentes si no se envían nuevos
             $old_marco_colors = isset($old_value['marco_colors']) ? $old_value['marco_colors'] : array();
@@ -144,34 +181,91 @@ class Cuadros_Admin_Settings {
     }
     
     public function render_dimensions_section() {
-        echo '<p>' . __('Configura los grosores del marco y paspartú en píxeles.', 'cuadros') . '</p>';
+        echo '<p>' . __('Configura los grosores del marco y paspartú en píxeles para cada orientación de imagen.', 'cuadros') . '</p>';
+        echo '<p class="description">' . __('Los grosores se aplicarán automáticamente según la orientación detectada de la imagen del producto.', 'cuadros') . '</p>';
     }
     
-    public function render_grosor_marco_field() {
+    public function render_grosor_marco_vertical_field() {
         $settings = get_option('cuadros_settings', array());
-        $value = isset($settings['grosor_marco']) ? $settings['grosor_marco'] : 8;
+        $value = isset($settings['grosor_marco_vertical']) ? $settings['grosor_marco_vertical'] : 8;
         ?>
         <input type="number" 
-               name="cuadros_settings[grosor_marco]" 
+               name="cuadros_settings[grosor_marco_vertical]" 
                value="<?php echo esc_attr($value); ?>" 
                min="1" 
                max="50" 
                style="width: 80px;"> px
-        <p class="description"><?php _e('Grosor del borde del marco. Recomendado: 5-15px', 'cuadros'); ?></p>
+        <p class="description"><?php _e('Grosor del borde del marco para imágenes verticales. Recomendado: 6-12px', 'cuadros'); ?></p>
         <?php
     }
     
-    public function render_grosor_paspartu_field() {
+    public function render_grosor_marco_cuadrado_field() {
         $settings = get_option('cuadros_settings', array());
-        $value = isset($settings['grosor_paspartu']) ? $settings['grosor_paspartu'] : 25;
+        $value = isset($settings['grosor_marco_cuadrado']) ? $settings['grosor_marco_cuadrado'] : 10;
         ?>
         <input type="number" 
-               name="cuadros_settings[grosor_paspartu]" 
+               name="cuadros_settings[grosor_marco_cuadrado]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="50" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del borde del marco para imágenes cuadradas (1:1). Recomendado: 8-15px', 'cuadros'); ?></p>
+        <?php
+    }
+    
+    public function render_grosor_marco_horizontal_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_marco_horizontal']) ? $settings['grosor_marco_horizontal'] : 6;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_marco_horizontal]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="50" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del borde del marco para imágenes horizontales. Recomendado: 4-10px', 'cuadros'); ?></p>
+        <?php
+    }
+    
+    public function render_grosor_paspartu_vertical_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_paspartu_vertical']) ? $settings['grosor_paspartu_vertical'] : 30;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_paspartu_vertical]" 
                value="<?php echo esc_attr($value); ?>" 
                min="1" 
                max="100" 
                style="width: 80px;"> px
-        <p class="description"><?php _e('Grosor del paspartú (espacio entre marco e imagen). Recomendado: 15-40px', 'cuadros'); ?></p>
+        <p class="description"><?php _e('Grosor del paspartú para imágenes verticales. Recomendado: 25-40px', 'cuadros'); ?></p>
+        <?php
+    }
+    
+    public function render_grosor_paspartu_cuadrado_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_paspartu_cuadrado']) ? $settings['grosor_paspartu_cuadrado'] : 25;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_paspartu_cuadrado]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="100" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del paspartú para imágenes cuadradas (1:1). Recomendado: 20-35px', 'cuadros'); ?></p>
+        <?php
+    }
+    
+    public function render_grosor_paspartu_horizontal_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_paspartu_horizontal']) ? $settings['grosor_paspartu_horizontal'] : 20;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_paspartu_horizontal]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="100" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del paspartú para imágenes horizontales. Recomendado: 15-30px', 'cuadros'); ?></p>
         <?php
     }
     

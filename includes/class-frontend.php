@@ -26,8 +26,15 @@ class Cuadros_Frontend {
         $settings = get_option('cuadros_settings', array());
         $marco_colors = isset($settings['marco_colors']) ? $settings['marco_colors'] : array();
         $paspartu_colors = isset($settings['paspartu_colors']) ? $settings['paspartu_colors'] : array();
-        $grosor_marco = isset($settings['grosor_marco']) ? intval($settings['grosor_marco']) : 8;
-        $grosor_paspartu = isset($settings['grosor_paspartu']) ? intval($settings['grosor_paspartu']) : 25;
+        
+        // Grosores por orientación
+        $grosor_marco_vertical = isset($settings['grosor_marco_vertical']) ? intval($settings['grosor_marco_vertical']) : 8;
+        $grosor_marco_cuadrado = isset($settings['grosor_marco_cuadrado']) ? intval($settings['grosor_marco_cuadrado']) : 10;
+        $grosor_marco_horizontal = isset($settings['grosor_marco_horizontal']) ? intval($settings['grosor_marco_horizontal']) : 6;
+        
+        $grosor_paspartu_vertical = isset($settings['grosor_paspartu_vertical']) ? intval($settings['grosor_paspartu_vertical']) : 30;
+        $grosor_paspartu_cuadrado = isset($settings['grosor_paspartu_cuadrado']) ? intval($settings['grosor_paspartu_cuadrado']) : 25;
+        $grosor_paspartu_horizontal = isset($settings['grosor_paspartu_horizontal']) ? intval($settings['grosor_paspartu_horizontal']) : 20;
         
         if (defined('CUADROS_SCRIPT_LOADED')) return;
         define('CUADROS_SCRIPT_LOADED', true);
@@ -37,8 +44,20 @@ class Cuadros_Frontend {
             
             var coloresMarco = <?php echo json_encode($marco_colors); ?>;
             var coloresPaspartu = <?php echo json_encode($paspartu_colors); ?>;
-            var GROSOR_MARCO = <?php echo $grosor_marco; ?>;
-            var GROSOR_PASPARTU = <?php echo $grosor_paspartu; ?>;
+            
+            // Grosores por orientación
+            var GROSORES_MARCO = {
+                'vertical': <?php echo $grosor_marco_vertical; ?>,
+                'cuadrado': <?php echo $grosor_marco_cuadrado; ?>,
+                'horizontal': <?php echo $grosor_marco_horizontal; ?>
+            };
+            
+            var GROSORES_PASPARTU = {
+                'vertical': <?php echo $grosor_paspartu_vertical; ?>,
+                'cuadrado': <?php echo $grosor_paspartu_cuadrado; ?>,
+                'horizontal': <?php echo $grosor_paspartu_horizontal; ?>
+            };
+            
             var FACTOR_ESCALA = 0.85;
             
             // Esperar un momento para que WooCommerce inicialice la galería
@@ -145,18 +164,36 @@ class Cuadros_Frontend {
                     return null;
                 }
                 
+                function detectarOrientacion(imgW, imgH) {
+                    var ratio = imgW / imgH;
+                    if (Math.abs(ratio - 1) < 0.1) {
+                        return 'cuadrado'; // Aproximadamente 1:1
+                    } else if (ratio > 1) {
+                        return 'horizontal'; // Más ancho que alto
+                    } else {
+                        return 'vertical'; // Más alto que ancho
+                    }
+                }
+                
                 function actualizar() {
                     var marcoColor = buscarColorMarco($('#pa_marco').val());
                     var paspartuColor = buscarColorPaspartu($('#pa_paspartu').val());
                     var hayMarco = !!marcoColor;
                     var hayPaspartu = !!paspartuColor;
                     
-                    var bordeMarco = hayMarco ? GROSOR_MARCO : 0;
-                    var bordePaspartu = hayPaspartu ? GROSOR_PASPARTU : 0;
-                    var bordeTotal = bordeMarco + bordePaspartu;
-                    
                     var imgNaturalW = $productImage[0].naturalWidth || originalWidth;
                     var imgNaturalH = $productImage[0].naturalHeight || originalHeight;
+                    
+                    // Detectar orientación de la imagen
+                    var orientacion = detectarOrientacion(imgNaturalW, imgNaturalH);
+                    
+                    // Obtener grosores según orientación
+                    var bordeMarco = hayMarco ? GROSORES_MARCO[orientacion] : 0;
+                    var bordePaspartu = hayPaspartu ? GROSORES_PASPARTU[orientacion] : 0;
+                    var bordeTotal = bordeMarco + bordePaspartu;
+                    
+                    console.log('[cuadros] Orientación detectada:', orientacion, 'Marco:', bordeMarco + 'px', 'Paspartú:', bordePaspartu + 'px');
+                    
                     var imgRatio = imgNaturalW / imgNaturalH;
                     
                     // El wrapper máximo es el 85% del fondo
@@ -314,12 +351,14 @@ class Cuadros_Frontend {
                         });
                         
                         if (hayM || hayP) {
-                            var bM = hayM ? GROSOR_MARCO : 0;
-                            var bP = hayP ? GROSOR_PASPARTU : 0;
-                            var bT = bM + bP;
-                            
                             var tmp = new Image();
                             tmp.onload = function() {
+                                // Detectar orientación para el lightbox
+                                var orientacionLb = detectarOrientacion(tmp.width, tmp.height);
+                                var bM = hayM ? GROSORES_MARCO[orientacionLb] : 0;
+                                var bP = hayP ? GROSORES_PASPARTU[orientacionLb] : 0;
+                                var bT = bM + bP;
+                                
                                 var r = tmp.width / tmp.height;
                                 var imgW, imgH;
                                 
