@@ -3,7 +3,7 @@
  * Plugin Name: Cuadros - Visualizador de Marcos y Paspartús
  * Plugin URI: https://ejemplo.com/cuadros
  * Description: Plugin para visualizar dinámicamente marcos y paspartús sobre imágenes de productos WooCommerce.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Tu Nombre
  * License: GPL v2 or later
  * Text Domain: cuadros
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('CUADROS_VERSION', '1.1.0');
+define('CUADROS_VERSION', '1.2.0');
 define('CUADROS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CUADROS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CUADROS_ASSETS_URL', CUADROS_PLUGIN_URL . 'assets/');
@@ -92,6 +92,9 @@ function cuadros_activate() {
         'grosor_paspartu_vertical' => 30,
         'grosor_paspartu_cuadrado' => 25,
         'grosor_paspartu_horizontal' => 20,
+        'grosor_doble_marco_vertical' => 3,
+        'grosor_doble_marco_cuadrado' => 4,
+        'grosor_doble_marco_horizontal' => 2,
         'paspartu_colors' => array(
             'blanco' => '#ffffff',
             'negro' => '#222222',
@@ -99,6 +102,8 @@ function cuadros_activate() {
             'rojo' => '#a83232'
         ),
         'marco_colors' => array(),
+        'doble_marco_enabled' => array(),
+        'doble_marco_colors' => array(),
         'marco_images' => array(),
         'dimensions' => array(
             'vertical' => array('width' => 70, 'height' => 90),

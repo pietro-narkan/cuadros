@@ -84,6 +84,31 @@ class Cuadros_Admin_Settings {
             'cuadros_dimensions_section'
         );
         
+        // Campos grosor del doble marco por orientación
+        add_settings_field(
+            'grosor_doble_marco_vertical',
+            __('Grosor del Doble Marco - Vertical (px)', 'cuadros'),
+            array($this, 'render_grosor_doble_marco_vertical_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
+        add_settings_field(
+            'grosor_doble_marco_cuadrado',
+            __('Grosor del Doble Marco - Cuadrado 1:1 (px)', 'cuadros'),
+            array($this, 'render_grosor_doble_marco_cuadrado_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
+        add_settings_field(
+            'grosor_doble_marco_horizontal',
+            __('Grosor del Doble Marco - Horizontal (px)', 'cuadros'),
+            array($this, 'render_grosor_doble_marco_horizontal_field'),
+            'cuadros-settings',
+            'cuadros_dimensions_section'
+        );
+        
         // Sección de colores de marco
         add_settings_section(
             'cuadros_marco_colors_section',
@@ -136,6 +161,11 @@ class Cuadros_Admin_Settings {
             $sanitized['grosor_paspartu_cuadrado'] = isset($new_value['grosor_paspartu_cuadrado']) ? absint($new_value['grosor_paspartu_cuadrado']) : 25;
             $sanitized['grosor_paspartu_horizontal'] = isset($new_value['grosor_paspartu_horizontal']) ? absint($new_value['grosor_paspartu_horizontal']) : 20;
             
+            // Sanitizar grosores del doble marco
+            $sanitized['grosor_doble_marco_vertical'] = isset($new_value['grosor_doble_marco_vertical']) ? absint($new_value['grosor_doble_marco_vertical']) : 3;
+            $sanitized['grosor_doble_marco_cuadrado'] = isset($new_value['grosor_doble_marco_cuadrado']) ? absint($new_value['grosor_doble_marco_cuadrado']) : 4;
+            $sanitized['grosor_doble_marco_horizontal'] = isset($new_value['grosor_doble_marco_horizontal']) ? absint($new_value['grosor_doble_marco_horizontal']) : 2;
+            
             // Sanitizar colores de marco - preservar colores existentes si no se envían nuevos
             $old_marco_colors = isset($old_value['marco_colors']) ? $old_value['marco_colors'] : array();
             if (isset($new_value['marco_colors']) && is_array($new_value['marco_colors'])) {
@@ -153,6 +183,37 @@ class Cuadros_Admin_Settings {
                 }
             } else {
                 $sanitized['marco_colors'] = $old_marco_colors;
+            }
+            
+            // Sanitizar configuración de doble marco
+            $old_doble_enabled = isset($old_value['doble_marco_enabled']) ? $old_value['doble_marco_enabled'] : array();
+            $old_doble_colors = isset($old_value['doble_marco_colors']) ? $old_value['doble_marco_colors'] : array();
+            
+            if (isset($new_value['doble_marco_enabled']) && is_array($new_value['doble_marco_enabled'])) {
+                $sanitized['doble_marco_enabled'] = array();
+                foreach ($new_value['doble_marco_enabled'] as $key => $value) {
+                    $clean_key = sanitize_title($key);
+                    $sanitized['doble_marco_enabled'][$clean_key] = ($value == '1');
+                }
+            } else {
+                $sanitized['doble_marco_enabled'] = $old_doble_enabled;
+            }
+            
+            if (isset($new_value['doble_marco_colors']) && is_array($new_value['doble_marco_colors'])) {
+                $sanitized['doble_marco_colors'] = array();
+                foreach ($new_value['doble_marco_colors'] as $key => $color) {
+                    $clean_key = sanitize_title($key);
+                    $sanitized_color = sanitize_hex_color($color);
+                    if ($sanitized_color) {
+                        $sanitized['doble_marco_colors'][$clean_key] = $sanitized_color;
+                    } elseif (isset($old_doble_colors[$clean_key])) {
+                        $sanitized['doble_marco_colors'][$clean_key] = $old_doble_colors[$clean_key];
+                    } else {
+                        $sanitized['doble_marco_colors'][$clean_key] = '#8B4513'; // Color por defecto (marrón)
+                    }
+                }
+            } else {
+                $sanitized['doble_marco_colors'] = $old_doble_colors;
             }
             
             // Sanitizar colores de paspartú - preservar colores existentes si no se envían nuevos
@@ -269,6 +330,48 @@ class Cuadros_Admin_Settings {
         <?php
     }
     
+    public function render_grosor_doble_marco_vertical_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_doble_marco_vertical']) ? $settings['grosor_doble_marco_vertical'] : 3;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_doble_marco_vertical]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="20" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del marco interior para imágenes verticales. Recomendado: 2-5px', 'cuadros'); ?></p>
+        <?php
+    }
+    
+    public function render_grosor_doble_marco_cuadrado_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_doble_marco_cuadrado']) ? $settings['grosor_doble_marco_cuadrado'] : 4;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_doble_marco_cuadrado]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="20" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del marco interior para imágenes cuadradas (1:1). Recomendado: 3-6px', 'cuadros'); ?></p>
+        <?php
+    }
+    
+    public function render_grosor_doble_marco_horizontal_field() {
+        $settings = get_option('cuadros_settings', array());
+        $value = isset($settings['grosor_doble_marco_horizontal']) ? $settings['grosor_doble_marco_horizontal'] : 2;
+        ?>
+        <input type="number" 
+               name="cuadros_settings[grosor_doble_marco_horizontal]" 
+               value="<?php echo esc_attr($value); ?>" 
+               min="1" 
+               max="20" 
+               style="width: 80px;"> px
+        <p class="description"><?php _e('Grosor del marco interior para imágenes horizontales. Recomendado: 2-4px', 'cuadros'); ?></p>
+        <?php
+    }
+    
     public function render_marco_colors_section() {
         echo '<p>' . __('Configura los colores disponibles para los marcos. Los colores se asignan a los términos del atributo "Marco" de WooCommerce.', 'cuadros') . '</p>';
     }
@@ -276,6 +379,8 @@ class Cuadros_Admin_Settings {
     public function render_marco_colors_field() {
         $settings = get_option('cuadros_settings', array());
         $marco_colors = isset($settings['marco_colors']) ? $settings['marco_colors'] : array();
+        $doble_marco_enabled = isset($settings['doble_marco_enabled']) ? $settings['doble_marco_enabled'] : array();
+        $doble_marco_colors = isset($settings['doble_marco_colors']) ? $settings['doble_marco_colors'] : array();
         ?>
         <div id="cuadros-marco-colors" style="margin: 10px 0;">
             <p style="color: #666; font-style: italic;">Cargando colores de marco disponibles...</p>
@@ -293,17 +398,29 @@ class Cuadros_Admin_Settings {
                         if (response.success && response.data.models) {
                             var models = response.data.models;
                             var savedColors = <?php echo json_encode($marco_colors); ?>;
+                            var dobleMarcoEnabled = <?php echo json_encode($doble_marco_enabled); ?>;
+                            var dobleMarcoColors = <?php echo json_encode($doble_marco_colors); ?>;
                             var html = '<table style="width: 100%; border-collapse: collapse;">';
                             
                             models.forEach(function(model) {
                                 var slug = model.slug || model.name.toLowerCase().replace(/\s+/g, '_');
                                 var name = model.name || model;
                                 var savedValue = savedColors[slug] || '#000000';
+                                var dobleEnabled = dobleMarcoEnabled[slug] || false;
+                                var dobleColor = dobleMarcoColors[slug] || '#8B4513';
                                 
                                 html += '<tr style="border-bottom: 1px solid #ddd;">';
-                                html += '<td style="padding: 10px; width: 30%;"><strong>' + name + '</strong><br><small style="color:#888;">slug: ' + slug + '</small></td>';
-                                html += '<td style="padding: 10px; width: 70%;">';
+                                html += '<td style="padding: 10px; width: 25%;"><strong>' + name + '</strong><br><small style="color:#888;">slug: ' + slug + '</small></td>';
+                                html += '<td style="padding: 10px; width: 25%;">';
+                                html += '<label>Color Principal:</label><br>';
                                 html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[marco_colors][' + slug + ']" value="' + savedValue + '">';
+                                html += '</td>';
+                                html += '<td style="padding: 10px; width: 50%;">';
+                                html += '<label><input type="checkbox" name="cuadros_settings[doble_marco_enabled][' + slug + ']" value="1" ' + (dobleEnabled ? 'checked' : '') + ' class="doble-marco-checkbox" data-slug="' + slug + '"> ¿Doble marco?</label><br>';
+                                html += '<div class="doble-marco-options" id="doble-options-' + slug + '" style="margin-top: 8px; ' + (dobleEnabled ? '' : 'display: none;') + '">';
+                                html += '<label>Color del marco interior:</label><br>';
+                                html += '<input type="text" class="cuadros-color-picker-doble" name="cuadros_settings[doble_marco_colors][' + slug + ']" value="' + dobleColor + '">';
+                                html += '</div>';
                                 html += '</td>';
                                 html += '</tr>';
                             });
@@ -311,6 +428,14 @@ class Cuadros_Admin_Settings {
                             html += '</table>';
                             $('#cuadros-marco-colors').html(html);
                             $('#cuadros-marco-colors .cuadros-color-picker').wpColorPicker();
+                            $('#cuadros-marco-colors .cuadros-color-picker-doble').wpColorPicker();
+                            
+                            // Manejar cambios en los checkboxes
+                            $('.doble-marco-checkbox').on('change', function() {
+                                var slug = $(this).data('slug');
+                                var isChecked = $(this).is(':checked');
+                                $('#doble-options-' + slug).toggle(isChecked);
+                            });
                         } else {
                             $('#cuadros-marco-colors').html('<p style="color: #999;">No hay modelos de marco configurados en WooCommerce (atributo pa_marco).</p>');
                         }

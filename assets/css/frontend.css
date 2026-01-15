@@ -28,6 +28,13 @@
     z-index: 3;
 }
 
+#layer-doble-marco {
+    position: absolute;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 4;
+}
+
 #layer-paspartu {
     position: absolute;
     top: 0;
