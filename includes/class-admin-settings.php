@@ -194,12 +194,12 @@ class Cuadros_Admin_Settings {
     }
     
     public function render_dimensions_section() {
-        echo '<p>' . __('Configura los grosores del marco, paspartú y doble marco para cada orientación de imagen.', 'cuadros') . '</p>';
+        echo '<p>' . __('Configura los grosores del marco y paspartú para cada orientación de imagen.', 'cuadros') . '</p>';
         echo '<div style="background: #f9f9f9; padding: 15px; margin: 10px 0; border-left: 4px solid #0073aa;">';
         echo '<strong>Cómo funciona el doble marco:</strong><br>';
-        echo '• El doble marco aparece en el borde interior del paspartú<br>';
-        echo '• Crea una separación visual elegante entre el paspartú y la imagen<br>';
-        echo '• Se puede configurar independientemente para cada orientación';
+        echo '• El doble marco se configura individualmente para cada modelo en la sección "Colores de Marco"<br>';
+        echo '• Aparece en el borde interior del paspartú cuando está habilitado<br>';
+        echo '• Crea una separación visual elegante entre el paspartú y la imagen';
         echo '</div>';
     }
     
@@ -234,15 +234,10 @@ class Cuadros_Admin_Settings {
                     <input type="number" name="cuadros_settings[grosor_marco_vertical]" value="<?php echo esc_attr($valores['grosor_marco_vertical']); ?>" min="1" max="50" style="width: 80px;"> px
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 6-12px</p>
                 </div>
-                <div style="margin-bottom: 15px;">
+                <div>
                     <label style="display: block; font-weight: bold; margin-bottom: 5px;">Paspartú:</label>
                     <input type="number" name="cuadros_settings[grosor_paspartu_vertical]" value="<?php echo esc_attr($valores['grosor_paspartu_vertical']); ?>" min="1" max="100" style="width: 80px;"> px
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 25-40px</p>
-                </div>
-                <div>
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Doble Marco:</label>
-                    <input type="number" name="cuadros_settings[grosor_doble_marco_vertical]" value="<?php echo esc_attr($valores['grosor_doble_marco_vertical']); ?>" min="1" max="20" style="width: 80px;"> px
-                    <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 2-5px</p>
                 </div>
             </div>
             
@@ -254,15 +249,10 @@ class Cuadros_Admin_Settings {
                     <input type="number" name="cuadros_settings[grosor_marco_cuadrado]" value="<?php echo esc_attr($valores['grosor_marco_cuadrado']); ?>" min="1" max="50" style="width: 80px;"> px
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 8-15px</p>
                 </div>
-                <div style="margin-bottom: 15px;">
+                <div>
                     <label style="display: block; font-weight: bold; margin-bottom: 5px;">Paspartú:</label>
                     <input type="number" name="cuadros_settings[grosor_paspartu_cuadrado]" value="<?php echo esc_attr($valores['grosor_paspartu_cuadrado']); ?>" min="1" max="100" style="width: 80px;"> px
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 20-35px</p>
-                </div>
-                <div>
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Doble Marco:</label>
-                    <input type="number" name="cuadros_settings[grosor_doble_marco_cuadrado]" value="<?php echo esc_attr($valores['grosor_doble_marco_cuadrado']); ?>" min="1" max="20" style="width: 80px;"> px
-                    <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 3-6px</p>
                 </div>
             </div>
             
@@ -274,15 +264,10 @@ class Cuadros_Admin_Settings {
                     <input type="number" name="cuadros_settings[grosor_marco_horizontal]" value="<?php echo esc_attr($valores['grosor_marco_horizontal']); ?>" min="1" max="50" style="width: 80px;"> px
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 4-10px</p>
                 </div>
-                <div style="margin-bottom: 15px;">
+                <div>
                     <label style="display: block; font-weight: bold; margin-bottom: 5px;">Paspartú:</label>
                     <input type="number" name="cuadros_settings[grosor_paspartu_horizontal]" value="<?php echo esc_attr($valores['grosor_paspartu_horizontal']); ?>" min="1" max="100" style="width: 80px;"> px
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 15-30px</p>
-                </div>
-                <div>
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Doble Marco:</label>
-                    <input type="number" name="cuadros_settings[grosor_doble_marco_horizontal]" value="<?php echo esc_attr($valores['grosor_doble_marco_horizontal']); ?>" min="1" max="20" style="width: 80px;"> px
-                    <p style="font-size: 12px; color: #666; margin: 5px 0;">Recomendado: 2-4px</p>
                 </div>
             </div>
         </div>

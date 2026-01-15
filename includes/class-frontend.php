@@ -252,6 +252,7 @@ class Cuadros_Frontend {
                     var bordeTotal = bordeMarco + bordePaspartu;
                     
                     console.log('[cuadros] Orientación:', orientacion, 'Marco:', bordeMarco + 'px', 'Paspartú:', bordePaspartu + 'px', 'Doble marco:', bordeDobleMarco + 'px', 'personalizado:', !!dobleMarcoInfo.grosor);
+                    console.log('[cuadros] Colores - Marco:', marcoColor, 'Paspartú:', paspartuColor, 'Doble marco:', dobleMarcoInfo.color);
                     
                     var imgRatio = imgNaturalW / imgNaturalH;
                     
@@ -317,9 +318,6 @@ class Cuadros_Frontend {
                         'height': wrapperH + 'px',
                         'background-color': wrapperBg
                     });
-                    
-                    // Aplicar marco principal
-                    $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     
                     // Aplicar marco principal
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
