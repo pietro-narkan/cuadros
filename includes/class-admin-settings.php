@@ -344,9 +344,9 @@ class Cuadros_Admin_Settings {
                                 html += '<input type="text" class="cuadros-color-picker-doble" name="cuadros_settings[doble_marco_colors][' + slug + ']" value="' + dobleColor + '">';
                                 html += '</div>';
                                 html += '<div>';
-                                html += '<label style="display: block; margin-bottom: 5px; font-weight: bold;">Grosor personalizado (px):</label>';
+                                html += '<label style="display: block; margin-bottom: 5px; font-weight: bold;">Grosor (px):</label>';
                                 html += '<input type="number" name="cuadros_settings[doble_marco_grosores][' + slug + ']" value="' + dobleGrosor + '" min="1" max="20" style="width: 80px;"> px';
-                                html += '<p style="font-size: 12px; color: #666; margin: 5px 0;">Opcional: Sobrescribe los grosores por orientación para este modelo específico</p>';
+                                html += '<p style="font-size: 12px; color: #666; margin: 5px 0;">Opcional: Sobrescribe los grosores por orientación</p>';
                                 html += '</div>';
                                 html += '</div>';
                                 html += '</td>';

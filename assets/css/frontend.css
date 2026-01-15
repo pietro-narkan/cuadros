@@ -32,8 +32,7 @@
     position: absolute;
     box-sizing: border-box;
     pointer-events: none;
-    z-index: 5;
-    /* Más alto que el paspartú para estar visible encima */
+    z-index: 4;
 }
 
 #layer-paspartu {

@@ -321,40 +321,29 @@ class Cuadros_Frontend {
                     // Aplicar marco principal
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     
-                    // Aplicar paspartú y doble marco con lógica corregida
-                    if (hayPaspartu) {
-                        // Aplicar paspartú completo como fondo
-                        $paspartuLayer.css({
+                    // Aplicar marco principal
+                    $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
+                    
+                    // Aplicar paspartú
+                    $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
+                    
+                    // Aplicar doble marco
+                    if (hayDobleMarco) {
+                        var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
+                        $dobleMarcoLayer.css({
                             'position': 'absolute',
-                            'top': bordeMarco + 'px',
-                            'left': bordeMarco + 'px',
-                            'right': bordeMarco + 'px',
-                            'bottom': bordeMarco + 'px',
-                            'background-color': paspartuColor,
-                            'z-index': 1
+                            'top': dobleMarcoPos + 'px',
+                            'left': dobleMarcoPos + 'px',
+                            'right': dobleMarcoPos + 'px',
+                            'bottom': dobleMarcoPos + 'px',
+                            'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
+                            'box-sizing': 'border-box',
+                            'pointer-events': 'none',
+                            'z-index': 4
                         });
                         
-                        if (hayDobleMarco) {
-                            // El doble marco va en el borde interior del paspartú
-                            var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
-                            $dobleMarcoLayer.css({
-                                'position': 'absolute',
-                                'top': dobleMarcoPos + 'px',
-                                'left': dobleMarcoPos + 'px',
-                                'right': dobleMarcoPos + 'px',
-                                'bottom': dobleMarcoPos + 'px',
-                                'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
-                                'box-sizing': 'border-box',
-                                'pointer-events': 'none',
-                                'z-index': 3
-                            });
-                            
-                            console.log('[cuadros] Doble marco aplicado - Posición:', dobleMarcoPos + 'px', 'Grosor:', bordeDobleMarco + 'px', 'Color:', dobleMarcoInfo.color);
-                        } else {
-                            $dobleMarcoLayer.css({ 'border': 'none' });
-                        }
+                        console.log('[cuadros] Doble marco aplicado - Posición:', dobleMarcoPos + 'px', 'Grosor:', bordeDobleMarco + 'px', 'Color:', dobleMarcoInfo.color);
                     } else {
-                        $paspartuLayer.css({ 'background-color': 'transparent' });
                         $dobleMarcoLayer.css({ 'border': 'none' });
                     }
                     
@@ -482,30 +471,20 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Aplicar paspartú y doble marco en lightbox (lógica corregida)
-                                if (hayP) {
-                                    // Paspartú completo como fondo
-                                    $container.css({ 
-                                        background: currentPaspartuColor
-                                    });
-                                    
-                                    if (hayDM) {
-                                        // Doble marco en el borde interior del paspartú
-                                        var dobleMarcoPos = bM + bP - bDM;
-                                        $('<div></div>').css({
-                                            position: 'absolute',
-                                            top: dobleMarcoPos + 'px',
-                                            left: dobleMarcoPos + 'px',
-                                            right: dobleMarcoPos + 'px',
-                                            bottom: dobleMarcoPos + 'px',
-                                            border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
-                                            boxSizing: 'border-box',
-                                            pointerEvents: 'none',
-                                            zIndex: 3
-                                        }).appendTo($container);
-                                    }
-                                } else {
-                                    $container.css({ background: '#fff' });
+                                // Agregar doble marco si está habilitado
+                                if (hayDM) {
+                                    var dobleMarcoPos = bM + bP - bDM;
+                                    $('<div></div>').css({
+                                        position: 'absolute',
+                                        top: dobleMarcoPos + 'px',
+                                        left: dobleMarcoPos + 'px',
+                                        right: dobleMarcoPos + 'px',
+                                        bottom: dobleMarcoPos + 'px',
+                                        border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
+                                        boxSizing: 'border-box',
+                                        pointerEvents: 'none',
+                                        zIndex: 3
+                                    }).appendTo($container);
                                 }
                                 
                                 $('<div></div>').css({ 
