@@ -489,9 +489,21 @@ class Cuadros_Frontend {
                                     imgW = imgH * r;
                                 }
                                 
+                                // Redondear
+                                imgW = Math.ceil(imgW);
+                                imgH = Math.ceil(imgH);
+                                
+                                // Tamaño del contenedor
+                                var containerW = imgW + (bT * 2);
+                                var containerH = imgH + (bT * 2);
+                                
+                                // Calcular posición centrada de la imagen (igual que en vista producto)
+                                var posX = Math.floor((containerW - imgW) / 2);
+                                var posY = Math.floor((containerH - imgH) / 2);
+                                
                                 $container.css({ 
-                                    width: imgW + bT*2, 
-                                    height: imgH + bT*2, 
+                                    width: containerW + 'px', 
+                                    height: containerH + 'px', 
                                     background: 'transparent',
                                     border: hayM ? bM + 'px solid ' + currentMarcoColor : 'none', 
                                     boxSizing: 'border-box',
@@ -528,12 +540,13 @@ class Cuadros_Frontend {
                                     }).appendTo($container);
                                 }
                                 
+                                // Imagen centrada usando posX y posY (igual que vista producto)
                                 $('<div></div>').css({ 
                                     position: 'absolute', 
-                                    top: bP, 
-                                    left: bP, 
-                                    width: imgW, 
-                                    height: imgH, 
+                                    top: posY + 'px', 
+                                    left: posX + 'px', 
+                                    width: imgW + 'px', 
+                                    height: imgH + 'px', 
                                     overflow: 'hidden',
                                     zIndex: 2
                                 }).append(
