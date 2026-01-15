@@ -55,6 +55,11 @@ class Cuadros_Frontend {
             var dobleMarcoColors = <?php echo json_encode($doble_marco_colors); ?>;
             var dobleMarcoGrosores = <?php echo json_encode($doble_marco_grosores); ?>;
             
+            console.log('[cuadros] Colores Marco cargados:', coloresMarco);
+            console.log('[cuadros] Colores Paspartú cargados:', coloresPaspartu);
+            console.log('[cuadros] Doble Marco Enabled:', dobleMarcoEnabled);
+            console.log('[cuadros] Doble Marco Colors:', dobleMarcoColors);
+            
             // Grosores por orientación
             var GROSORES_MARCO = {
                 'vertical': <?php echo $grosor_marco_vertical; ?>,
@@ -228,6 +233,12 @@ class Cuadros_Frontend {
                     var marcoColor = buscarColorMarco($('#pa_marco').val());
                     var paspartuColor = buscarColorPaspartu($('#pa_paspartu').val());
                     var dobleMarcoInfo = buscarDobleMarco($('#pa_marco').val());
+                    
+                    console.log('[cuadros] DEBUG - Marco seleccionado:', $('#pa_marco').val());
+                    console.log('[cuadros] DEBUG - Paspartú seleccionado:', $('#pa_paspartu').val());
+                    console.log('[cuadros] DEBUG - Color marco encontrado:', marcoColor);
+                    console.log('[cuadros] DEBUG - Color paspartú encontrado:', paspartuColor);
+                    console.log('[cuadros] DEBUG - Doble marco info:', dobleMarcoInfo);
                     
                     var hayMarco = !!marcoColor;
                     var hayPaspartu = !!paspartuColor;
