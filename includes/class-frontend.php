@@ -313,20 +313,24 @@ class Cuadros_Frontend {
                     // Aplicar paspartú
                     $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
                     
-                    // Aplicar doble marco (va sobre el paspartú)
+                    // Aplicar doble marco (va sobre el paspartú, en el borde interior)
                     if (hayDobleMarco) {
-                        var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
+                        // El doble marco se posiciona en el borde interior del paspartú
+                        // Debe estar a una distancia del borde = grosor del marco principal + grosor del paspartú - grosor del doble marco
+                        var dobleMarcoOffset = bordeMarco + bordePaspartu - bordeDobleMarco;
                         $dobleMarcoLayer.css({
                             'position': 'absolute',
-                            'top': dobleMarcoPos + 'px',
-                            'left': dobleMarcoPos + 'px',
-                            'right': dobleMarcoPos + 'px',
-                            'bottom': dobleMarcoPos + 'px',
+                            'top': dobleMarcoOffset + 'px',
+                            'left': dobleMarcoOffset + 'px',
+                            'right': dobleMarcoOffset + 'px',
+                            'bottom': dobleMarcoOffset + 'px',
                             'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
                             'box-sizing': 'border-box',
                             'pointer-events': 'none',
-                            'z-index': 4
+                            'z-index': 5
                         });
+                        
+                        console.log('[cuadros] Doble marco aplicado - Offset:', dobleMarcoOffset + 'px', 'Grosor:', bordeDobleMarco + 'px', 'Color:', dobleMarcoInfo.color);
                     } else {
                         $dobleMarcoLayer.css({ 'border': 'none' });
                     }
@@ -457,13 +461,13 @@ class Cuadros_Frontend {
                                 
                                 // Agregar doble marco si está habilitado
                                 if (hayDM) {
-                                    var dobleMarcoPos = bM + bP - bDM;
+                                    var dobleMarcoOffset = bM + bP - bDM;
                                     $('<div></div>').css({
                                         position: 'absolute',
-                                        top: dobleMarcoPos + 'px',
-                                        left: dobleMarcoPos + 'px',
-                                        right: dobleMarcoPos + 'px',
-                                        bottom: dobleMarcoPos + 'px',
+                                        top: dobleMarcoOffset + 'px',
+                                        left: dobleMarcoOffset + 'px',
+                                        right: dobleMarcoOffset + 'px',
+                                        bottom: dobleMarcoOffset + 'px',
                                         border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
                                         boxSizing: 'border-box',
                                         pointerEvents: 'none',
