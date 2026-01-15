@@ -325,8 +325,26 @@ class Cuadros_Frontend {
                     // Aplicar paspartú
                     $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
                     
-                    // Deshabilitar doble marco temporalmente
-                    $dobleMarcoLayer.css({ 'border': 'none' });
+                    // Aplicar doble marco (entre paspartú e imagen)
+                    if (hayDobleMarco) {
+                        // El doble marco va justo antes de la imagen
+                        var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
+                        $dobleMarcoLayer.css({
+                            'position': 'absolute',
+                            'top': dobleMarcoPos + 'px',
+                            'left': dobleMarcoPos + 'px',
+                            'right': dobleMarcoPos + 'px',
+                            'bottom': dobleMarcoPos + 'px',
+                            'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
+                            'box-sizing': 'border-box',
+                            'pointer-events': 'none',
+                            'z-index': 4
+                        });
+                        
+                        console.log('[cuadros] Doble marco - Pos:', dobleMarcoPos, 'Grosor:', bordeDobleMarco, 'Color:', dobleMarcoInfo.color);
+                    } else {
+                        $dobleMarcoLayer.css({ 'border': 'none' });
+                    }
                     
                     $imagenLayer.css({ 
                         'top': posY + 'px', 
@@ -452,7 +470,21 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Doble marco deshabilitado temporalmente
+                                // Aplicar doble marco en lightbox
+                                if (hayDM) {
+                                    var dobleMarcoPos = bM + bP - bDM;
+                                    $('<div></div>').css({
+                                        position: 'absolute',
+                                        top: dobleMarcoPos + 'px',
+                                        left: dobleMarcoPos + 'px',
+                                        right: dobleMarcoPos + 'px',
+                                        bottom: dobleMarcoPos + 'px',
+                                        border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
+                                        boxSizing: 'border-box',
+                                        pointerEvents: 'none',
+                                        zIndex: 4
+                                    }).appendTo($container);
+                                }
                                 
                                 $('<div></div>').css({ 
                                     position: 'absolute', 
