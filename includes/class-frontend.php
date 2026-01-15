@@ -333,7 +333,7 @@ class Cuadros_Frontend {
                     // Aplicar marco principal
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     
-                    // Aplicar paspartú (debe tener posicionamiento explícito)
+                    // Aplicar paspartú (capa de fondo completa)
                     if (hayPaspartu) {
                         $paspartuLayer.css({
                             'position': 'absolute',
@@ -348,10 +348,10 @@ class Cuadros_Frontend {
                         $paspartuLayer.css({ 'background-color': 'transparent' });
                     }
                     
-                    // Aplicar doble marco (DESPUÉS del paspartú, justo antes de la imagen)
+                    // Aplicar doble marco (ENTRE paspartú y marco principal)
+                    // Va en el borde INTERIOR del marco principal
                     if (hayDobleMarco) {
-                        // El doble marco va DESPUÉS del marco principal Y del paspartú
-                        var dobleMarcoPos = bordeMarco + bordePaspartu;
+                        var dobleMarcoPos = bordeMarco - bordeDobleMarco;
                         $dobleMarcoLayer.css({
                             'position': 'absolute',
                             'top': dobleMarcoPos + 'px',
@@ -493,9 +493,9 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Aplicar doble marco en lightbox (DESPUÉS del paspartú)
+                                // Aplicar doble marco en lightbox (ENTRE paspartú y marco)
                                 if (hayDM) {
-                                    var dobleMarcoPos = bM + bP;
+                                    var dobleMarcoPos = bM - bDM;
                                     $('<div></div>').css({
                                         position: 'absolute',
                                         top: dobleMarcoPos + 'px',
