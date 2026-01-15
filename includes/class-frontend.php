@@ -478,24 +478,31 @@ class Cuadros_Frontend {
                                 var bT = bM + bP;
                                 
                                 var r = tmp.width / tmp.height;
-                                var imgW, imgH;
                                 
-                                // Calcular tamaño respetando proporción y máximos
-                                if (r >= (maxW / maxH)) {
-                                    imgW = maxW - (bT * 2);
+                                // Calcular espacio disponible para la imagen (restando bordes)
+                                var espacioW = maxW - (bT * 2);
+                                var espacioH = maxH - (bT * 2);
+                                var espacioRatio = espacioW / espacioH;
+                                
+                                // Calcular tamaño de imagen manteniendo proporción (igual que producto)
+                                var imgW, imgH;
+                                if (r >= espacioRatio) {
+                                    imgW = espacioW;
                                     imgH = imgW / r;
                                 } else {
-                                    imgH = maxH - (bT * 2);
+                                    imgH = espacioH;
                                     imgW = imgH * r;
                                 }
                                 
-                                // Redondear
-                                imgW = Math.ceil(imgW);
-                                imgH = Math.ceil(imgH);
-                                
-                                // Tamaño del contenedor
+                                // El contenedor es la imagen + bordes totales
                                 var containerW = imgW + (bT * 2);
                                 var containerH = imgH + (bT * 2);
+                                
+                                // Redondear (igual que producto)
+                                containerW = Math.floor(containerW);
+                                containerH = Math.floor(containerH);
+                                imgW = Math.ceil(imgW);
+                                imgH = Math.ceil(imgH);
                                 
                                 // Calcular posición centrada de la imagen (igual que en vista producto)
                                 var posX = Math.floor((containerW - imgW) / 2);
