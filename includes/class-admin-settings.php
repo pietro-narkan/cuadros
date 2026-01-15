@@ -242,8 +242,14 @@ class Cuadros_Admin_Settings {
     }
     
     public function render_dimensions_section() {
-        echo '<p>' . __('Configura los grosores del marco y paspartú en píxeles para cada orientación de imagen.', 'cuadros') . '</p>';
+        echo '<p>' . __('Configura los grosores del marco, paspartú y doble marco en píxeles para cada orientación de imagen.', 'cuadros') . '</p>';
         echo '<p class="description">' . __('Los grosores se aplicarán automáticamente según la orientación detectada de la imagen del producto.', 'cuadros') . '</p>';
+        echo '<div style="background: #f9f9f9; padding: 15px; margin: 10px 0; border-left: 4px solid #0073aa;">';
+        echo '<strong>Cómo funciona el doble marco:</strong><br>';
+        echo '• El doble marco <strong>ocupa parte del espacio del paspartú</strong>, no va encima<br>';
+        echo '• Si el paspartú es 30px y el doble marco 5px, el paspartú efectivo será 25px + doble marco 5px<br>';
+        echo '• Esto crea una separación visual elegante entre el paspartú y la imagen';
+        echo '</div>';
     }
     
     public function render_grosor_marco_vertical_field() {
@@ -340,7 +346,7 @@ class Cuadros_Admin_Settings {
                min="1" 
                max="20" 
                style="width: 80px;"> px
-        <p class="description"><?php _e('Grosor del marco interior para imágenes verticales. Recomendado: 2-5px', 'cuadros'); ?></p>
+        <p class="description"><?php _e('Grosor del marco interior para imágenes verticales. Este espacio se toma del paspartú. Recomendado: 2-5px', 'cuadros'); ?></p>
         <?php
     }
     
@@ -354,7 +360,7 @@ class Cuadros_Admin_Settings {
                min="1" 
                max="20" 
                style="width: 80px;"> px
-        <p class="description"><?php _e('Grosor del marco interior para imágenes cuadradas (1:1). Recomendado: 3-6px', 'cuadros'); ?></p>
+        <p class="description"><?php _e('Grosor del marco interior para imágenes cuadradas (1:1). Este espacio se toma del paspartú. Recomendado: 3-6px', 'cuadros'); ?></p>
         <?php
     }
     
@@ -368,12 +374,13 @@ class Cuadros_Admin_Settings {
                min="1" 
                max="20" 
                style="width: 80px;"> px
-        <p class="description"><?php _e('Grosor del marco interior para imágenes horizontales. Recomendado: 2-4px', 'cuadros'); ?></p>
+        <p class="description"><?php _e('Grosor del marco interior para imágenes horizontales. Este espacio se toma del paspartú. Recomendado: 2-4px', 'cuadros'); ?></p>
         <?php
     }
     
     public function render_marco_colors_section() {
         echo '<p>' . __('Configura los colores disponibles para los marcos. Los colores se asignan a los términos del atributo "Marco" de WooCommerce.', 'cuadros') . '</p>';
+        echo '<p class="description" style="color: #666;">' . __('Para cada marco puedes habilitar un "doble marco" que ocupará parte del espacio del paspartú, creando un efecto más elegante.', 'cuadros') . '</p>';
     }
     
     public function render_marco_colors_field() {

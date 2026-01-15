@@ -310,28 +310,45 @@ class Cuadros_Frontend {
                     // Aplicar marco principal
                     $marcoLayer.css({ 'border': hayMarco ? bordeMarco + 'px solid ' + marcoColor : 'none' });
                     
-                    // Aplicar paspartú
-                    $paspartuLayer.css({ 'background-color': hayPaspartu ? paspartuColor : 'transparent' });
-                    
-                    // Aplicar doble marco (va sobre el paspartú, en el borde interior)
-                    if (hayDobleMarco) {
-                        // El doble marco se posiciona en el borde interior del paspartú
-                        // Debe estar a una distancia del borde = grosor del marco principal + grosor del paspartú - grosor del doble marco
-                        var dobleMarcoOffset = bordeMarco + bordePaspartu - bordeDobleMarco;
-                        $dobleMarcoLayer.css({
-                            'position': 'absolute',
-                            'top': dobleMarcoOffset + 'px',
-                            'left': dobleMarcoOffset + 'px',
-                            'right': dobleMarcoOffset + 'px',
-                            'bottom': dobleMarcoOffset + 'px',
-                            'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
-                            'box-sizing': 'border-box',
-                            'pointer-events': 'none',
-                            'z-index': 5
-                        });
-                        
-                        console.log('[cuadros] Doble marco aplicado - Offset:', dobleMarcoOffset + 'px', 'Grosor:', bordeDobleMarco + 'px', 'Color:', dobleMarcoInfo.color);
+                    // Aplicar paspartú y doble marco con nueva lógica
+                    if (hayPaspartu) {
+                        if (hayDobleMarco) {
+                            // Si hay doble marco, el paspartú se divide en dos partes
+                            var paspartuEfectivo = bordePaspartu - bordeDobleMarco;
+                            
+                            // Aplicar paspartú reducido
+                            $paspartuLayer.css({
+                                'position': 'absolute',
+                                'top': bordeMarco + 'px',
+                                'left': bordeMarco + 'px',
+                                'right': bordeMarco + 'px',
+                                'bottom': bordeMarco + 'px',
+                                'background-color': paspartuColor,
+                                'z-index': 1
+                            });
+                            
+                            // Aplicar doble marco que ocupa el espacio restante del paspartú
+                            var dobleMarcoInicio = bordeMarco + paspartuEfectivo;
+                            $dobleMarcoLayer.css({
+                                'position': 'absolute',
+                                'top': dobleMarcoInicio + 'px',
+                                'left': dobleMarcoInicio + 'px',
+                                'right': dobleMarcoInicio + 'px',
+                                'bottom': dobleMarcoInicio + 'px',
+                                'border': bordeDobleMarco + 'px solid ' + dobleMarcoInfo.color,
+                                'box-sizing': 'border-box',
+                                'pointer-events': 'none',
+                                'z-index': 3
+                            });
+                            
+                            console.log('[cuadros] Doble marco aplicado - Paspartú efectivo:', paspartuEfectivo + 'px', 'Doble marco inicio:', dobleMarcoInicio + 'px', 'Grosor:', bordeDobleMarco + 'px');
+                        } else {
+                            // Sin doble marco, paspartú normal
+                            $paspartuLayer.css({ 'background-color': paspartuColor });
+                            $dobleMarcoLayer.css({ 'border': 'none' });
+                        }
                     } else {
+                        $paspartuLayer.css({ 'background-color': 'transparent' });
                         $dobleMarcoLayer.css({ 'border': 'none' });
                     }
                     
@@ -459,26 +476,51 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Agregar doble marco si está habilitado
-                                if (hayDM) {
-                                    var dobleMarcoOffset = bM + bP - bDM;
-                                    $('<div></div>').css({
-                                        position: 'absolute',
-                                        top: dobleMarcoOffset + 'px',
-                                        left: dobleMarcoOffset + 'px',
-                                        right: dobleMarcoOffset + 'px',
-                                        bottom: dobleMarcoOffset + 'px',
-                                        border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
-                                        boxSizing: 'border-box',
-                                        pointerEvents: 'none',
-                                        zIndex: 10
-                                    }).appendTo($container);
+                                // Aplicar paspartú y doble marco en lightbox
+                                if (hayP) {
+                                    if (hayDM) {
+                                        // Con doble marco: paspartú reducido + doble marco
+                                        var paspartuEfectivoLb = bP - bDM;
+                                        
+                                        // Crear div para paspartú reducido
+                                        $('<div></div>').css({
+                                            position: 'absolute',
+                                            top: bM + 'px',
+                                            left: bM + 'px',
+                                            right: bM + 'px',
+                                            bottom: bM + 'px',
+                                            backgroundColor: currentPaspartuColor,
+                                            zIndex: 1
+                                        }).appendTo($container);
+                                        
+                                        // Crear doble marco
+                                        var dobleMarcoInicioLb = bM + paspartuEfectivoLb;
+                                        $('<div></div>').css({
+                                            position: 'absolute',
+                                            top: dobleMarcoInicioLb + 'px',
+                                            left: dobleMarcoInicioLb + 'px',
+                                            right: dobleMarcoInicioLb + 'px',
+                                            bottom: dobleMarcoInicioLb + 'px',
+                                            border: bDM + 'px solid ' + currentDobleMarcoInfo.color,
+                                            boxSizing: 'border-box',
+                                            pointerEvents: 'none',
+                                            zIndex: 3
+                                        }).appendTo($container);
+                                        
+                                        // Posición de imagen ajustada
+                                        var imgPosLb = bM + bP;
+                                    } else {
+                                        // Sin doble marco: paspartú normal
+                                        var imgPosLb = bP;
+                                    }
+                                } else {
+                                    var imgPosLb = bM;
                                 }
                                 
                                 $('<div></div>').css({ 
                                     position: 'absolute', 
-                                    top: bP, 
-                                    left: bP, 
+                                    top: imgPosLb, 
+                                    left: imgPosLb, 
                                     width: imgW, 
                                     height: imgH, 
                                     overflow: 'hidden' 
