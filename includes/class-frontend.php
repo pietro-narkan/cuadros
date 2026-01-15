@@ -348,10 +348,10 @@ class Cuadros_Frontend {
                         $paspartuLayer.css({ 'background-color': 'transparent' });
                     }
                     
-                    // Aplicar doble marco (entre paspartú e imagen)
+                    // Aplicar doble marco (DESPUÉS del paspartú, justo antes de la imagen)
                     if (hayDobleMarco) {
-                        // El doble marco va justo antes de la imagen
-                        var dobleMarcoPos = bordeMarco + bordePaspartu - bordeDobleMarco;
+                        // El doble marco va DESPUÉS del marco principal Y del paspartú
+                        var dobleMarcoPos = bordeMarco + bordePaspartu;
                         $dobleMarcoLayer.css({
                             'position': 'absolute',
                             'top': dobleMarcoPos + 'px',
@@ -493,9 +493,9 @@ class Cuadros_Frontend {
                                     position: 'relative'
                                 });
                                 
-                                // Aplicar doble marco en lightbox
+                                // Aplicar doble marco en lightbox (DESPUÉS del paspartú)
                                 if (hayDM) {
-                                    var dobleMarcoPos = bM + bP - bDM;
+                                    var dobleMarcoPos = bM + bP;
                                     $('<div></div>').css({
                                         position: 'absolute',
                                         top: dobleMarcoPos + 'px',
