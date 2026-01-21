@@ -178,7 +178,7 @@ class Cuadros_Frontend {
                     
                     var slug = val.toLowerCase();
                     
-                    // Buscar si está habilitado el doble marco para este slug
+                    // Solo buscar coincidencia EXACTA por slug (sin búsqueda parcial)
                     var enabled = false;
                     var color = null;
                     var grosor = null;
@@ -187,18 +187,6 @@ class Cuadros_Frontend {
                         enabled = true;
                         color = dobleMarcoColors[slug] || '#8B4513';
                         grosor = dobleMarcoGrosores[slug] || null; // null significa usar grosor por orientación
-                    }
-                    
-                    // Buscar coincidencia parcial si no se encontró directa
-                    if (!enabled) {
-                        for (var k in dobleMarcoEnabled) {
-                            if ((k.includes(slug) || slug.includes(k)) && dobleMarcoEnabled[k]) {
-                                enabled = true;
-                                color = dobleMarcoColors[k] || '#8B4513';
-                                grosor = dobleMarcoGrosores[k] || null;
-                                break;
-                            }
-                        }
                     }
                     
                     return { enabled: enabled, color: color, grosor: grosor };
