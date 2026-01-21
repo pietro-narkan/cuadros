@@ -453,10 +453,10 @@ class Cuadros_Frontend {
                         
                         var src = galleryImages[i] ? galleryImages[i].src : '';
                         
-                        // Mostrar marco/paspartú/doble marco en TODAS las imágenes
-                        var hayM = currentMarcoColor;
-                        var hayP = currentPaspartuColor;
-                        var hayDM = currentDobleMarcoInfo.enabled && hayM;
+                        // Solo mostrar marco/paspartú/doble marco en la PRIMERA imagen del lightbox
+                        var hayM = (i === 0) && currentMarcoColor;
+                        var hayP = (i === 0) && currentPaspartuColor;
+                        var hayDM = (i === 0) && currentDobleMarcoInfo.enabled && hayM;
                         
                         // Tamaño máximo - 80% para mobile
                         var maxW = window.innerWidth * 0.8;
