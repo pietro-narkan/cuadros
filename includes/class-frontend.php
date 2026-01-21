@@ -85,6 +85,16 @@ class Cuadros_Frontend {
             setTimeout(inicializarCuadros, 500);
             
             function inicializarCuadros() {
+                // Verificar si el producto tiene los atributos de cuadros
+                var $marcoSelect = $('#pa_marco');
+                var $paspartuSelect = $('#pa_paspartu');
+                
+                // Si no existe ninguno de los dos atributos, no activar el plugin
+                if ($marcoSelect.length === 0 && $paspartuSelect.length === 0) {
+                    console.log('[cuadros] Producto sin atributos de cuadros - plugin no activado');
+                    return;
+                }
+                
                 var $galleryImage = $('.woocommerce-product-gallery__image').first();
                 var $productImage = $galleryImage.find('img').first();
                 
@@ -443,10 +453,10 @@ class Cuadros_Frontend {
                         
                         var src = galleryImages[i] ? galleryImages[i].src : '';
                         
-                        // Solo mostrar marco/paspartú en la PRIMERA imagen
-                        var hayM = (i === 0) && currentMarcoColor;
-                        var hayP = (i === 0) && currentPaspartuColor;
-                        var hayDM = (i === 0) && currentDobleMarcoInfo.enabled && hayM;
+                        // Mostrar marco/paspartú/doble marco en TODAS las imágenes
+                        var hayM = currentMarcoColor;
+                        var hayP = currentPaspartuColor;
+                        var hayDM = currentDobleMarcoInfo.enabled && hayM;
                         
                         // Tamaño máximo - 80% para mobile
                         var maxW = window.innerWidth * 0.8;
@@ -600,6 +610,7 @@ class Cuadros_Frontend {
                 }
                 
                 $fondoWrapper.on('click', function(e) {
+                    // Solo activar lightbox si hay marco o paspartú seleccionado
                     if (currentMarcoColor || currentPaspartuColor) {
                         e.preventDefault();
                         e.stopPropagation();
