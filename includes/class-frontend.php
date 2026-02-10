@@ -273,10 +273,11 @@ class Cuadros_Frontend {
                     var marcoSeleccionado = tieneSeleccion($marcoSelect);
                     var tamanoActual = $tamanoSelect.length ? String($tamanoSelect.val() || '').trim() : '';
                     var tamanoCambio = tamanoActual !== ultimoTamanoSeleccionado;
+                    var tamanoCambioReal = tamanoCambio && tamanoSeleccionado && String(ultimoTamanoSeleccionado || '').trim() !== '';
                     var paspartuAutoSin = false;
                     var $selectRecalculo = null;
 
-                    if (tamanoCambio && tamanoSeleccionado) {
+                    if (tamanoCambioReal) {
                         var valorSinPaspartu = obtenerValorSinPaspartu($paspartuSelect);
 
                         if (valorSinPaspartu) {
@@ -310,7 +311,7 @@ class Cuadros_Frontend {
                         bloquearSelect($paspartuSelect, false);
 
                         bloquearSelect($marcoSelect, true, 'Selecciona primero un paspartú');
-                        if (tamanoCambio) {
+                        if (tamanoCambioReal) {
                             setAvisoOrden('<strong>Tamaño actualizado:</strong> no se encontró "Sin paspartú". Elige un paspartú para continuar.', false);
                         } else {
                             setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
@@ -319,7 +320,7 @@ class Cuadros_Frontend {
                         bloquearSelect($paspartuSelect, false);
                         bloquearSelect($marcoSelect, false);
 
-                        if (tamanoCambio && paspartuAutoSin) {
+                        if (tamanoCambioReal && paspartuAutoSin) {
                             if (marcoSeleccionado) {
                                 setAvisoOrden('<strong>Tamaño actualizado:</strong> paspartú en "Sin paspartú" y tu marco se mantiene seleccionado.', true);
                             } else {
