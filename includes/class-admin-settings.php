@@ -3,6 +3,11 @@
  * Clase para el panel de administración del plugin Cuadros
  */
 class Cuadros_Admin_Settings {
+
+    private function is_sin_marco_slug($slug) {
+        $normalized = str_replace('_', '-', sanitize_title($slug));
+        return 'sin-marco' === $normalized;
+    }
     
     public function __construct() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -167,6 +172,24 @@ class Cuadros_Admin_Settings {
             } else {
                 $sanitized['doble_marco_grosores'] = $old_doble_grosores;
             }
+
+            // Forzar que "sin-marco" nunca tenga doble marco activo
+            if (!isset($sanitized['doble_marco_enabled']) || !is_array($sanitized['doble_marco_enabled'])) {
+                $sanitized['doble_marco_enabled'] = array();
+            }
+
+            $all_marco_keys = array_unique(array_merge(
+                array_keys(isset($sanitized['marco_colors']) && is_array($sanitized['marco_colors']) ? $sanitized['marco_colors'] : array()),
+                array_keys($sanitized['doble_marco_enabled']),
+                array_keys(isset($sanitized['doble_marco_colors']) && is_array($sanitized['doble_marco_colors']) ? $sanitized['doble_marco_colors'] : array()),
+                array_keys(isset($sanitized['doble_marco_grosores']) && is_array($sanitized['doble_marco_grosores']) ? $sanitized['doble_marco_grosores'] : array())
+            ));
+
+            foreach ($all_marco_keys as $marco_key) {
+                if ($this->is_sin_marco_slug($marco_key)) {
+                    $sanitized['doble_marco_enabled'][$marco_key] = false;
+                }
+            }
             
             // Sanitizar colores de paspartú - preservar colores existentes si no se envían nuevos
             $old_paspartu_colors = isset($old_value['paspartu_colors']) ? $old_value['paspartu_colors'] : array();
@@ -310,13 +333,28 @@ class Cuadros_Admin_Settings {
                             models.forEach(function(model) {
                                 var slug = model.slug || model.name.toLowerCase().replace(/\s+/g, '_');
                                 var name = model.name || model;
+                                var slugNormalizado = String(slug).toLowerCase().replace(/_/g, '-');
+                                var esSinMarco = slugNormalizado === 'sin-marco';
                                 var savedValue = savedColors[slug] || '#000000';
-                                var dobleEnabled = dobleMarcoEnabled[slug] || false;
+                                var dobleEnabled = esSinMarco ? false : (dobleMarcoEnabled[slug] || false);
                                 var dobleColor = dobleMarcoColors[slug] || '#8B4513';
                                 var dobleGrosor = dobleMarcoGrosores[slug] || 5;
                                 
                                 html += '<tr style="border-bottom: 1px solid #ddd;">';
                                 html += '<td style="padding: 15px; width: 25%; vertical-align: top;"><strong>' + name + '</strong><br><small style="color:#888;">slug: ' + slug + '</small></td>';
+                                if (esSinMarco) {
+                                    html += '<td style="padding: 15px; width: 30%; vertical-align: top;">';
+                                    html += '<label style="display: block; margin-bottom: 8px; font-weight: bold;">Color principal (ignorado):</label>';
+                                    html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[marco_colors][' + slug + ']" value="' + savedValue + '" disabled="disabled">';
+                                    html += '<p style="font-size: 12px; color: #666; margin: 6px 0 0;"><strong>Sin marco:</strong> este color se ignora en frontend.</p>';
+                                    html += '</td>';
+                                    html += '<td style="padding: 15px; width: 45%; vertical-align: top;">';
+                                    html += '<p style="margin: 0; color: #666;"><strong>Doble marco no aplica</strong> para este slug.</p>';
+                                    html += '</td>';
+                                    html += '</tr>';
+                                    return;
+                                }
+
                                 html += '<td style="padding: 15px; width: 30%; vertical-align: top;">';
                                 html += '<label style="display: block; margin-bottom: 8px; font-weight: bold;">Color Principal:</label>';
                                 html += '<input type="text" class="cuadros-color-picker" name="cuadros_settings[marco_colors][' + slug + ']" value="' + savedValue + '">';
@@ -340,7 +378,7 @@ class Cuadros_Admin_Settings {
                             
                             html += '</table>';
                             $('#cuadros-marco-colors').html(html);
-                            $('#cuadros-marco-colors .cuadros-color-picker').wpColorPicker();
+                            $('#cuadros-marco-colors .cuadros-color-picker:not(:disabled)').wpColorPicker();
                             $('#cuadros-marco-colors .cuadros-color-picker-doble').wpColorPicker();
                             
                             // Manejar cambios en los checkboxes

@@ -80,14 +80,35 @@ class Cuadros_Frontend {
             };
             
             var FACTOR_ESCALA = 0.85;
+
+            function obtenerSelectTamano() {
+                var $tamano = $('#pa_tamano');
+                if ($tamano.length) return $tamano.first();
+
+                $tamano = $('select[name="attribute_pa_tamano"]');
+                if ($tamano.length) return $tamano.first();
+
+                $tamano = $('#tamano');
+                if ($tamano.length) return $tamano.first();
+
+                $tamano = $('select[name="attribute_tamano"]');
+                if ($tamano.length) return $tamano.first();
+
+                return $();
+            }
             
             // Esperar un momento para que WooCommerce inicialice la galería
             setTimeout(inicializarCuadros, 500);
             
             function inicializarCuadros() {
                 // Verificar si el producto tiene los atributos de cuadros
+                var $tamanoSelect = obtenerSelectTamano();
                 var $marcoSelect = $('#pa_marco');
                 var $paspartuSelect = $('#pa_paspartu');
+                var $variationsForm = $('form.variations_form').first();
+                var flujoSecuencialActivo = $tamanoSelect.length > 0 && $paspartuSelect.length > 0 && $marcoSelect.length > 0;
+                var $avisoOrden = $();
+                var aplicandoOrden = false;
                 
                 // Si no existe ninguno de los dos atributos, no activar el plugin
                 if ($marcoSelect.length === 0 && $paspartuSelect.length === 0) {
@@ -151,6 +172,124 @@ class Cuadros_Frontend {
                     'max-width': originalWidth + 'px',
                     'max-height': originalHeight + 'px'
                 });
+
+                function inicializarAvisoOrden() {
+                    if (!flujoSecuencialActivo || !$variationsForm.length) {
+                        return;
+                    }
+
+                    $avisoOrden = $('#cuadros-selection-order-notice');
+                    if ($avisoOrden.length === 0) {
+                        $avisoOrden = $('<div id="cuadros-selection-order-notice" class="cuadros-selection-order-notice"></div>');
+                        var $target = $variationsForm.find('table.variations').first();
+                        if ($target.length) {
+                            $target.before($avisoOrden);
+                        } else {
+                            $variationsForm.prepend($avisoOrden);
+                        }
+                    }
+                }
+
+                function setAvisoOrden(mensaje, completado) {
+                    if (!$avisoOrden.length) {
+                        return;
+                    }
+
+                    $avisoOrden
+                        .removeClass('cuadros-notice-step cuadros-notice-ready')
+                        .addClass(completado ? 'cuadros-notice-ready' : 'cuadros-notice-step')
+                        .html(mensaje);
+                }
+
+                function tieneSeleccion($select) {
+                    if (!$select.length) return false;
+                    var val = $select.val();
+                    return !!(val && String(val).trim() !== '');
+                }
+
+                function bloquearSelect($select, bloquear, tooltip) {
+                    if (!$select.length) return;
+
+                    $select.prop('disabled', bloquear);
+                    $select.toggleClass('cuadros-select-bloqueado', bloquear);
+
+                    if (bloquear && tooltip) {
+                        $select.attr('title', tooltip);
+                    } else {
+                        $select.removeAttr('title');
+                    }
+                }
+
+                function limpiarSelect($select) {
+                    if (!$select.length || !tieneSeleccion($select)) {
+                        return false;
+                    }
+
+                    $select.val('');
+                    return true;
+                }
+
+                function aplicarFlujoSeleccion(saltarRecalculo) {
+                    if (!flujoSecuencialActivo || aplicandoOrden) {
+                        return;
+                    }
+
+                    aplicandoOrden = true;
+
+                    var tamanoSeleccionado = tieneSeleccion($tamanoSelect);
+                    var paspartuSeleccionado = tieneSeleccion($paspartuSelect);
+                    var marcoSeleccionado = tieneSeleccion($marcoSelect);
+                    var $selectRecalculo = null;
+
+                    if (!tamanoSeleccionado) {
+                        if (limpiarSelect($paspartuSelect)) {
+                            $selectRecalculo = $paspartuSelect;
+                        }
+
+                        if (limpiarSelect($marcoSelect) && !$selectRecalculo) {
+                            $selectRecalculo = $marcoSelect;
+                        }
+
+                        bloquearSelect($paspartuSelect, true, 'Selecciona primero un tamaño');
+                        bloquearSelect($marcoSelect, true, 'Selecciona primero tamaño y paspartú');
+                        setAvisoOrden('<strong>Paso 1 de 3:</strong> selecciona primero el tamaño.', false);
+                    } else if (!paspartuSeleccionado) {
+                        bloquearSelect($paspartuSelect, false);
+
+                        if (limpiarSelect($marcoSelect)) {
+                            $selectRecalculo = $marcoSelect;
+                            marcoSeleccionado = false;
+                        }
+
+                        bloquearSelect($marcoSelect, true, 'Selecciona primero un paspartú');
+                        setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
+                    } else {
+                        bloquearSelect($paspartuSelect, false);
+                        bloquearSelect($marcoSelect, false);
+
+                        if (marcoSeleccionado) {
+                            setAvisoOrden('<strong>Configuración completa:</strong> tamaño, paspartú y marco seleccionados.', true);
+                        } else {
+                            setAvisoOrden('<strong>Paso 3 de 3:</strong> ahora puedes elegir el marco.', true);
+                        }
+                    }
+
+                    aplicandoOrden = false;
+
+                    if ($selectRecalculo && !saltarRecalculo) {
+                        setTimeout(function() {
+                            $selectRecalculo.trigger('change');
+                        }, 0);
+                    }
+                }
+
+                inicializarAvisoOrden();
+
+                if (flujoSecuencialActivo) {
+                    console.log('[cuadros] Flujo secuencial activo: tamaño -> paspartú -> marco');
+                } else {
+                    console.log('[cuadros] Flujo secuencial inactivo: faltan atributos requeridos (tamano/paspartu/marco)');
+                }
                 
                 function esSlugSinMarco(val) {
                     if (!val) return false;
@@ -389,13 +528,22 @@ class Cuadros_Frontend {
                         'height': imgH + 'px' 
                     });
                 }
+
+                function actualizarTodo() {
+                    aplicarFlujoSeleccion();
+                    actualizar();
+                    actualizarLightboxState();
+                }
                 
                 // Eventos
-                $('form.variations_form').on('change', 'select', function() { setTimeout(actualizar, 100); });
-                $(document).on('woocommerce_variation_has_changed', function() { setTimeout(actualizar, 100); });
-                $('.reset_variations').on('click', function() { setTimeout(actualizar, 100); });
+                if ($variationsForm.length) {
+                    $variationsForm.on('change', 'select', function() { setTimeout(actualizarTodo, 120); });
+                }
+                $(document).on('woocommerce_variation_has_changed', function() { setTimeout(actualizarTodo, 120); });
+                $('.reset_variations').on('click', function() { setTimeout(actualizarTodo, 120); });
                 
                 // Ejecutar
+                aplicarFlujoSeleccion(true);
                 actualizar();
                 
                 // ===== LIGHTBOX =====
@@ -621,7 +769,6 @@ class Cuadros_Frontend {
                     }
                 });
                 
-                $('form.variations_form').on('change', 'select', function() { setTimeout(actualizarLightboxState, 150); });
                 actualizarLightboxState();
             }
         });

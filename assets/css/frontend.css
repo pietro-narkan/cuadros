@@ -57,3 +57,24 @@
     height: 100%;
     object-fit: fill;
 }
+
+.cuadros-selection-order-notice {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-left: 4px solid #dba617;
+    background: #fff8e5;
+    color: #1d2327;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.cuadros-selection-order-notice.cuadros-notice-ready {
+    border-left-color: #00a32a;
+    background: #edfaef;
+}
+
+form.variations_form select.cuadros-select-bloqueado {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background-color: #f6f7f7;
+}
