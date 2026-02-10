@@ -152,11 +152,22 @@ class Cuadros_Frontend {
                     'max-height': originalHeight + 'px'
                 });
                 
+                function esSlugSinMarco(val) {
+                    if (!val) return false;
+                    var slugNormalizado = String(val).toLowerCase().trim().replace(/_/g, '-');
+                    return slugNormalizado === 'sin-marco';
+                }
+
                 function buscarColorMarco(val) {
                     if (!val) return null;
                     
                     // El valor del select ya es el slug
                     var slug = val.toLowerCase();
+
+                    // Caso especial: si el slug es "sin-marco", no se debe dibujar borde
+                    if (esSlugSinMarco(slug)) {
+                        return null;
+                    }
                     
                     // Buscar coincidencia directa por slug
                     if (coloresMarco[slug]) {
@@ -177,6 +188,10 @@ class Cuadros_Frontend {
                     if (!val) return { enabled: false, color: null, grosor: null };
                     
                     var slug = val.toLowerCase();
+
+                    if (esSlugSinMarco(slug)) {
+                        return { enabled: false, color: null, grosor: null };
+                    }
                     
                     // Solo buscar coincidencia EXACTA por slug (sin búsqueda parcial)
                     var enabled = false;
