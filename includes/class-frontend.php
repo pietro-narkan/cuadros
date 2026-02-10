@@ -109,6 +109,7 @@ class Cuadros_Frontend {
                 var flujoSecuencialActivo = $tamanoSelect.length > 0 && $paspartuSelect.length > 0 && $marcoSelect.length > 0;
                 var $avisoOrden = $();
                 var aplicandoOrden = false;
+                var ultimoTamanoSeleccionado = $tamanoSelect.length ? String($tamanoSelect.val() || '').trim() : '';
                 
                 // Si no existe ninguno de los dos atributos, no activar el plugin
                 if ($marcoSelect.length === 0 && $paspartuSelect.length === 0) {
@@ -239,7 +240,22 @@ class Cuadros_Frontend {
                     var tamanoSeleccionado = tieneSeleccion($tamanoSelect);
                     var paspartuSeleccionado = tieneSeleccion($paspartuSelect);
                     var marcoSeleccionado = tieneSeleccion($marcoSelect);
+                    var tamanoActual = $tamanoSelect.length ? String($tamanoSelect.val() || '').trim() : '';
+                    var tamanoCambio = tamanoActual !== ultimoTamanoSeleccionado;
                     var $selectRecalculo = null;
+
+                    if (tamanoCambio && tamanoSeleccionado) {
+                        if (limpiarSelect($paspartuSelect)) {
+                            $selectRecalculo = $paspartuSelect;
+                        }
+
+                        if (limpiarSelect($marcoSelect) && !$selectRecalculo) {
+                            $selectRecalculo = $marcoSelect;
+                        }
+
+                        paspartuSeleccionado = false;
+                        marcoSeleccionado = false;
+                    }
 
                     if (!tamanoSeleccionado) {
                         if (limpiarSelect($paspartuSelect)) {
@@ -262,7 +278,11 @@ class Cuadros_Frontend {
                         }
 
                         bloquearSelect($marcoSelect, true, 'Selecciona primero un paspartú');
-                        setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
+                        if (tamanoCambio) {
+                            setAvisoOrden('<strong>Tamaño actualizado:</strong> vuelve a elegir el paspartú para continuar.', false);
+                        } else {
+                            setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
+                        }
                     } else {
                         bloquearSelect($paspartuSelect, false);
                         bloquearSelect($marcoSelect, false);
@@ -273,6 +293,8 @@ class Cuadros_Frontend {
                             setAvisoOrden('<strong>Paso 3 de 3:</strong> ahora puedes elegir el marco.', true);
                         }
                     }
+
+                    ultimoTamanoSeleccionado = tamanoActual;
 
                     aplicandoOrden = false;
 
