@@ -249,12 +249,7 @@ class Cuadros_Frontend {
                             $selectRecalculo = $paspartuSelect;
                         }
 
-                        if (limpiarSelect($marcoSelect) && !$selectRecalculo) {
-                            $selectRecalculo = $marcoSelect;
-                        }
-
                         paspartuSeleccionado = false;
-                        marcoSeleccionado = false;
                     }
 
                     if (!tamanoSeleccionado) {
@@ -272,14 +267,13 @@ class Cuadros_Frontend {
                     } else if (!paspartuSeleccionado) {
                         bloquearSelect($paspartuSelect, false);
 
-                        if (limpiarSelect($marcoSelect)) {
-                            $selectRecalculo = $marcoSelect;
-                            marcoSeleccionado = false;
-                        }
-
                         bloquearSelect($marcoSelect, true, 'Selecciona primero un paspartú');
                         if (tamanoCambio) {
-                            setAvisoOrden('<strong>Tamaño actualizado:</strong> vuelve a elegir el paspartú para continuar.', false);
+                            if (marcoSeleccionado) {
+                                setAvisoOrden('<strong>Tamaño actualizado:</strong> vuelve a elegir el paspartú. Tu marco se mantiene seleccionado.', false);
+                            } else {
+                                setAvisoOrden('<strong>Tamaño actualizado:</strong> vuelve a elegir el paspartú para continuar.', false);
+                            }
                         } else {
                             setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
                         }
