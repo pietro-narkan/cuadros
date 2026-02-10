@@ -230,6 +230,37 @@ class Cuadros_Frontend {
                     return true;
                 }
 
+                function normalizarSlug(valor) {
+                    return String(valor || '').toLowerCase().trim().replace(/_/g, '-');
+                }
+
+                function esValorSinPaspartu(valor) {
+                    var slug = normalizarSlug(valor);
+                    if (!slug) return false;
+
+                    return slug === 'sin-paspartu' ||
+                        slug.indexOf('sin-paspartu') === 0 ||
+                        slug === 'sin-paspartu-color' ||
+                        slug === 'ninguno' ||
+                        slug === 'none' ||
+                        slug === 'no';
+                }
+
+                function obtenerValorSinPaspartu($select) {
+                    if (!$select.length) return '';
+
+                    var valor = '';
+                    $select.find('option').each(function() {
+                        var candidato = $(this).val();
+                        if (esValorSinPaspartu(candidato)) {
+                            valor = candidato;
+                            return false;
+                        }
+                    });
+
+                    return valor;
+                }
+
                 function aplicarFlujoSeleccion(saltarRecalculo) {
                     if (!flujoSecuencialActivo || aplicandoOrden) {
                         return;
@@ -242,14 +273,25 @@ class Cuadros_Frontend {
                     var marcoSeleccionado = tieneSeleccion($marcoSelect);
                     var tamanoActual = $tamanoSelect.length ? String($tamanoSelect.val() || '').trim() : '';
                     var tamanoCambio = tamanoActual !== ultimoTamanoSeleccionado;
+                    var paspartuAutoSin = false;
                     var $selectRecalculo = null;
 
                     if (tamanoCambio && tamanoSeleccionado) {
-                        if (limpiarSelect($paspartuSelect)) {
-                            $selectRecalculo = $paspartuSelect;
-                        }
+                        var valorSinPaspartu = obtenerValorSinPaspartu($paspartuSelect);
 
-                        paspartuSeleccionado = false;
+                        if (valorSinPaspartu) {
+                            if (String($paspartuSelect.val() || '') !== String(valorSinPaspartu)) {
+                                $paspartuSelect.val(valorSinPaspartu);
+                                $selectRecalculo = $paspartuSelect;
+                            }
+                            paspartuSeleccionado = true;
+                            paspartuAutoSin = true;
+                        } else {
+                            if (limpiarSelect($paspartuSelect)) {
+                                $selectRecalculo = $paspartuSelect;
+                            }
+                            paspartuSeleccionado = false;
+                        }
                     }
 
                     if (!tamanoSeleccionado) {
@@ -269,11 +311,7 @@ class Cuadros_Frontend {
 
                         bloquearSelect($marcoSelect, true, 'Selecciona primero un paspartú');
                         if (tamanoCambio) {
-                            if (marcoSeleccionado) {
-                                setAvisoOrden('<strong>Tamaño actualizado:</strong> vuelve a elegir el paspartú. Tu marco se mantiene seleccionado.', false);
-                            } else {
-                                setAvisoOrden('<strong>Tamaño actualizado:</strong> vuelve a elegir el paspartú para continuar.', false);
-                            }
+                            setAvisoOrden('<strong>Tamaño actualizado:</strong> no se encontró "Sin paspartú". Elige un paspartú para continuar.', false);
                         } else {
                             setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
                         }
@@ -281,10 +319,18 @@ class Cuadros_Frontend {
                         bloquearSelect($paspartuSelect, false);
                         bloquearSelect($marcoSelect, false);
 
-                        if (marcoSeleccionado) {
-                            setAvisoOrden('<strong>Configuración completa:</strong> tamaño, paspartú y marco seleccionados.', true);
+                        if (tamanoCambio && paspartuAutoSin) {
+                            if (marcoSeleccionado) {
+                                setAvisoOrden('<strong>Tamaño actualizado:</strong> paspartú en "Sin paspartú" y tu marco se mantiene seleccionado.', true);
+                            } else {
+                                setAvisoOrden('<strong>Tamaño actualizado:</strong> paspartú en "Sin paspartú". Ahora puedes elegir el marco.', true);
+                            }
                         } else {
-                            setAvisoOrden('<strong>Paso 3 de 3:</strong> ahora puedes elegir el marco.', true);
+                            if (marcoSeleccionado) {
+                                setAvisoOrden('<strong>Configuración completa:</strong> tamaño, paspartú y marco seleccionados.', true);
+                            } else {
+                                setAvisoOrden('<strong>Paso 3 de 3:</strong> ahora puedes elegir el marco.', true);
+                            }
                         }
                     }
 
