@@ -76,6 +76,7 @@
 .cuadros-steps-inline {
     display: flex;
     align-items: stretch;
+    justify-content: flex-start;
     gap: 10px;
     flex-wrap: nowrap;
     width: 100%;
@@ -93,8 +94,8 @@
     background: #ffffff;
     color: #50575e;
     white-space: normal;
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 0 1 430px;
+    min-width: 220px;
     max-width: 100%;
     box-sizing: border-box;
 }
@@ -138,6 +139,8 @@
     }
 
     .cuadros-step-item {
+        flex: 1 1 auto;
+        min-width: 0;
         padding: 7px;
     }
 
