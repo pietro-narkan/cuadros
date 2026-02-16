@@ -209,14 +209,10 @@ class Cuadros_Frontend {
 
                 function construirAvisoPasos() {
                     var paso1 = escaparHtml(obtenerTextoPaso('paso1', 'Selecciona primero el tamaño.'));
-                    var paso2 = escaparHtml(obtenerTextoPaso('paso2', 'Selecciona el paspartú para desbloquear el marco.'));
-                    var paso3 = escaparHtml(obtenerTextoPaso('paso3', 'Ahora puedes elegir el marco.'));
 
                     return '' +
                         '<div class="cuadros-steps-inline" role="list">' +
-                            '<div class="cuadros-step-item" data-step="1" role="listitem"><span class="cuadros-step-title">Paso 1</span><span class="cuadros-step-text">' + paso1 + '</span></div>' +
-                            '<div class="cuadros-step-item" data-step="2" role="listitem"><span class="cuadros-step-title">Paso 2</span><span class="cuadros-step-text">' + paso2 + '</span></div>' +
-                            '<div class="cuadros-step-item" data-step="3" role="listitem"><span class="cuadros-step-title">Paso 3</span><span class="cuadros-step-text">' + paso3 + '</span></div>' +
+                            '<div class="cuadros-step-item is-active" data-step="1" role="listitem"><span class="cuadros-step-text">' + paso1 + '</span></div>' +
                         '</div>' +
                         '<div class="cuadros-step-status" aria-live="polite"></div>';
                 }
@@ -247,27 +243,32 @@ class Cuadros_Frontend {
                         return;
                     }
 
-                    var pasoActivo = 0;
+                    var pasoActivo = 1;
+                    var textoPaso = obtenerTextoPaso('paso1', 'Selecciona primero el tamaño.');
+
                     if (!tamanoSeleccionado) {
                         pasoActivo = 1;
                     } else if (!paspartuSeleccionado) {
                         pasoActivo = 2;
+                        textoPaso = obtenerTextoPaso('paso2', 'Selecciona el paspartú para desbloquear el marco.');
                     } else if (!marcoSeleccionado) {
                         pasoActivo = 3;
+                        textoPaso = obtenerTextoPaso('paso3', 'Ahora puedes elegir el marco.');
+                    } else {
+                        pasoActivo = 3;
+                        textoPaso = obtenerTextoPaso('paso3', 'Ahora puedes elegir el marco.');
                     }
 
-                    $avisoOrden.find('.cuadros-step-item').each(function() {
-                        var $paso = $(this);
-                        var numeroPaso = parseInt($paso.attr('data-step'), 10);
-                        var completado = (numeroPaso === 1 && tamanoSeleccionado) ||
-                            (numeroPaso === 2 && tamanoSeleccionado && paspartuSeleccionado) ||
-                            (numeroPaso === 3 && tamanoSeleccionado && paspartuSeleccionado && marcoSeleccionado);
-
+                    var $paso = $avisoOrden.find('.cuadros-step-item').first();
+                    if ($paso.length) {
                         $paso
+                            .attr('data-step', pasoActivo)
                             .removeClass('is-active is-completed')
-                            .toggleClass('is-completed', completado)
-                            .toggleClass('is-active', !completado && numeroPaso === pasoActivo);
-                    });
+                            .toggleClass('is-completed', tamanoSeleccionado && paspartuSeleccionado && marcoSeleccionado)
+                            .toggleClass('is-active', !(tamanoSeleccionado && paspartuSeleccionado && marcoSeleccionado));
+
+                        $paso.find('.cuadros-step-text').text(textoPaso);
+                    }
 
                     var textoEstado = String(mensajeEstado || '').trim();
                     var $estado = $avisoOrden.find('.cuadros-step-status');

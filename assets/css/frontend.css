@@ -86,7 +86,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 3px;
+    gap: 0;
     padding: 8px 10px;
     border: 1px solid #c3c4c7;
     border-radius: 8px;
@@ -97,13 +97,6 @@
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
-}
-
-.cuadros-step-title {
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #1d2327;
 }
 
 .cuadros-step-text {
@@ -119,18 +112,10 @@
     color: #1d2327;
 }
 
-.cuadros-step-item.is-active .cuadros-step-title {
-    color: #8a5500;
-}
-
 .cuadros-step-item.is-completed {
     border-color: #00a32a;
     background: #edfaef;
     color: #14532d;
-}
-
-.cuadros-step-item.is-completed .cuadros-step-title {
-    color: #166534;
 }
 
 .cuadros-step-status {
@@ -154,10 +139,6 @@
 
     .cuadros-step-item {
         padding: 7px;
-    }
-
-    .cuadros-step-title {
-        font-size: 10px;
     }
 
     .cuadros-step-text {

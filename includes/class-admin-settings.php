@@ -305,7 +305,7 @@ class Cuadros_Admin_Settings {
                     style="width: 100%; max-width: 720px;"
                 >
             </div>
-            <p class="description" style="margin: 0;">Estos textos se muestran siempre en línea en el frontend, de Paso 1 a Paso 3.</p>
+            <p class="description" style="margin: 0;">En frontend se muestra un solo paso a la vez, cambiando automáticamente según la selección del usuario.</p>
         </div>
         <?php
     }
