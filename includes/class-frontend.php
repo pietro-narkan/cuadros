@@ -412,18 +412,12 @@ class Cuadros_Frontend {
                         bloquearSelect($paspartuSelect, false);
                         bloquearSelect($marcoSelect, false);
 
-                        if (tamanoCambioReal && paspartuAutoSin) {
-                            if (marcoSeleccionado) {
-                                mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú" y tu marco se mantiene seleccionado.';
-                            } else {
-                                mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú". Ahora puedes elegir el marco.';
-                            }
+                        if (marcoSeleccionado) {
+                            mensajeEstado = 'cofiguracion completa';
                             estadoTipo = 'success';
-                        } else {
-                            if (marcoSeleccionado) {
-                                mensajeEstado = 'Configuración completa: tamaño, paspartú y marco seleccionados.';
-                                estadoTipo = 'success';
-                            }
+                        } else if (tamanoCambioReal && paspartuAutoSin) {
+                            mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú". Ahora puedes elegir el marco.';
+                            estadoTipo = 'success';
                         }
                     }
 

@@ -68,7 +68,8 @@
     font-size: 13px;
     line-height: 1.4;
     box-sizing: border-box;
-    width: 100%;
+    display: inline-block;
+    width: auto;
     max-width: 100%;
     overflow: hidden;
 }
@@ -79,7 +80,7 @@
     justify-content: flex-start;
     gap: 10px;
     flex-wrap: nowrap;
-    width: 100%;
+    width: auto;
     max-width: 100%;
 }
 
@@ -134,8 +135,14 @@
 }
 
 @media (max-width: 680px) {
+    .cuadros-selection-order-notice {
+        display: block;
+        width: 100%;
+    }
+
     .cuadros-steps-inline {
         gap: 6px;
+        width: 100%;
     }
 
     .cuadros-step-item {
