@@ -3,7 +3,7 @@
  * Plugin Name: Cuadros - Visualizador de Marcos y Paspartús
  * Plugin URI: https://ejemplo.com/cuadros
  * Description: Plugin para visualizar dinámicamente marcos y paspartús sobre imágenes de productos WooCommerce.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Tu Nombre
  * License: GPL v2 or later
  * Text Domain: cuadros
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('CUADROS_VERSION', '1.2.0');
+define('CUADROS_VERSION', '1.2.1');
 define('CUADROS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CUADROS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('CUADROS_ASSETS_URL', CUADROS_PLUGIN_URL . 'assets/');
@@ -95,6 +95,9 @@ function cuadros_activate() {
         'grosor_doble_marco_vertical' => 3,
         'grosor_doble_marco_cuadrado' => 4,
         'grosor_doble_marco_horizontal' => 2,
+        'flujo_paso_1' => 'Selecciona primero el tamaño.',
+        'flujo_paso_2' => 'Selecciona el paspartú para desbloquear el marco.',
+        'flujo_paso_3' => 'Ahora puedes elegir el marco.',
         'paspartu_colors' => array(
             'blanco' => '#ffffff',
             'negro' => '#222222',
@@ -149,7 +152,20 @@ function cuadros_migrate_settings() {
         unset($settings['grosor_paspartu']); // Eliminar el campo antiguo
         $needs_update = true;
     }
-    
+
+    $defaults_flujo = array(
+        'flujo_paso_1' => 'Selecciona primero el tamaño.',
+        'flujo_paso_2' => 'Selecciona el paspartú para desbloquear el marco.',
+        'flujo_paso_3' => 'Ahora puedes elegir el marco.',
+    );
+
+    foreach ($defaults_flujo as $key => $default_text) {
+        if (!isset($settings[$key]) || '' === trim((string) $settings[$key])) {
+            $settings[$key] = $default_text;
+            $needs_update = true;
+        }
+    }
+
     if ($needs_update) {
         update_option('cuadros_settings', $settings);
         error_log('[cuadros] Settings migrated to new orientation-based structure');

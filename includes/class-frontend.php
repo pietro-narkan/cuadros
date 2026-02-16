@@ -42,6 +42,28 @@ class Cuadros_Frontend {
         $grosor_doble_marco_vertical = isset($settings['grosor_doble_marco_vertical']) ? intval($settings['grosor_doble_marco_vertical']) : 3;
         $grosor_doble_marco_cuadrado = isset($settings['grosor_doble_marco_cuadrado']) ? intval($settings['grosor_doble_marco_cuadrado']) : 4;
         $grosor_doble_marco_horizontal = isset($settings['grosor_doble_marco_horizontal']) ? intval($settings['grosor_doble_marco_horizontal']) : 2;
+
+        $flujo_paso_1 = isset($settings['flujo_paso_1']) ? sanitize_text_field($settings['flujo_paso_1']) : 'Selecciona primero el tamaño.';
+        $flujo_paso_2 = isset($settings['flujo_paso_2']) ? sanitize_text_field($settings['flujo_paso_2']) : 'Selecciona el paspartú para desbloquear el marco.';
+        $flujo_paso_3 = isset($settings['flujo_paso_3']) ? sanitize_text_field($settings['flujo_paso_3']) : 'Ahora puedes elegir el marco.';
+
+        if ('' === trim($flujo_paso_1)) {
+            $flujo_paso_1 = 'Selecciona primero el tamaño.';
+        }
+
+        if ('' === trim($flujo_paso_2)) {
+            $flujo_paso_2 = 'Selecciona el paspartú para desbloquear el marco.';
+        }
+
+        if ('' === trim($flujo_paso_3)) {
+            $flujo_paso_3 = 'Ahora puedes elegir el marco.';
+        }
+
+        $textos_pasos = array(
+            'paso1' => $flujo_paso_1,
+            'paso2' => $flujo_paso_2,
+            'paso3' => $flujo_paso_3,
+        );
         
         if (defined('CUADROS_SCRIPT_LOADED')) return;
         define('CUADROS_SCRIPT_LOADED', true);
@@ -78,6 +100,8 @@ class Cuadros_Frontend {
                 'cuadrado': <?php echo $grosor_doble_marco_cuadrado; ?>,
                 'horizontal': <?php echo $grosor_doble_marco_horizontal; ?>
             };
+
+            var textosPasos = <?php echo wp_json_encode($textos_pasos); ?>;
             
             var FACTOR_ESCALA = 0.85;
 
@@ -174,6 +198,29 @@ class Cuadros_Frontend {
                     'max-height': originalHeight + 'px'
                 });
 
+                function escaparHtml(valor) {
+                    return $('<div>').text(String(valor || '')).html();
+                }
+
+                function obtenerTextoPaso(clave, fallback) {
+                    var texto = textosPasos && textosPasos[clave] ? String(textosPasos[clave]).trim() : '';
+                    return texto || fallback;
+                }
+
+                function construirAvisoPasos() {
+                    var paso1 = escaparHtml(obtenerTextoPaso('paso1', 'Selecciona primero el tamaño.'));
+                    var paso2 = escaparHtml(obtenerTextoPaso('paso2', 'Selecciona el paspartú para desbloquear el marco.'));
+                    var paso3 = escaparHtml(obtenerTextoPaso('paso3', 'Ahora puedes elegir el marco.'));
+
+                    return '' +
+                        '<div class="cuadros-steps-inline" role="list">' +
+                            '<div class="cuadros-step-item" data-step="1" role="listitem"><span class="cuadros-step-number">1</span><span class="cuadros-step-text">' + paso1 + '</span></div>' +
+                            '<div class="cuadros-step-item" data-step="2" role="listitem"><span class="cuadros-step-number">2</span><span class="cuadros-step-text">' + paso2 + '</span></div>' +
+                            '<div class="cuadros-step-item" data-step="3" role="listitem"><span class="cuadros-step-number">3</span><span class="cuadros-step-text">' + paso3 + '</span></div>' +
+                        '</div>' +
+                        '<div class="cuadros-step-status" aria-live="polite"></div>';
+                }
+
                 function inicializarAvisoOrden() {
                     if (!flujoSecuencialActivo || !$variationsForm.length) {
                         return;
@@ -189,17 +236,57 @@ class Cuadros_Frontend {
                             $variationsForm.prepend($avisoOrden);
                         }
                     }
+
+                    if (!$avisoOrden.find('.cuadros-steps-inline').length) {
+                        $avisoOrden.html(construirAvisoPasos());
+                    }
                 }
 
-                function setAvisoOrden(mensaje, completado) {
+                function setAvisoOrden(tamanoSeleccionado, paspartuSeleccionado, marcoSeleccionado, mensajeEstado, estadoTipo) {
                     if (!$avisoOrden.length) {
                         return;
                     }
 
-                    $avisoOrden
-                        .removeClass('cuadros-notice-step cuadros-notice-ready')
-                        .addClass(completado ? 'cuadros-notice-ready' : 'cuadros-notice-step')
-                        .html(mensaje);
+                    var pasoActivo = 0;
+                    if (!tamanoSeleccionado) {
+                        pasoActivo = 1;
+                    } else if (!paspartuSeleccionado) {
+                        pasoActivo = 2;
+                    } else if (!marcoSeleccionado) {
+                        pasoActivo = 3;
+                    }
+
+                    $avisoOrden.find('.cuadros-step-item').each(function() {
+                        var $paso = $(this);
+                        var numeroPaso = parseInt($paso.attr('data-step'), 10);
+                        var completado = (numeroPaso === 1 && tamanoSeleccionado) ||
+                            (numeroPaso === 2 && tamanoSeleccionado && paspartuSeleccionado) ||
+                            (numeroPaso === 3 && tamanoSeleccionado && paspartuSeleccionado && marcoSeleccionado);
+
+                        $paso
+                            .removeClass('is-active is-completed')
+                            .toggleClass('is-completed', completado)
+                            .toggleClass('is-active', !completado && numeroPaso === pasoActivo);
+                    });
+
+                    var textoEstado = String(mensajeEstado || '').trim();
+                    var $estado = $avisoOrden.find('.cuadros-step-status');
+
+                    if (!$estado.length) {
+                        return;
+                    }
+
+                    $estado
+                        .removeClass('is-warning is-success')
+                        .toggleClass('is-warning', estadoTipo === 'warning')
+                        .toggleClass('is-success', estadoTipo === 'success')
+                        .text(textoEstado);
+
+                    if (textoEstado) {
+                        $estado.show();
+                    } else {
+                        $estado.hide();
+                    }
                 }
 
                 function tieneSeleccion($select) {
@@ -276,6 +363,8 @@ class Cuadros_Frontend {
                     var tamanoCambioReal = tamanoCambio && tamanoSeleccionado && String(ultimoTamanoSeleccionado || '').trim() !== '';
                     var paspartuAutoSin = false;
                     var $selectRecalculo = null;
+                    var mensajeEstado = '';
+                    var estadoTipo = '';
 
                     if (tamanoCambioReal) {
                         var valorSinPaspartu = obtenerValorSinPaspartu($paspartuSelect);
@@ -298,23 +387,25 @@ class Cuadros_Frontend {
                     if (!tamanoSeleccionado) {
                         if (limpiarSelect($paspartuSelect)) {
                             $selectRecalculo = $paspartuSelect;
+                            paspartuSeleccionado = false;
                         }
 
-                        if (limpiarSelect($marcoSelect) && !$selectRecalculo) {
-                            $selectRecalculo = $marcoSelect;
+                        if (limpiarSelect($marcoSelect)) {
+                            marcoSeleccionado = false;
+                            if (!$selectRecalculo) {
+                                $selectRecalculo = $marcoSelect;
+                            }
                         }
 
                         bloquearSelect($paspartuSelect, true, 'Selecciona primero un tamaño');
                         bloquearSelect($marcoSelect, true, 'Selecciona primero tamaño y paspartú');
-                        setAvisoOrden('<strong>Paso 1 de 3:</strong> selecciona primero el tamaño.', false);
                     } else if (!paspartuSeleccionado) {
                         bloquearSelect($paspartuSelect, false);
 
                         bloquearSelect($marcoSelect, true, 'Selecciona primero un paspartú');
                         if (tamanoCambioReal) {
-                            setAvisoOrden('<strong>Tamaño actualizado:</strong> no se encontró "Sin paspartú". Elige un paspartú para continuar.', false);
-                        } else {
-                            setAvisoOrden('<strong>Paso 2 de 3:</strong> selecciona el paspartú para desbloquear el marco.', false);
+                            mensajeEstado = 'Tamaño actualizado: no se encontró "Sin paspartú". Elige un paspartú para continuar.';
+                            estadoTipo = 'warning';
                         }
                     } else {
                         bloquearSelect($paspartuSelect, false);
@@ -322,18 +413,20 @@ class Cuadros_Frontend {
 
                         if (tamanoCambioReal && paspartuAutoSin) {
                             if (marcoSeleccionado) {
-                                setAvisoOrden('<strong>Tamaño actualizado:</strong> paspartú en "Sin paspartú" y tu marco se mantiene seleccionado.', true);
+                                mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú" y tu marco se mantiene seleccionado.';
                             } else {
-                                setAvisoOrden('<strong>Tamaño actualizado:</strong> paspartú en "Sin paspartú". Ahora puedes elegir el marco.', true);
+                                mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú". Ahora puedes elegir el marco.';
                             }
+                            estadoTipo = 'success';
                         } else {
                             if (marcoSeleccionado) {
-                                setAvisoOrden('<strong>Configuración completa:</strong> tamaño, paspartú y marco seleccionados.', true);
-                            } else {
-                                setAvisoOrden('<strong>Paso 3 de 3:</strong> ahora puedes elegir el marco.', true);
+                                mensajeEstado = 'Configuración completa: tamaño, paspartú y marco seleccionados.';
+                                estadoTipo = 'success';
                             }
                         }
                     }
+
+                    setAvisoOrden(tamanoSeleccionado, paspartuSeleccionado, marcoSeleccionado, mensajeEstado, estadoTipo);
 
                     ultimoTamanoSeleccionado = tamanoActual;
 

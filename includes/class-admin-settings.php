@@ -47,6 +47,22 @@ class Cuadros_Admin_Settings {
             'cuadros-settings',
             'cuadros_dimensions_section'
         );
+
+        // Sección de textos del flujo paso a paso
+        add_settings_section(
+            'cuadros_flujo_pasos_section',
+            __('Textos del Paso a Paso', 'cuadros'),
+            array($this, 'render_flujo_pasos_section'),
+            'cuadros-settings'
+        );
+
+        add_settings_field(
+            'flujo_pasos_textos',
+            __('Mensajes de los pasos', 'cuadros'),
+            array($this, 'render_flujo_pasos_field'),
+            'cuadros-settings',
+            'cuadros_flujo_pasos_section'
+        );
         
         // Sección de colores de marco
         add_settings_section(
@@ -90,6 +106,19 @@ class Cuadros_Admin_Settings {
         
         if (is_array($new_value)) {
             $sanitized = array();
+
+            $defaults_flujo = array(
+                'flujo_paso_1' => 'Selecciona primero el tamaño.',
+                'flujo_paso_2' => 'Selecciona el paspartú para desbloquear el marco.',
+                'flujo_paso_3' => 'Ahora puedes elegir el marco.',
+            );
+
+            foreach ($defaults_flujo as $key => $default_text) {
+                $old_text = isset($old_value[$key]) ? sanitize_text_field($old_value[$key]) : $default_text;
+                $current_text = isset($new_value[$key]) ? sanitize_text_field($new_value[$key]) : $old_text;
+                $current_text = trim($current_text);
+                $sanitized[$key] = '' !== $current_text ? $current_text : $default_text;
+            }
             
             // Sanitizar grosores por orientación
             $sanitized['grosor_marco_vertical'] = isset($new_value['grosor_marco_vertical']) ? absint($new_value['grosor_marco_vertical']) : 8;
@@ -224,6 +253,61 @@ class Cuadros_Admin_Settings {
         echo '• Aparece en el borde interior del paspartú cuando está habilitado<br>';
         echo '• Crea una separación visual elegante entre el paspartú y la imagen';
         echo '</div>';
+    }
+
+    public function render_flujo_pasos_section() {
+        echo '<p>' . __('Personaliza los textos del aviso de selección que aparece en la página del producto.', 'cuadros') . '</p>';
+    }
+
+    public function render_flujo_pasos_field() {
+        $settings = get_option('cuadros_settings', array());
+        $defaults = array(
+            'flujo_paso_1' => 'Selecciona primero el tamaño.',
+            'flujo_paso_2' => 'Selecciona el paspartú para desbloquear el marco.',
+            'flujo_paso_3' => 'Ahora puedes elegir el marco.',
+        );
+
+        $paso_1 = isset($settings['flujo_paso_1']) && '' !== trim($settings['flujo_paso_1']) ? $settings['flujo_paso_1'] : $defaults['flujo_paso_1'];
+        $paso_2 = isset($settings['flujo_paso_2']) && '' !== trim($settings['flujo_paso_2']) ? $settings['flujo_paso_2'] : $defaults['flujo_paso_2'];
+        $paso_3 = isset($settings['flujo_paso_3']) && '' !== trim($settings['flujo_paso_3']) ? $settings['flujo_paso_3'] : $defaults['flujo_paso_3'];
+        ?>
+        <div style="display: grid; gap: 12px; max-width: 760px; margin: 10px 0 0;">
+            <div>
+                <label for="cuadros-flujo-paso-1" style="display: block; font-weight: bold; margin-bottom: 6px;">Paso 1</label>
+                <input
+                    type="text"
+                    id="cuadros-flujo-paso-1"
+                    class="regular-text"
+                    name="cuadros_settings[flujo_paso_1]"
+                    value="<?php echo esc_attr($paso_1); ?>"
+                    style="width: 100%; max-width: 720px;"
+                >
+            </div>
+            <div>
+                <label for="cuadros-flujo-paso-2" style="display: block; font-weight: bold; margin-bottom: 6px;">Paso 2</label>
+                <input
+                    type="text"
+                    id="cuadros-flujo-paso-2"
+                    class="regular-text"
+                    name="cuadros_settings[flujo_paso_2]"
+                    value="<?php echo esc_attr($paso_2); ?>"
+                    style="width: 100%; max-width: 720px;"
+                >
+            </div>
+            <div>
+                <label for="cuadros-flujo-paso-3" style="display: block; font-weight: bold; margin-bottom: 6px;">Paso 3</label>
+                <input
+                    type="text"
+                    id="cuadros-flujo-paso-3"
+                    class="regular-text"
+                    name="cuadros_settings[flujo_paso_3]"
+                    value="<?php echo esc_attr($paso_3); ?>"
+                    style="width: 100%; max-width: 720px;"
+                >
+            </div>
+            <p class="description" style="margin: 0;">Estos textos se muestran siempre en línea en el frontend, de Paso 1 a Paso 3.</p>
+        </div>
+        <?php
     }
     
     public function render_grosores_organizados_field() {

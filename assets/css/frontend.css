@@ -61,16 +61,96 @@
 .cuadros-selection-order-notice {
     margin: 0 0 12px;
     padding: 10px 12px;
-    border-left: 4px solid #dba617;
-    background: #fff8e5;
+    border: 1px solid #dcdcde;
+    border-left: 4px solid #2271b1;
+    background: #f7fbff;
     color: #1d2327;
     font-size: 13px;
     line-height: 1.4;
 }
 
-.cuadros-selection-order-notice.cuadros-notice-ready {
-    border-left-color: #00a32a;
+.cuadros-steps-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cuadros-step-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid #c3c4c7;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #50575e;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.cuadros-step-number {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f1;
+    color: #1d2327;
+    font-weight: 700;
+    font-size: 11px;
+    line-height: 1;
+}
+
+.cuadros-step-item.is-active {
+    border-color: #dba617;
+    background: #fff8e5;
+    color: #1d2327;
+}
+
+.cuadros-step-item.is-active .cuadros-step-number {
+    background: #dba617;
+    color: #ffffff;
+}
+
+.cuadros-step-item.is-completed {
+    border-color: #00a32a;
     background: #edfaef;
+    color: #14532d;
+}
+
+.cuadros-step-item.is-completed .cuadros-step-number {
+    background: #00a32a;
+    color: #ffffff;
+}
+
+.cuadros-step-status {
+    margin-top: 8px;
+    font-size: 12px;
+    display: none;
+}
+
+.cuadros-step-status.is-warning {
+    color: #8a5500;
+}
+
+.cuadros-step-status.is-success {
+    color: #166534;
+}
+
+@media (max-width: 680px) {
+    .cuadros-step-item {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .cuadros-step-text {
+        font-size: 12px;
+    }
 }
 
 form.variations_form select.cuadros-select-bloqueado {
