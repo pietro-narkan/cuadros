@@ -413,7 +413,7 @@ class Cuadros_Frontend {
                         bloquearSelect($marcoSelect, false);
 
                         if (marcoSeleccionado) {
-                            mensajeEstado = 'cofiguracion completa';
+                            mensajeEstado = 'Configuracion completa';
                             estadoTipo = 'success';
                         } else if (tamanoCambioReal && paspartuAutoSin) {
                             mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú". Ahora puedes elegir el marco.';
