@@ -214,9 +214,9 @@ class Cuadros_Frontend {
 
                     return '' +
                         '<div class="cuadros-steps-inline" role="list">' +
-                            '<div class="cuadros-step-item" data-step="1" role="listitem"><span class="cuadros-step-number">1</span><span class="cuadros-step-text">' + paso1 + '</span></div>' +
-                            '<div class="cuadros-step-item" data-step="2" role="listitem"><span class="cuadros-step-number">2</span><span class="cuadros-step-text">' + paso2 + '</span></div>' +
-                            '<div class="cuadros-step-item" data-step="3" role="listitem"><span class="cuadros-step-number">3</span><span class="cuadros-step-text">' + paso3 + '</span></div>' +
+                            '<div class="cuadros-step-item" data-step="1" role="listitem"><span class="cuadros-step-title">Paso 1</span><span class="cuadros-step-text">' + paso1 + '</span></div>' +
+                            '<div class="cuadros-step-item" data-step="2" role="listitem"><span class="cuadros-step-title">Paso 2</span><span class="cuadros-step-text">' + paso2 + '</span></div>' +
+                            '<div class="cuadros-step-item" data-step="3" role="listitem"><span class="cuadros-step-title">Paso 3</span><span class="cuadros-step-text">' + paso3 + '</span></div>' +
                         '</div>' +
                         '<div class="cuadros-step-status" aria-live="polite"></div>';
                 }
