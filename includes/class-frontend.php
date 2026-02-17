@@ -256,7 +256,7 @@ class Cuadros_Frontend {
                         textoPaso = obtenerTextoPaso('paso3', 'Ahora puedes elegir el marco.');
                     } else {
                         pasoActivo = 3;
-                        textoPaso = obtenerTextoPaso('paso3', 'Ahora puedes elegir el marco.');
+                        textoPaso = 'Configuracion completa';
                     }
 
                     var $paso = $avisoOrden.find('.cuadros-step-item').first();
@@ -412,10 +412,7 @@ class Cuadros_Frontend {
                         bloquearSelect($paspartuSelect, false);
                         bloquearSelect($marcoSelect, false);
 
-                        if (marcoSeleccionado) {
-                            mensajeEstado = 'Configuracion completa';
-                            estadoTipo = 'success';
-                        } else if (tamanoCambioReal && paspartuAutoSin) {
+                        if (!marcoSeleccionado && tamanoCambioReal && paspartuAutoSin) {
                             mensajeEstado = 'Tamaño actualizado: paspartú en "Sin paspartú". Ahora puedes elegir el marco.';
                             estadoTipo = 'success';
                         }
