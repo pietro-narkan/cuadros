@@ -382,10 +382,17 @@ class Cuadros_Frontend {
                     var dimensiones = extraerDimensionesDesdeTexto(textoSeleccionado);
 
                     if (dimensiones) {
+                        dimensiones.etiquetaPrint = 'Print' + dimensiones.ancho + 'x' + dimensiones.alto;
                         return dimensiones;
                     }
 
-                    return extraerDimensionesDesdeTexto(valorSeleccionado);
+                    dimensiones = extraerDimensionesDesdeTexto(valorSeleccionado);
+                    if (!dimensiones) {
+                        return null;
+                    }
+
+                    dimensiones.etiquetaPrint = 'Print' + dimensiones.ancho + 'x' + dimensiones.alto;
+                    return dimensiones;
                 }
 
                 function actualizarEtiquetasPaspartuPorTamano() {
@@ -393,10 +400,10 @@ class Cuadros_Frontend {
                         return;
                     }
 
-                    var dimensiones = obtenerDimensionesTamanoSeleccionado();
-                    var dimensionesFinales = dimensiones ? {
-                        ancho: dimensiones.ancho + 10,
-                        alto: dimensiones.alto + 10
+                    var infoTamano = obtenerDimensionesTamanoSeleccionado();
+                    var dimensionesFinales = infoTamano ? {
+                        ancho: infoTamano.ancho + 10,
+                        alto: infoTamano.alto + 10
                     } : null;
 
                     $paspartuSelect.find('option').each(function() {
@@ -409,17 +416,21 @@ class Cuadros_Frontend {
                             $option.data('cuadrosOriginalText', textoOriginal);
                         }
 
-                        var textoNormalizado = String(textoOriginal || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
-                        var esSinPaspartu = esValorSinPaspartu(valor) || textoNormalizado.indexOf('sin-paspartu') !== -1;
+                        var textoBase = String(textoOriginal || '').trim();
+                        var textoNormalizado = textoBase.toLowerCase().replace(/[\s_]+/g, '-');
+                        var esSinPaspartu = esValorSinPaspartu(valor) || textoNormalizado.indexOf('sin-paspartu') !== -1 || textoNormalizado.indexOf('sin-paspart') === 0;
 
                         if (!valor || esSinPaspartu || !dimensionesFinales) {
                             $option.text(textoOriginal);
                             return;
                         }
 
+                        var etiquetaPaspartu = /^paspart[uú]\b/i.test(textoBase) ? textoBase : ('Paspartú ' + textoBase);
+
                         $option.text(
-                            textoOriginal +
-                            ' (+5 cm por lado, final ' + dimensionesFinales.ancho + 'x' + dimensionesFinales.alto + ' cm)'
+                            etiquetaPaspartu +
+                            ' 5 cms. + ' + infoTamano.etiquetaPrint +
+                            ' (' + dimensionesFinales.ancho + 'x' + dimensionesFinales.alto + ') cms.'
                         );
                     });
                 }

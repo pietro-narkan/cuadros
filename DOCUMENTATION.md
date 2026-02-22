@@ -88,8 +88,9 @@ El plugin requiere que el producto tenga estos atributos configurados:
 Para ofrecer la opción sin paspartú, crear un término que contenga "sin" en el nombre o slug (ej: "Sin paspartú", "Ninguno").
 
 ### Nota de visualización en paspartú
-- Cuando hay un tamaño seleccionado con formato `ancho x alto`, el texto visible de cada opción de paspartú muestra:
-  - `(+5 cm por lado, final AxB cm)`
+- Cuando hay un tamaño seleccionado con formato `Print AnchoxAlto`, el texto visible de cada opción de paspartú muestra:
+  - `Paspartú <Color> 5 cms. + PrintAxB (CxD) cms.`
+  - Ejemplo: `Paspartú Negro 5 cms. + Print60x40 (70x50) cms.`
 - El tamaño final se calcula sumando 10 cm al ancho y 10 cm al alto (5 cm por lado).
 - La opción **Sin paspartú** se mantiene sin texto adicional.
 
