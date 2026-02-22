@@ -67,8 +67,31 @@ El plugin requiere que el producto tenga estos atributos configurados:
    - Usado para: Variaciones
    - Términos: Los diferentes colores de paspartú (ej: "Blanco", "Turquesa", "Sin paspartú")
 
+3. **`pa_tamano`** (Tamaño / Print)
+   - Tipo: Atributo de producto
+   - Usado para: Flujo de selección y referencia visual en paspartú
+   - Valores de referencia actuales:
+     - Print 30x40
+     - Print 60x40
+     - Print 50x70
+     - Print 60x80
+     - Print 90x70
+     - Print 100x80
+     - Print 120x90
+     - Print 40x40
+     - Print 50x50
+     - Print 60x60
+     - Print 70x70
+     - Print 80x80
+
 ### Configuración de "Sin Paspartú"
 Para ofrecer la opción sin paspartú, crear un término que contenga "sin" en el nombre o slug (ej: "Sin paspartú", "Ninguno").
+
+### Nota de visualización en paspartú
+- Cuando hay un tamaño seleccionado con formato `ancho x alto`, el texto visible de cada opción de paspartú muestra:
+  - `(+5 cm por lado, final AxB cm)`
+- El tamaño final se calcula sumando 10 cm al ancho y 10 cm al alto (5 cm por lado).
+- La opción **Sin paspartú** se mantiene sin texto adicional.
 
 Endpoints AJAX
 --------------

@@ -349,6 +349,81 @@ class Cuadros_Frontend {
                     return valor;
                 }
 
+                function extraerDimensionesDesdeTexto(texto) {
+                    var match = String(texto || '').match(/(\d{2,3})\s*[xX×]\s*(\d{2,3})/);
+                    if (!match) {
+                        return null;
+                    }
+
+                    var ancho = parseInt(match[1], 10);
+                    var alto = parseInt(match[2], 10);
+
+                    if (!ancho || !alto) {
+                        return null;
+                    }
+
+                    return {
+                        ancho: ancho,
+                        alto: alto
+                    };
+                }
+
+                function obtenerDimensionesTamanoSeleccionado() {
+                    if (!$tamanoSelect.length) {
+                        return null;
+                    }
+
+                    var valorSeleccionado = String($tamanoSelect.val() || '').trim();
+                    if (!valorSeleccionado) {
+                        return null;
+                    }
+
+                    var textoSeleccionado = $tamanoSelect.find('option:selected').text();
+                    var dimensiones = extraerDimensionesDesdeTexto(textoSeleccionado);
+
+                    if (dimensiones) {
+                        return dimensiones;
+                    }
+
+                    return extraerDimensionesDesdeTexto(valorSeleccionado);
+                }
+
+                function actualizarEtiquetasPaspartuPorTamano() {
+                    if (!$paspartuSelect.length) {
+                        return;
+                    }
+
+                    var dimensiones = obtenerDimensionesTamanoSeleccionado();
+                    var dimensionesFinales = dimensiones ? {
+                        ancho: dimensiones.ancho + 10,
+                        alto: dimensiones.alto + 10
+                    } : null;
+
+                    $paspartuSelect.find('option').each(function() {
+                        var $option = $(this);
+                        var valor = String($option.val() || '').trim();
+                        var textoOriginal = $option.data('cuadrosOriginalText');
+
+                        if (typeof textoOriginal !== 'string') {
+                            textoOriginal = String($option.text() || '');
+                            $option.data('cuadrosOriginalText', textoOriginal);
+                        }
+
+                        var textoNormalizado = String(textoOriginal || '').toLowerCase().trim().replace(/[\s_]+/g, '-');
+                        var esSinPaspartu = esValorSinPaspartu(valor) || textoNormalizado.indexOf('sin-paspartu') !== -1;
+
+                        if (!valor || esSinPaspartu || !dimensionesFinales) {
+                            $option.text(textoOriginal);
+                            return;
+                        }
+
+                        $option.text(
+                            textoOriginal +
+                            ' (+5 cm por lado, final ' + dimensionesFinales.ancho + 'x' + dimensionesFinales.alto + ' cm)'
+                        );
+                    });
+                }
+
                 function aplicarFlujoSeleccion(saltarRecalculo) {
                     if (!flujoSecuencialActivo || aplicandoOrden) {
                         return;
@@ -678,6 +753,7 @@ class Cuadros_Frontend {
                 }
 
                 function actualizarTodo() {
+                    actualizarEtiquetasPaspartuPorTamano();
                     aplicarFlujoSeleccion();
                     actualizar();
                     actualizarLightboxState();
@@ -691,6 +767,7 @@ class Cuadros_Frontend {
                 $('.reset_variations').on('click', function() { setTimeout(actualizarTodo, 120); });
                 
                 // Ejecutar
+                actualizarEtiquetasPaspartuPorTamano();
                 aplicarFlujoSeleccion(true);
                 actualizar();
                 
