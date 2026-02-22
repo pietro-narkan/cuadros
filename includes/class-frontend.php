@@ -492,7 +492,12 @@ class Cuadros_Frontend {
                         }
                     }
 
-                    setAvisoOrden(tamanoSeleccionado, paspartuSeleccionado, marcoSeleccionado, mensajeEstado, estadoTipo);
+                    var marcoSeleccionadoParaAviso = marcoSeleccionado;
+                    if (marcoSeleccionadoParaAviso && esSlugSinMarco($marcoSelect.val())) {
+                        marcoSeleccionadoParaAviso = false;
+                    }
+
+                    setAvisoOrden(tamanoSeleccionado, paspartuSeleccionado, marcoSeleccionadoParaAviso, mensajeEstado, estadoTipo);
 
                     ultimoTamanoSeleccionado = tamanoActual;
 
