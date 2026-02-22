@@ -472,18 +472,6 @@ class Cuadros_Frontend {
                     }
 
                     if (!tamanoSeleccionado) {
-                        if (limpiarSelect($paspartuSelect)) {
-                            $selectRecalculo = $paspartuSelect;
-                            paspartuSeleccionado = false;
-                        }
-
-                        if (limpiarSelect($marcoSelect)) {
-                            marcoSeleccionado = false;
-                            if (!$selectRecalculo) {
-                                $selectRecalculo = $marcoSelect;
-                            }
-                        }
-
                         bloquearSelect($paspartuSelect, true, 'Selecciona primero un tamaño');
                         bloquearSelect($marcoSelect, true, 'Selecciona primero tamaño y paspartú');
                     } else if (!paspartuSeleccionado) {
