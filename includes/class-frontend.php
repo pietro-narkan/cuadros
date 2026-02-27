@@ -368,6 +368,77 @@ class Cuadros_Frontend {
                     };
                 }
 
+                function ordenarOpcionesTamano() {
+                    if (!$tamanoSelect.length) {
+                        return;
+                    }
+
+                    var valorSeleccionado = String($tamanoSelect.val() || '');
+                    var opciones = $tamanoSelect.find('option').toArray();
+
+                    if (!opciones.length) {
+                        return;
+                    }
+
+                    var placeholders = [];
+                    var opcionesConDimensiones = [];
+                    var opcionesSinDimensiones = [];
+
+                    opciones.forEach(function(option, indice) {
+                        var $option = $(option);
+                        var valor = String($option.val() || '').trim();
+
+                        if (!valor) {
+                            placeholders.push(option);
+                            return;
+                        }
+
+                        var texto = String($option.text() || '');
+                        var dimensiones = extraerDimensionesDesdeTexto(texto) || extraerDimensionesDesdeTexto(valor);
+
+                        if (!dimensiones) {
+                            opcionesSinDimensiones.push({
+                                option: option,
+                                indice: indice
+                            });
+                            return;
+                        }
+
+                        opcionesConDimensiones.push({
+                            option: option,
+                            indice: indice,
+                            ancho: dimensiones.ancho,
+                            alto: dimensiones.alto,
+                            esCuadrado: dimensiones.ancho === dimensiones.alto
+                        });
+                    });
+
+                    opcionesConDimensiones.sort(function(a, b) {
+                        if (a.ancho !== b.ancho) {
+                            return a.ancho - b.ancho;
+                        }
+
+                        if (a.esCuadrado !== b.esCuadrado) {
+                            return a.esCuadrado ? 1 : -1;
+                        }
+
+                        if (a.alto !== b.alto) {
+                            return a.alto - b.alto;
+                        }
+
+                        return a.indice - b.indice;
+                    });
+
+                    var ordenFinal = placeholders
+                        .concat(opcionesConDimensiones.map(function(item) { return item.option; }))
+                        .concat(opcionesSinDimensiones.sort(function(a, b) {
+                            return a.indice - b.indice;
+                        }).map(function(item) { return item.option; }));
+
+                    $tamanoSelect.empty().append(ordenFinal);
+                    $tamanoSelect.val(valorSeleccionado);
+                }
+
                 function obtenerDimensionesTamanoSeleccionado() {
                     if (!$tamanoSelect.length) {
                         return null;
@@ -757,6 +828,7 @@ class Cuadros_Frontend {
                 }
 
                 function actualizarTodo() {
+                    ordenarOpcionesTamano();
                     actualizarEtiquetasPaspartuPorTamano();
                     aplicarFlujoSeleccion();
                     actualizar();
@@ -771,6 +843,7 @@ class Cuadros_Frontend {
                 $('.reset_variations').on('click', function() { setTimeout(actualizarTodo, 120); });
                 
                 // Ejecutar
+                ordenarOpcionesTamano();
                 actualizarEtiquetasPaspartuPorTamano();
                 aplicarFlujoSeleccion(true);
                 actualizar();
