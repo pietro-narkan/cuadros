@@ -382,7 +382,7 @@ class Cuadros_Frontend {
                     var dimensiones = extraerDimensionesDesdeTexto(textoSeleccionado);
 
                     if (dimensiones) {
-                        dimensiones.etiquetaPrint = 'Print' + dimensiones.ancho + 'x' + dimensiones.alto;
+                        dimensiones.etiquetaPrint = 'Print ' + dimensiones.ancho + 'x' + dimensiones.alto;
                         return dimensiones;
                     }
 
@@ -391,7 +391,7 @@ class Cuadros_Frontend {
                         return null;
                     }
 
-                    dimensiones.etiquetaPrint = 'Print' + dimensiones.ancho + 'x' + dimensiones.alto;
+                    dimensiones.etiquetaPrint = 'Print ' + dimensiones.ancho + 'x' + dimensiones.alto;
                     return dimensiones;
                 }
 
